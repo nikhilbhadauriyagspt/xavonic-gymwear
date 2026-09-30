@@ -15,6 +15,7 @@ import {
   Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function CustomersTab() {
   const [customers, setCustomers] = useState([]);
@@ -27,10 +28,9 @@ export default function CustomersTab() {
     setLoading(true);
     try {
       const token = localStorage.getItem('xavonic_admin_token');
-      const url = new URL('http://localhost:5000/api/admin/customers');
-      if (searchQuery) url.searchParams.append('search', searchQuery);
+      const url = `${ADMIN_API_BASE}/customers${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`;
 
-      const res = await fetch(url.toString(), {
+      const res = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -63,7 +63,7 @@ export default function CustomersTab() {
 
     try {
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch(`http://localhost:5000/api/admin/customers/${id}`, {
+      const res = await fetch(`${ADMIN_API_BASE}/customers/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

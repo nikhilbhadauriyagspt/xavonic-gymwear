@@ -15,6 +15,7 @@ import {
   CreditCard 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function OffersDiscountsTab() {
   const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ export default function OffersDiscountsTab() {
   const fetchOffers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/settings/offers');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/offers`);
       const data = await res.json();
       if (data.success && data.config) {
         setConfig(prev => ({ ...prev, ...data.config }));
@@ -75,7 +76,7 @@ export default function OffersDiscountsTab() {
     setSaving(true);
     try {
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch('http://localhost:5000/api/admin/settings/offers', {
+      const res = await fetch(`${ADMIN_API_BASE}/settings/offers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

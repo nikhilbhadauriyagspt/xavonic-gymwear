@@ -18,6 +18,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function GatewaySettingsTab() {
   const [activeSubTab, setActiveSubTab] = useState('whatsapp'); // 'whatsapp' | 'email'
@@ -69,13 +70,13 @@ export default function GatewaySettingsTab() {
       const token = localStorage.getItem('xavonic_admin_token');
 
       const [waRes, smtpRes, cloudRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/settings/whatsapp', {
+        fetch(`${ADMIN_API_BASE}/settings/whatsapp`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch('http://localhost:5000/api/admin/settings/smtp', {
+        fetch(`${ADMIN_API_BASE}/settings/smtp`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch('http://localhost:5000/api/admin/settings/cloudinary', {
+        fetch(`${ADMIN_API_BASE}/settings/cloudinary`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -99,7 +100,7 @@ export default function GatewaySettingsTab() {
     try {
       setIsSaving(true);
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch('http://localhost:5000/api/admin/settings/cloudinary', {
+      const res = await fetch(`${ADMIN_API_BASE}/settings/cloudinary`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +127,7 @@ export default function GatewaySettingsTab() {
     try {
       setIsSaving(true);
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch('http://localhost:5000/api/admin/settings/whatsapp', {
+      const res = await fetch(`${ADMIN_API_BASE}/settings/whatsapp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +155,7 @@ export default function GatewaySettingsTab() {
     try {
       setIsSaving(true);
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch('http://localhost:5000/api/admin/settings/smtp', {
+      const res = await fetch(`${ADMIN_API_BASE}/settings/smtp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +187,7 @@ export default function GatewaySettingsTab() {
     try {
       setIsTesting(true);
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch('http://localhost:5000/api/admin/settings/whatsapp/test', {
+      const res = await fetch(`${ADMIN_API_BASE}/settings/whatsapp/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -218,7 +219,7 @@ export default function GatewaySettingsTab() {
     try {
       setIsTesting(true);
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch('http://localhost:5000/api/admin/settings/smtp/test', {
+      const res = await fetch(`${ADMIN_API_BASE}/settings/smtp/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

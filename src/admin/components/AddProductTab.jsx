@@ -19,6 +19,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function AddProductTab({ onProductCreated, onCancel }) {
   const [categories, setCategories] = useState([]);
@@ -88,7 +89,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
   useEffect(() => {
     const fetchCats = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/admin/categories');
+        const res = await fetch(`${ADMIN_API_BASE}/categories`);
         const data = await res.json();
         if (data.success && data.categories) {
           setCategories(data.categories);
@@ -268,7 +269,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
 
       formData.append('colors_json', JSON.stringify(colorsPayload));
 
-      const res = await fetch('http://localhost:5000/api/admin/products', {
+      const res = await fetch(`${ADMIN_API_BASE}/products`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`

@@ -10,6 +10,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function EditCategoryModal({ category, allCategories = [], isOpen, onClose, onCategoryUpdated }) {
   if (!isOpen || !category) return null;
@@ -98,7 +99,7 @@ export default function EditCategoryModal({ category, allCategories = [], isOpen
         formData.append('image_url', customImageUrl);
       }
 
-      const res = await fetch(`http://localhost:5000/api/admin/categories/${category.id}`, {
+      const res = await fetch(`${ADMIN_API_BASE}/categories/${category.id}`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../config/api';
 
 import spotlightFront from '../assets/spotlight_front.jpg';
 import heroCompression from '../assets/hero_compression.jpg';
@@ -128,7 +129,7 @@ export function CartProvider({ children }) {
 
   // Fetch live global offers from backend
   React.useEffect(() => {
-    fetch('http://localhost:5000/api/admin/settings/offers')
+    fetch(`${ADMIN_API_BASE}/settings/offers`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.config) setOffersConfig(data.config);

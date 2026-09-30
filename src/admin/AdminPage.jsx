@@ -11,6 +11,7 @@ import AllProductsTab from './components/AllProductsTab';
 import AddProductTab from './components/AddProductTab';
 import OffersDiscountsTab from './components/OffersDiscountsTab';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../config/api';
 
 export default function AdminPage() {
   // Authentication State
@@ -36,7 +37,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdminLoggedIn) {
       const token = localStorage.getItem('xavonic_admin_token');
-      fetch('http://localhost:5000/api/admin/customers?limit=1', {
+      fetch(`${ADMIN_API_BASE}/customers?limit=1`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())

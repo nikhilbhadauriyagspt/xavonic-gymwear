@@ -10,6 +10,8 @@ import heroJoggers from '../assets/hero_joggers.jpg';
 import catTrackpants from '../assets/cat_trackpants.jpg';
 import catShorts from '../assets/cat_shorts.jpg';
 
+import { ADMIN_API_BASE } from '../config/api';
+
 export default function Categories() {
   const fallbackCategories = [
     { id: 1, name: 'Oversized T-Shirts', slug: 'oversized', image_url: heroOversized, show_title_overlay: 1 },
@@ -25,7 +27,7 @@ export default function Categories() {
   const [categories, setCategories] = useState(fallbackCategories);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/admin/categories')
+    fetch(`${ADMIN_API_BASE}/categories`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.categories && data.categories.length > 0) {

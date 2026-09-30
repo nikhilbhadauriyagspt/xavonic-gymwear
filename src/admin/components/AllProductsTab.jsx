@@ -15,6 +15,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 import EditProductModal from './EditProductModal';
 
 export default function AllProductsTab({ onNavigateToAdd }) {
@@ -31,7 +32,7 @@ export default function AllProductsTab({ onNavigateToAdd }) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/products');
+      const res = await fetch(`${ADMIN_API_BASE}/products`);
       const data = await res.json();
       if (data.success) {
         setProducts(data.products || []);
@@ -54,7 +55,7 @@ export default function AllProductsTab({ onNavigateToAdd }) {
 
     try {
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch(`http://localhost:5000/api/admin/products/${id}`, {
+      const res = await fetch(`${ADMIN_API_BASE}/products/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

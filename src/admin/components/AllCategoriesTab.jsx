@@ -15,6 +15,7 @@ import {
   ExternalLink 
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 import EditCategoryModal from './EditCategoryModal';
 
 export default function AllCategoriesTab({ onNavigateToAdd }) {
@@ -31,7 +32,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/categories');
+      const res = await fetch(`${ADMIN_API_BASE}/categories`);
       const data = await res.json();
       if (data.success) {
         setCategories(data.categories || []);
@@ -54,7 +55,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
 
     try {
       const token = localStorage.getItem('xavonic_admin_token');
-      const res = await fetch(`http://localhost:5000/api/admin/categories/${id}`, {
+      const res = await fetch(`${ADMIN_API_BASE}/categories/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -276,7 +277,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
                           const nextVal = cat.show_in_dual_section ? 0 : 1;
                           try {
                             const token = localStorage.getItem('xavonic_admin_token');
-                            const res = await fetch(`http://localhost:5000/api/admin/categories/${cat.id}`, {
+                            const res = await fetch(`${ADMIN_API_BASE}/categories/${cat.id}`, {
                               method: 'PUT',
                               headers: {
                                 'Content-Type': 'application/json',

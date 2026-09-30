@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { AUTH_API_BASE } from '../config/api';
 
 import spotlightFront from '../assets/spotlight_front.jpg';
-import catShorts from '../assets/cat_shorts.jpg';
+import heroCompression from '../assets/hero_compression.jpg';
 
 const AuthContext = createContext();
 
@@ -135,7 +136,7 @@ export function AuthProvider({ children }) {
   // 1. Send OTP to WhatsApp
   const sendWhatsAppOtp = async (phone) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/send-whatsapp-otp', {
+      const res = await fetch(`${AUTH_API_BASE}/send-whatsapp-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone }),
@@ -161,7 +162,7 @@ export function AuthProvider({ children }) {
   // 2. Verify WhatsApp OTP & Authenticate
   const verifyWhatsAppOtp = async (phone, otp) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/verify-whatsapp-otp', {
+      const res = await fetch(`${AUTH_API_BASE}/verify-whatsapp-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone, otp }),
@@ -195,7 +196,7 @@ export function AuthProvider({ children }) {
   // 3. Send Email OTP via Nodemailer
   const sendEmailOtp = async (email) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/send-email-otp', {
+      const res = await fetch(`${AUTH_API_BASE}/send-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -221,7 +222,7 @@ export function AuthProvider({ children }) {
   // 4. Verify Email OTP
   const verifyEmailOtp = async (email, otp) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/verify-email-otp', {
+      const res = await fetch(`${AUTH_API_BASE}/verify-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp }),
@@ -255,7 +256,7 @@ export function AuthProvider({ children }) {
   // 5. Login with Email and Password
   const loginWithEmailPassword = async (email, password) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login-email-password', {
+      const res = await fetch(`${AUTH_API_BASE}/login-email-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -282,7 +283,7 @@ export function AuthProvider({ children }) {
   // 6. Register with Email and Password
   const registerWithEmailPassword = async (name, email, password, phone) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register-email-password', {
+      const res = await fetch(`${AUTH_API_BASE}/register-email-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, phone }),
@@ -309,7 +310,7 @@ export function AuthProvider({ children }) {
   // 7. Profile: Send OTP to verify & link Email
   const linkEmailSendOtp = async (emailToLink) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/link-email/send-otp', {
+      const res = await fetch(`${AUTH_API_BASE}/link-email/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailToLink }),
@@ -332,7 +333,7 @@ export function AuthProvider({ children }) {
   const verifyLinkEmail = async (emailToLink, otp) => {
     try {
       const token = localStorage.getItem('xavonic_user_token');
-      const res = await fetch('http://localhost:5000/api/auth/link-email/verify', {
+      const res = await fetch(`${AUTH_API_BASE}/link-email/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -371,7 +372,7 @@ export function AuthProvider({ children }) {
   // 9. Profile: Send OTP to verify & link Phone
   const linkPhoneSendOtp = async (phoneToLink) => {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/link-phone/send-otp', {
+      const res = await fetch(`${AUTH_API_BASE}/link-phone/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: phoneToLink }),
@@ -394,7 +395,7 @@ export function AuthProvider({ children }) {
   const verifyLinkPhone = async (phoneToLink, otp) => {
     try {
       const token = localStorage.getItem('xavonic_user_token');
-      const res = await fetch('http://localhost:5000/api/auth/link-phone/verify', {
+      const res = await fetch(`${AUTH_API_BASE}/link-phone/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -434,7 +435,7 @@ export function AuthProvider({ children }) {
   const updateProfile = async (updatedData) => {
     try {
       const token = localStorage.getItem('xavonic_user_token');
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch(`${AUTH_API_BASE}/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

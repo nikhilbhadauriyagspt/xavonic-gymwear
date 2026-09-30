@@ -14,6 +14,7 @@ import {
   Plus
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function EditProductModal({ product, isOpen, onClose, onProductUpdated }) {
   if (!isOpen || !product) return null;
@@ -67,7 +68,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
   useEffect(() => {
     const fetchCats = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/admin/categories');
+        const res = await fetch(`${ADMIN_API_BASE}/categories`);
         const data = await res.json();
         if (data.success) {
           setCategories(data.categories || []);
@@ -194,7 +195,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
 
       formData.append('colors_json', JSON.stringify(colorsPayload));
 
-      const res = await fetch(`http://localhost:5000/api/admin/products/${product.id}`, {
+      const res = await fetch(`${ADMIN_API_BASE}/products/${product.id}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` },
         body: formData

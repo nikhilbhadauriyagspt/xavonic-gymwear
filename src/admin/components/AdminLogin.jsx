@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Shield, Mail, Lock, Zap, RefreshCw, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function AdminLogin({ onLoginSuccess }) {
   const [loginEmail, setLoginEmail] = useState('admin@xavonic.com');
@@ -15,7 +16,7 @@ export default function AdminLogin({ onLoginSuccess }) {
     setIsLoggingIn(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/login', {
+      const response = await fetch(`${ADMIN_API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),

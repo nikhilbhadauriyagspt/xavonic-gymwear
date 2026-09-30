@@ -12,6 +12,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function AddCategoryTab({ onCategoryCreated, onCancel }) {
   const [categories, setCategories] = useState([]);
@@ -40,7 +41,7 @@ export default function AddCategoryTab({ onCategoryCreated, onCancel }) {
   useEffect(() => {
     const fetchExistingCategories = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/admin/categories');
+        const res = await fetch(`${ADMIN_API_BASE}/categories`);
         const data = await res.json();
         if (data.success) {
           setCategories(data.categories || []);
@@ -106,7 +107,7 @@ export default function AddCategoryTab({ onCategoryCreated, onCancel }) {
         formData.append('image_url', customImageUrl);
       }
 
-      const res = await fetch('http://localhost:5000/api/admin/categories', {
+      const res = await fetch(`${ADMIN_API_BASE}/categories`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
