@@ -10,6 +10,7 @@ import {
   Layers
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { toast } from 'sonner';
 import { fetchLiveProducts, fetchLiveCategories } from '../services/productService';
 import { allCategories as fallbackCategories, allProducts as fallbackProducts } from '../data/productsData';
@@ -86,7 +87,7 @@ export default function CollectionsPage() {
   }, [effectiveSlug, location.pathname]);
 
   const [sortBy, setSortBy] = useState('featured');
-  const [wishlist, setWishlist] = useState([]);
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const [selectedSizes, setSelectedSizes] = useState({});
 
   // Clean list of display categories on main /collections page
@@ -157,19 +158,6 @@ export default function CollectionsPage() {
     }
     return list;
   }
-
-  const toggleWishlist = (productId) => {
-    setWishlist(prev => {
-      const exists = prev.includes(productId);
-      if (exists) {
-        toast.info('Removed from wishlist');
-        return prev.filter(id => id !== productId);
-      } else {
-        toast.success('Saved to wishlist');
-        return [...prev, productId];
-      }
-    });
-  };
 
   const handleQuickAdd = (product) => {
     const size = selectedSizes[product.id] || product.sizes?.[0] || 'L';
@@ -384,7 +372,7 @@ export default function CollectionsPage() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 {categoryProducts.map((p) => {
-                  const isWishlisted = wishlist.includes(p.id);
+                  const wishlisted = isWishlisted(p.id || p.slug);
                   const frontImg = p.imageFront || p.colors?.[0]?.image || p.gallery?.[0] || heroOversized;
                   const backImg = p.imageBack || p.gallery?.[1] || frontImg;
                   const priceFormatted = typeof p.price === 'number' ? `₹${p.price.toLocaleString('en-IN')}` : p.price;
@@ -414,15 +402,15 @@ export default function CollectionsPage() {
                         {/* Wishlist Button */}
                         <button
                           type="button"
-                          onClick={() => toggleWishlist(p.id)}
+                          onClick={() => toggleWishlist(p)}
                           className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all cursor-pointer ${
-                            isWishlisted
+                            wishlisted
                               ? 'bg-red-600 text-white'
                               : 'bg-white/80 text-zinc-700 hover:text-red-600 hover:bg-white shadow-xs'
                           }`}
                           aria-label="Save to Wishlist"
                         >
-                          <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
+                          <Heart className={`w-3.5 h-3.5 ${wishlisted ? 'fill-white' : ''}`} />
                         </button>
 
                         {/* Quick Size Selection Slide Bar */}

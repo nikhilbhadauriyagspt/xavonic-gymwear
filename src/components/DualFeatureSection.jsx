@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Heart, Eye, ArrowRight, ChevronLeft, ChevronRight, X, ShoppingBag, Plus, Minus } from 'lucide-react';
 
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { fetchLiveProducts, fetchDualFeaturedCategories } from '../services/productService';
 import { allProducts as fallbackProducts, allCategories as fallbackCategories } from '../data/productsData';
 
@@ -11,11 +12,10 @@ import { allProducts as fallbackProducts, allCategories as fallbackCategories } 
 function CategoryProductSliderRow({
   category,
   products,
-  wishlist,
-  toggleWishlist,
   openQuickView,
   handleQuickAdd,
 }) {
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const sliderRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -101,7 +101,7 @@ function CategoryProductSliderRow({
           className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 px-1 scrollbar-none snap-x snap-mandatory"
         >
           {products.map((product) => {
-            const isWishlisted = wishlist.includes(product.id);
+            const wishlisted = isWishlisted(product.id || product.slug);
             const frontImg = product.imageFront || product.colors?.[0]?.image || product.gallery?.[0];
             const backImg = product.imageBack || product.gallery?.[1] || frontImg;
             const priceFormatted = typeof product.price === 'number' ? `₹${product.price.toLocaleString('en-IN')}` : product.price;
@@ -133,16 +133,16 @@ function CategoryProductSliderRow({
                   <div className="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5 opacity-0 translate-x-2 group-hover/card:opacity-100 group-hover/card:translate-x-0 transition-all duration-200">
                     <button
                       type="button"
-                      onClick={() => toggleWishlist(product.id, product.title)}
+                      onClick={() => toggleWishlist(product)}
                       className={`w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer ${
-                        isWishlisted
+                        wishlisted
                           ? 'bg-red-600 text-white'
                           : 'bg-white/90 text-zinc-700 hover:text-red-600 hover:bg-white shadow-xs'
                       }`}
                       title="Save to Wishlist"
                       aria-label="Save to Wishlist"
                     >
-                      <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
+                      <Heart className={`w-3.5 h-3.5 ${wishlisted ? 'fill-white' : ''}`} />
                     </button>
 
                     <button
@@ -225,7 +225,6 @@ function CategoryProductSliderRow({
 
 export default function DualFeatureSection() {
   const { addToCart, openCart } = useCart();
-  const [wishlist, setWishlist] = useState([]);
   const [allLiveProducts, setAllLiveProducts] = useState(fallbackProducts);
   const [featuredCategories, setFeaturedCategories] = useState([]);
 
@@ -261,16 +260,6 @@ export default function DualFeatureSection() {
     loadData();
     return () => { isMounted = false; };
   }, []);
-
-  const toggleWishlist = (id, title) => {
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter(item => item !== id));
-      toast('Removed from Wishlist', { description: title });
-    } else {
-      setWishlist([...wishlist, id]);
-      toast.success('Added to Wishlist', { description: title });
-    }
-  };
 
   const handleQuickAdd = (product, size) => {
     addToCart(product, size, 1, product.colors?.[0]?.name || 'Standard');
@@ -314,8 +303,6 @@ export default function DualFeatureSection() {
             key={category.id || category.slug || idx}
             category={category}
             products={products}
-            wishlist={wishlist}
-            toggleWishlist={toggleWishlist}
             openQuickView={openQuickView}
             handleQuickAdd={handleQuickAdd}
           />

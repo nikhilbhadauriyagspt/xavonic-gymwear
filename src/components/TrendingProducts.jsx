@@ -3,13 +3,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Heart, Eye, X, ShoppingBag, Plus, Minus, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { toast } from 'sonner';
 import { fetchLiveProducts, fetchLiveCategories } from '../services/productService';
 import { allProducts as defaultLocalProducts, allCategories as defaultLocalCategories } from '../data/productsData';
 
 export default function TrendingProducts() {
   const [activeTab, setActiveTab] = useState('all');
-  const [wishlist, setWishlist] = useState([]);
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const [productsList, setProductsList] = useState(defaultLocalProducts);
   const [categoriesList, setCategoriesList] = useState(defaultLocalCategories);
   const [loading, setLoading] = useState(true);
@@ -129,16 +130,6 @@ export default function TrendingProducts() {
   const scrollRight = () => {
     if (sliderRef.current) {
       sliderRef.current.scrollBy({ left: 360, behavior: 'smooth' });
-    }
-  };
-
-  const toggleWishlist = (id, title) => {
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter(item => item !== id));
-      toast('Removed from Wishlist', { description: title });
-    } else {
-      setWishlist([...wishlist, id]);
-      toast.success('Added to Wishlist', { description: title });
     }
   };
 
@@ -290,7 +281,7 @@ export default function TrendingProducts() {
                 className="flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth pb-4 pt-1 px-1 scrollbar-none snap-x snap-mandatory"
               >
                 {filteredProducts.map((product) => {
-                  const isWishlisted = wishlist.includes(product.id);
+                  const wishlisted = isWishlisted(product.id || product.slug);
                   const frontImg = product.imageFront || (product.colors?.[0]?.image) || (product.gallery?.[0]);
                   const backImg = product.imageBack || (product.gallery?.[1]) || frontImg;
                   const priceFormatted = typeof product.price === 'number' ? `₹${product.price.toLocaleString('en-IN')}` : product.price;
@@ -325,16 +316,16 @@ export default function TrendingProducts() {
                         <div className="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1.5 opacity-0 translate-x-2 group-hover/card:opacity-100 group-hover/card:translate-x-0 transition-all duration-200">
                           <button
                             type="button"
-                            onClick={() => toggleWishlist(product.id, product.title)}
+                            onClick={() => toggleWishlist(product)}
                             className={`w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer ${
-                              isWishlisted
+                              wishlisted
                                 ? 'bg-red-600 text-white'
                                 : 'bg-white/90 text-zinc-700 hover:text-red-600 hover:bg-white shadow-xs'
                             }`}
                             title="Save to Wishlist"
                             aria-label="Save to Wishlist"
                           >
-                            <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
+                            <Heart className={`w-3.5 h-3.5 ${wishlisted ? 'fill-white' : ''}`} />
                           </button>
 
                           <button

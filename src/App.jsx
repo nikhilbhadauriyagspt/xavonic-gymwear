@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { Toaster } from 'sonner';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 
 import Header from './components/Header';
 import CartDrawer from './components/CartDrawer';
@@ -21,6 +22,7 @@ import AboutStory from './components/AboutStory';
 import Footer from './components/Footer';
 import CollectionsPage from './pages/CollectionsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AdminPage from './admin/AdminPage';
 
@@ -104,6 +106,7 @@ function MainLayout() {
           <Route path="/cargo-lowers" element={<CollectionsPage />} />
           <Route path="/bestsellers" element={<CollectionsPage />} />
           <Route path="/new-drops" element={<CollectionsPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/product/:productId" element={<ProductDetailPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
@@ -118,13 +121,15 @@ function MainLayout() {
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <Router>
-          {/* Toast Notifications */}
-          <Toaster position="top-right" richColors closeButton theme="dark" />
-          <MainLayout />
-        </Router>
-      </CartProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <Router>
+            {/* Toast Notifications */}
+            <Toaster position="top-right" richColors closeButton theme="dark" />
+            <MainLayout />
+          </Router>
+        </CartProvider>
+      </WishlistProvider>
     </AuthProvider>
   );
 }

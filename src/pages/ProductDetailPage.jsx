@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { allProducts, allCategories } from '../data/productsData';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { toast } from 'sonner';
 import { fetchLiveProductBySlugOrId, fetchLiveProducts } from '../services/productService';
 
@@ -39,6 +40,7 @@ export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, openCart } = useCart();
+  const { isWishlisted: checkIsWishlisted, toggleWishlist: globalToggleWishlist } = useWishlist();
 
   const [liveProduct, setLiveProduct] = useState(null);
   const [allLiveProducts, setAllLiveProducts] = useState(allProducts);
@@ -75,7 +77,6 @@ export default function ProductDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState(1);
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [activeInfoTab, setActiveInfoTab] = useState('description');
   const [bundleQty, setBundleQty] = useState(1);
@@ -208,16 +209,12 @@ export default function ProductDetailPage() {
     navigate('/checkout');
   };
 
+  const isWishlisted = checkIsWishlisted(product?.id || product?.slug || productId);
+
   const toggleWishlist = () => {
-    setIsWishlisted((prev) => {
-      const next = !prev;
-      if (next) {
-        toast.success('Saved to wishlist');
-      } else {
-        toast.info('Removed from wishlist');
-      }
-      return next;
-    });
+    if (product) {
+      globalToggleWishlist(product);
+    }
   };
 
   const handleShare = () => {

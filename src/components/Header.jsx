@@ -18,6 +18,7 @@ import logoWhite from '../assets/logo_white.png';
 import logoBlack from '../assets/logo_balck.png';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
 import { fetchLiveCategories } from '../services/productService';
 import SearchModal from './SearchModal';
 
@@ -33,6 +34,7 @@ export default function Header() {
   const location = useLocation();
   const { openCart, totalItemsCount } = useCart();
   const { handleAccountClick, isLoggedIn, user } = useAuth();
+  const { wishlistCount } = useWishlist();
 
   // 1. Fetch live categories from backend / MySQL DB
   useEffect(() => {
@@ -329,16 +331,21 @@ export default function Header() {
             </button>
 
             <Link
-              to="/collections"
-              className={`hidden sm:flex p-2.5 transition-colors cursor-pointer rounded-none ${
+              to="/wishlist"
+              className={`relative hidden sm:flex p-2.5 transition-colors cursor-pointer rounded-none ${
                 isScrolled 
                   ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' 
                   : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
               }`}
-              title="Browse Collections"
+              title="My Wishlist"
               aria-label="Wishlist"
             >
-              <Heart className="w-5 h-5 stroke-[1.6]" />
+              <Heart className={`w-5 h-5 stroke-[1.6] ${wishlistCount > 0 ? 'fill-red-600 text-red-600' : ''}`} />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-3.5 h-3.5 bg-red-600 text-white font-normal text-[9px] flex items-center justify-center px-0.5 rounded-none leading-none animate-scale-in">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
 
             {/* Cart with Sharp Red Badge */}
@@ -552,12 +559,12 @@ export default function Header() {
               </button>
 
               <Link 
-                to="/collections" 
+                to="/wishlist" 
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-1.5 py-2 text-zinc-300 hover:text-white font-normal"
               >
-                <Heart className="w-4 h-4 text-red-600" />
-                <span>Collections</span>
+                <Heart className={`w-4 h-4 ${wishlistCount > 0 ? 'fill-red-600 text-red-600' : 'text-red-600'}`} />
+                <span>Wishlist {wishlistCount > 0 ? `(${wishlistCount})` : ''}</span>
               </Link>
             </div>
           </div>
