@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { Heart, Eye, Star, ChevronLeft, ChevronRight, X, ShoppingBag, Plus, Minus } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 import heroCompression from '../assets/hero_compression.jpg';
 import prodCompressionBack from '../assets/prod_compression_back.jpg';
@@ -14,6 +15,7 @@ import catStringers from '../assets/cat_stringers.jpg';
 import heroOversized from '../assets/hero_oversized.jpg';
 
 export default function MostLovedProducts() {
+  const { addToCart } = useCart();
   const [wishlist, setWishlist] = useState([]);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [quickViewSize, setQuickViewSize] = useState('L');
@@ -142,9 +144,7 @@ export default function MostLovedProducts() {
   };
 
   const handleQuickAdd = (product, size) => {
-    toast.success('Added to Bag', {
-      description: `${product.title} · Size ${size}`,
-    });
+    addToCart(product, size);
   };
 
   const openQuickView = (product) => {

@@ -8,17 +8,23 @@ import {
   Menu, 
   X, 
   ChevronDown,
-  ArrowRight
+  ArrowRight,
+  Home,
+  Layers
 } from 'lucide-react';
 import logoWhite from '../assets/logo_white.png';
 import logoBlack from '../assets/logo_balck.png';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import SearchModal from './SearchModal';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = useState(null);
   const { openCart, totalItemsCount } = useCart();
+  const { openAuth, openProfile, handleAccountClick, isLoggedIn, user } = useAuth();
 
   // Scroll listener with hysteresis threshold to prevent jumpy glitch
   useEffect(() => {
@@ -178,7 +184,7 @@ export default function Header() {
                 onMouseEnter={() => item.type === 'mega' ? setActiveMegaMenu(item.key) : setActiveMegaMenu(null)}
               >
                 <Link
-                  to="#"
+                  to={item.path || '#'}
                   className={`flex items-center gap-1.5 text-sm transition-colors duration-150 py-2 border-b-2 tracking-normal ${
                     activeMegaMenu === item.key
                       ? 'border-red-600 text-red-600 font-medium'
@@ -203,6 +209,7 @@ export default function Header() {
           {/* RIGHT: Action Icons */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
+              onClick={() => setIsSearchOpen(true)}
               className={`p-2 sm:p-2.5 transition-colors cursor-pointer rounded-none ${
                 isScrolled 
                   ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' 
@@ -214,16 +221,32 @@ export default function Header() {
               <Search className="w-5 h-5 stroke-[1.6]" />
             </button>
 
+            {/* Account / User Avatar Button */}
             <button
-              className={`hidden sm:flex p-2.5 transition-colors cursor-pointer rounded-none ${
+              onClick={handleAccountClick}
+              className={`relative hidden sm:flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 transition-colors cursor-pointer rounded-full ${
                 isScrolled 
                   ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' 
                   : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
               }`}
-              title="Account"
+              title={isLoggedIn ? `Athlete Portal (${user?.name})` : "Account Login"}
               aria-label="Account"
             >
-              <User className="w-5 h-5 stroke-[1.6]" />
+              {isLoggedIn ? (
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <div className="w-7 h-7 rounded-full bg-red-600 text-white font-bold text-[11px] flex items-center justify-center tracking-tight shadow-xs">
+                      {user?.initials || 'NS'}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black" />
+                  </div>
+                  <span className="hidden xl:inline text-xs font-medium">
+                    {user?.name?.split(' ')[0] || 'Athlete'}
+                  </span>
+                </div>
+              ) : (
+                <User className="w-5 h-5 stroke-[1.6]" />
+              )}
             </button>
 
             <button
@@ -367,9 +390,26 @@ export default function Header() {
           </div>
 
           <div className="pt-4 flex items-center justify-around text-xs font-normal text-zinc-400 border-t border-zinc-900">
-            <button className="flex items-center gap-1.5 py-2 text-zinc-300 hover:text-white font-normal">
-              <User className="w-4 h-4 text-red-600" />
-              <span>Account</span>
+            <button 
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleAccountClick();
+              }}
+              className="flex items-center gap-2 py-2 text-zinc-300 hover:text-white font-normal cursor-pointer"
+            >
+              {isLoggedIn ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center">
+                    {user?.initials || 'NS'}
+                  </div>
+                  <span className="font-medium text-white">{user?.name}</span>
+                </div>
+              ) : (
+                <>
+                  <User className="w-4 h-4 text-red-600" />
+                  <span>Account Login</span>
+                </>
+              )}
             </button>
             <button className="flex items-center gap-1.5 py-2 text-zinc-300 hover:text-white font-normal">
               <Heart className="w-4 h-4 text-red-600" />
@@ -378,7 +418,84 @@ export default function Header() {
           </div>
         </div>
       )}
-    </header>
+      </header>
+
+      {/* 5. ULTRA-LIGHTWEIGHT MOBILE BOTTOM NAVIGATION BAR */}
+      <nav 
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-200/80 px-2 py-1.5 flex items-center justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.04)]"
+        aria-label="Mobile bottom navigation"
+      >
+        {/* Home */}
+        <Link 
+          to="/" 
+          className="flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-800 hover:text-black transition-colors"
+        >
+          <Home className="w-5 h-5 stroke-[1.6]" />
+          <span className="text-[10px] font-medium tracking-tight">Home</span>
+        </Link>
+
+        {/* Categories / Shop trigger */}
+        <Link 
+          to="/collections" 
+          className="flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-500 hover:text-black transition-colors"
+        >
+          <Layers className="w-5 h-5 stroke-[1.6]" />
+          <span className="text-[10px] font-normal tracking-tight">Shop</span>
+        </Link>
+
+        {/* Search */}
+        <button 
+          onClick={() => setIsSearchOpen(true)}
+          className="flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-500 hover:text-black transition-colors cursor-pointer"
+        >
+          <Search className="w-5 h-5 stroke-[1.6]" />
+          <span className="text-[10px] font-normal tracking-tight">Search</span>
+        </button>
+
+        {/* Account / Avatar Trigger */}
+        <button 
+          onClick={handleAccountClick}
+          className="relative flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-500 hover:text-black transition-colors cursor-pointer"
+        >
+          <div className="relative">
+            {isLoggedIn ? (
+              <div className="w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[9px] flex items-center justify-center">
+                {user?.initials || 'NS'}
+              </div>
+            ) : (
+              <User className="w-5 h-5 stroke-[1.6]" />
+            )}
+            {isLoggedIn && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-white" />
+            )}
+          </div>
+          <span className="text-[10px] font-normal tracking-tight">
+            {isLoggedIn ? 'Profile' : 'Account'}
+          </span>
+        </button>
+
+        {/* Cart Trigger */}
+        <button 
+          onClick={openCart}
+          className="relative flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-500 hover:text-black transition-colors cursor-pointer"
+        >
+          <div className="relative">
+            <ShoppingBag className="w-5 h-5 stroke-[1.6]" />
+            {totalItemsCount > 0 && (
+              <span className="absolute -top-1 -right-1.5 min-w-3.5 h-3.5 bg-red-600 text-white font-medium text-[9px] flex items-center justify-center px-0.5 rounded-full leading-none">
+                {totalItemsCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-normal tracking-tight">Bag</span>
+        </button>
+      </nav>
+
+      {/* 6. CLEAN MODERN SEARCH MODAL */}
+      <SearchModal 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+      />
     </>
   );
 }

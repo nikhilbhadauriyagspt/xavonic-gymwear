@@ -12,7 +12,10 @@ import spotlightBack from '../assets/spotlight_back.jpg';
 import catDropcut from '../assets/cat_dropcut.jpg';
 import spotlightSide from '../assets/spotlight_side.jpg';
 
+import { useCart } from '../context/CartContext';
+
 export default function DualFeatureSection() {
+  const { addToCart } = useCart();
   const [wishlist, setWishlist] = useState([]);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [quickViewSize, setQuickViewSize] = useState('L');
@@ -208,9 +211,7 @@ export default function DualFeatureSection() {
   };
 
   const handleQuickAdd = (product, size) => {
-    toast.success('Added to Bag', {
-      description: `${product.title} · Size ${size}`,
-    });
+    addToCart(product, size);
   };
 
   const openQuickView = (product) => {

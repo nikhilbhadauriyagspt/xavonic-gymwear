@@ -16,7 +16,10 @@ import heroOversized from '../assets/hero_oversized.jpg';
 import catDropcut from '../assets/cat_dropcut.jpg';
 import spotlightSide from '../assets/spotlight_side.jpg';
 
+import { useCart } from '../context/CartContext';
+
 export default function NewInStore() {
+  const { addToCart } = useCart();
   const galleryImages = [
     { src: spotlightFront, label: 'Front Fit' },
     { src: spotlightBack, label: 'Back Angle' },
@@ -81,15 +84,33 @@ export default function NewInStore() {
   };
 
   const handleAddToCart = () => {
-    toast.success('Added to bag', {
-      description: `Acid Wash Oversized Tee · ${selectedColor} · Size ${selectedSize} · Qty ${quantity}`,
-    });
+    addToCart(
+      {
+        id: 'new-in-store-1',
+        title: 'Acid Wash Heavyweight Oversized Tee',
+        price: 1499,
+        originalPrice: 2299,
+        imageFront: galleryImages[activeImageIndex]?.src || spotlightFront,
+      },
+      selectedSize,
+      quantity,
+      selectedColor
+    );
   };
 
   const handleBuyNow = () => {
-    toast.success('Proceeding to checkout', {
-      description: `Acid Wash Oversized Tee · ${selectedColor} · Size ${selectedSize} · Qty ${quantity}`,
-    });
+    addToCart(
+      {
+        id: 'new-in-store-1',
+        title: 'Acid Wash Heavyweight Oversized Tee',
+        price: 1499,
+        originalPrice: 2299,
+        imageFront: galleryImages[activeImageIndex]?.src || spotlightFront,
+      },
+      selectedSize,
+      quantity,
+      selectedColor
+    );
   };
 
   useEffect(() => {
@@ -131,12 +152,12 @@ export default function NewInStore() {
             
             {/* =========================================================
                 LEFT COMBINED GALLERY: (THUMBNAILS + MAIN BIG IMAGE)
-                Generous Height with Vertical Scroll for Thumbnails
+                Responsive: Sleek Mobile Slider + Desktop Vertical Strip
             ========================================================= */}
-            <div className="lg:col-span-7 flex flex-col-reverse lg:flex-row gap-3.5 sm:gap-4 w-full h-auto lg:h-[640px] xl:h-[680px] items-stretch">
+            <div className="lg:col-span-7 flex flex-col-reverse lg:flex-row gap-3 sm:gap-4 w-full h-auto lg:h-[640px] xl:h-[680px] items-stretch">
               
-              {/* Vertical Thumbnails (Scrollable within exact big image height) */}
-              <div className="w-full lg:w-[82px] xl:w-[90px] shrink-0 flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden h-auto lg:h-full pr-0 lg:pr-1 custom-gallery-scrollbar">
+              {/* Thumbnails: Horizontal scroll strip on mobile, Vertical on Desktop */}
+              <div className="w-full lg:w-[82px] xl:w-[90px] shrink-0 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden h-auto lg:h-full pb-1 lg:pb-0 pr-0 lg:pr-1 scrollbar-none custom-gallery-scrollbar">
                 {galleryImages.map((item, index) => {
                   const active = activeImageIndex === index;
 
@@ -147,21 +168,23 @@ export default function NewInStore() {
                       onClick={() => setActiveImageIndex(index)}
                       className={`
                         relative
-                        h-[86px]
-                        w-[66px]
+                        h-[72px]
+                        w-[56px]
+                        sm:h-[86px]
+                        sm:w-[66px]
                         lg:h-[102px]
                         lg:w-full
                         shrink-0
                         overflow-hidden
                         bg-[#f3f3f3]
                         border
-                        transition-colors
+                        transition-all
                         duration-200
                         cursor-pointer
                         rounded-none
                         ${active
-                          ? 'border-red-600 ring-1 ring-red-600'
-                          : 'border-transparent hover:border-zinc-400'
+                          ? 'border-red-600 ring-1 ring-red-600 opacity-100'
+                          : 'border-zinc-200 opacity-60 hover:opacity-100'
                         }
                       `}
                       aria-label={`View ${item.label}`}
@@ -176,17 +199,50 @@ export default function NewInStore() {
                 })}
               </div>
 
-              {/* Main Big Product Display (Vertical Sliding Track) */}
-              <div className="flex-1 min-w-0 h-[480px] sm:h-[560px] lg:h-full relative overflow-hidden bg-[#f1f1f1] border border-zinc-300 rounded-none shadow-sm cursor-none">
+              {/* Main Big Product Display Container */}
+              <div className="group/mainimg flex-1 min-w-0 aspect-[3/4] sm:aspect-[4/5] lg:aspect-auto lg:h-full relative overflow-hidden bg-[#f1f1f1] border border-zinc-200 rounded-none shadow-xs">
+                
+                {/* Mobile Left & Right Quick Arrow Buttons */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    previousLightboxImage();
+                    setActiveImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+                  }}
+                  className="lg:hidden absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-xs border border-white/60 text-zinc-900 flex items-center justify-center cursor-pointer shadow-xs"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextLightboxImage();
+                    setActiveImageIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+                  }}
+                  className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-xs border border-white/60 text-zinc-900 flex items-center justify-center cursor-pointer shadow-xs"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* Mobile Image Index Badge */}
+                <div className="lg:hidden absolute top-2.5 right-2.5 z-20 px-2 py-0.5 bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium tracking-wider">
+                  {activeImageIndex + 1} / {galleryImages.length}
+                </div>
+
                 <div
                   onClick={() => openLightbox(activeImageIndex)}
                   onMouseEnter={() => setShowZoomCursor(true)}
                   onMouseLeave={() => setShowZoomCursor(false)}
                   onMouseMove={handleMouseMove}
-                  className="w-full h-full relative"
+                  className="w-full h-full relative cursor-pointer lg:cursor-none"
                   aria-label="Open full screen gallery"
                 >
-                  {/* Continuous Vertical Slide Track */}
+                  {/* Continuous Vertical Slide Track on Desktop / Instant Smooth on Mobile */}
                   <div
                     className="w-full h-full flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
                     style={{
@@ -194,7 +250,7 @@ export default function NewInStore() {
                     }}
                   >
                     {galleryImages.map((item, index) => (
-                      <div key={index} className="w-full h-full shrink-0 relative">
+                      <div key={index} className="w-full h-full shrink-0 relative bg-zinc-100">
                         <img
                           src={item.src}
                           alt={item.label}
@@ -204,14 +260,15 @@ export default function NewInStore() {
                     ))}
                   </div>
 
-                  {/* Custom + Zoom Cursor */}
+                  {/* Desktop Zoom Cursor */}
                   {showZoomCursor && (
                     <span
                       className="
+                        hidden
+                        lg:flex
                         pointer-events-none
                         absolute
                         z-20
-                        flex
                         h-12
                         w-12
                         -translate-x-1/2

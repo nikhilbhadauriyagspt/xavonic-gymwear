@@ -34,32 +34,52 @@ export function CartProvider({ children }) {
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
-  const addToCart = (product, size = 'L') => {
-    const existingIndex = cartItems.findIndex(
-      (item) => item.id === product.id && item.size === size
-    );
+  const addToCart = (product, size = 'L', qty = 1, color = '') => {
+    const numericPrice = typeof product.price === 'number' 
+      ? product.price 
+      : parseInt(String(product.price).replace(/[^0-9]/g, ''), 10) || 1299;
 
-    if (existingIndex > -1) {
-      const updated = [...cartItems];
-      updated[existingIndex].quantity += 1;
-      setCartItems(updated);
-    } else {
-      const newItem = {
-        id: product.id,
-        title: product.title,
-        price: parseInt(product.price.replace(/[^0-9]/g, ''), 10) || 1299,
-        originalPrice: parseInt(product.originalPrice?.replace(/[^0-9]/g, ''), 10) || 1899,
-        size: size,
-        color: 'Selected Color',
-        quantity: 1,
-        image: product.imageFront || product.image || spotlightFront,
-      };
-      setCartItems((prev) => [newItem, ...prev]);
-    }
+    const numericOriginalPrice = product.originalPrice 
+      ? (typeof product.originalPrice === 'number' 
+          ? product.originalPrice 
+          : parseInt(String(product.originalPrice).replace(/[^0-9]/g, ''), 10) || 0)
+      : 0;
+
+    const productImage = product.imageFront || product.image || product.src || spotlightFront;
+
+    setCartItems((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) => item.id === product.id && item.size === size
+      );
+
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + qty,
+        };
+        return updated;
+      }
+
+      return [
+        {
+          id: product.id,
+          title: product.title || 'Performance Apparel',
+          price: numericPrice,
+          originalPrice: numericOriginalPrice,
+          size: size,
+          color: color || 'Core Drop',
+          quantity: qty,
+          image: productImage,
+        },
+        ...prev,
+      ];
+    });
 
     toast.success('Added to Bag', {
-      description: `${product.title} (Size: ${size})`,
+      description: `${product.title || 'Product'} · Size ${size}`,
     });
+
     openCart();
   };
 
@@ -79,7 +99,6 @@ export function CartProvider({ children }) {
 
   const removeFromCart = (id, size) => {
     setCartItems((prev) => prev.filter((item) => !(item.id === id && item.size === size)));
-    toast('Item removed from Bag');
   };
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);

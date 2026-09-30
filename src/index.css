@@ -10,3 +10,12 @@
     @apply bg-black text-zinc-100 min-h-screen antialiased selection:bg-red-600 selection:text-white;
   }
 }
+
+/* Global scrollbar hiding utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -76,13 +76,13 @@ export default function Categories() {
         </p>
       </div>
 
-      {/* Responsive Grid with Aspect Ratio 4/4.6 */}
-      <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 w-full">
+      {/* Responsive Grid: 2 cols on mobile, 2 on sm, 3 on lg, 4 on 2xl */}
+      <div className="relative z-10 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-6 w-full">
         {categories.map((cat, idx) => (
           <Link
             key={idx}
             to={cat.link}
-            className="group relative block aspect-[4/4.6] w-full overflow-hidden bg-zinc-950 border border-zinc-900 hover:border-zinc-700 transition-all duration-300 rounded-none cursor-pointer"
+            className="group relative block aspect-[4/4.6] w-full overflow-hidden bg-zinc-950 transition-all duration-300 rounded-none cursor-pointer shadow-none"
           >
             {/* High-Resolution Photoshoot Image */}
             <img
@@ -98,16 +98,16 @@ export default function Categories() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
             {/* Bottom Content with Straight Right Arrow Icon */}
-            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 flex items-end justify-between gap-4">
+            <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 md:p-6 flex items-end justify-between gap-2 sm:gap-4">
               <div>
-                <h3 className="text-lg sm:text-xl font-medium text-white group-hover:text-red-500 transition-colors">
+                <h3 className="text-xs sm:text-lg md:text-xl font-medium text-white group-hover:text-red-500 transition-colors line-clamp-2">
                   {cat.title}
                 </h3>
               </div>
 
               {/* Glass Circle with Pure Right Direction Arrow (ArrowRight) */}
-              <div className="w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:bg-red-600 group-hover:border-red-600 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+              <div className="w-8 h-8 sm:w-11 sm:h-11 md:w-12 md:h-12 shrink-0 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:bg-red-600 group-hover:border-red-600 group-hover:scale-110 transition-all duration-300 shadow-lg">
+                <ArrowRight className="w-3.5 h-3.5 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform duration-300" />
               </div>
             </div>
           </Link>
