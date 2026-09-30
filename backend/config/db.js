@@ -6,49 +6,62 @@ const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_USER = process.env.DB_USER || 'root';
 const DB_PASSWORD = process.env.DB_PASSWORD || '';
 const DB_NAME = process.env.DB_NAME || 'guidelya_db';
-const DB_PORT = process.env.DB_PORT || 3306;
+const DB_PORT = Number(process.env.DB_PORT) || 3306;
+const DB_SSL = process.env.DB_SSL === 'true' || (DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1');
 
-// 1. Initial connection to create database in phpMyAdmin if not existing
-const initialConnection = mysql.createConnection({
-  host: DB_HOST,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  port: DB_PORT,
-});
+const sslConfig = DB_SSL ? { rejectUnauthorized: false } : undefined;
 
-initialConnection.connect((err) => {
-  if (err) {
-    console.error('❌ Could not connect to MySQL Server:', err.message);
-    return;
-  }
-  console.log('✅ Connected to MySQL Server successfully.');
-
-  // Create DB in phpMyAdmin if it does not exist
-  initialConnection.query(
-    `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`,
-    (dbErr) => {
-      if (dbErr) {
-        console.error(`❌ Error creating database ${DB_NAME}:`, dbErr.message);
-      } else {
-        console.log(`📦 phpMyAdmin Database verified/created: [ ${DB_NAME} ]`);
-        initDatabaseTables();
-      }
-      initialConnection.end();
-    }
-  );
-});
-
-// 2. MySQL Connection Pool for the application
-const pool = mysql.createPool({
+// 1. Connection Pool options
+const poolConfig = {
   host: DB_HOST,
   user: DB_USER,
   password: DB_PASSWORD,
   database: DB_NAME,
   port: DB_PORT,
+  ssl: sslConfig,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});
+};
+
+// 2. Initial connection to create database if on localhost
+if (DB_HOST === 'localhost' || DB_HOST === '127.0.0.1') {
+  const initialConnection = mysql.createConnection({
+    host: DB_HOST,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    port: DB_PORT,
+  });
+
+  initialConnection.connect((err) => {
+    if (err) {
+      console.error('❌ Could not connect to MySQL Server:', err.message);
+      return;
+    }
+    console.log('✅ Connected to MySQL Server successfully.');
+
+    // Create DB in phpMyAdmin if it does not exist
+    initialConnection.query(
+      `CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`,
+      (dbErr) => {
+        if (dbErr) {
+          console.error(`❌ Error creating database ${DB_NAME}:`, dbErr.message);
+        } else {
+          console.log(`📦 phpMyAdmin Database verified/created: [ ${DB_NAME} ]`);
+          initDatabaseTables();
+        }
+        initialConnection.end();
+      }
+    );
+  });
+} else {
+  // Remote Cloud Database (Render / Aiven / Railway)
+  console.log(`🌐 Connecting to Cloud MySQL Database: ${DB_HOST}:${DB_PORT} [${DB_NAME}] (SSL: ${DB_SSL ? 'Active' : 'Off'})...`);
+  initDatabaseTables();
+}
+
+// 3. MySQL Connection Pool for the application
+const pool = mysql.createPool(poolConfig);
 
 function initDatabaseTables() {
   const promisePool = pool.promise();
