@@ -24,7 +24,10 @@ const poolConfig = {
   queueLimit: 0,
 };
 
-// 2. Initial connection to create database if on localhost
+// 2. MySQL Connection Pool for the application
+const pool = mysql.createPool(poolConfig);
+
+// 3. Initial connection to create database if on localhost
 if (DB_HOST === 'localhost' || DB_HOST === '127.0.0.1') {
   const initialConnection = mysql.createConnection({
     host: DB_HOST,
@@ -59,9 +62,6 @@ if (DB_HOST === 'localhost' || DB_HOST === '127.0.0.1') {
   console.log(`🌐 Connecting to Cloud MySQL Database: ${DB_HOST}:${DB_PORT} [${DB_NAME}] (SSL: ${DB_SSL ? 'Active' : 'Off'})...`);
   initDatabaseTables();
 }
-
-// 3. MySQL Connection Pool for the application
-const pool = mysql.createPool(poolConfig);
 
 function initDatabaseTables() {
   const promisePool = pool.promise();
