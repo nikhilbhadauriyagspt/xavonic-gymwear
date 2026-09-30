@@ -33,15 +33,40 @@ import {
 import { allProducts, allCategories } from '../data/productsData';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
+import { fetchLiveProductBySlugOrId, fetchLiveProducts } from '../services/productService';
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, openCart } = useCart();
 
-  const product = useMemo(() => {
-    return allProducts.find((p) => p.id === productId) || allProducts[0];
+  const [liveProduct, setLiveProduct] = useState(null);
+  const [allLiveProducts, setAllLiveProducts] = useState(allProducts);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadProduct() {
+      try {
+        const [fetched, all] = await Promise.all([
+          fetchLiveProductBySlugOrId(productId),
+          fetchLiveProducts(),
+        ]);
+        if (isMounted) {
+          if (fetched) setLiveProduct(fetched);
+          if (all && all.length > 0) setAllLiveProducts(all);
+        }
+      } catch (err) {
+        console.warn('Error loading dynamic product detail:', err);
+      }
+    }
+    loadProduct();
+    return () => { isMounted = false; };
   }, [productId]);
+
+  const product = useMemo(() => {
+    if (liveProduct) return liveProduct;
+    return allProducts.find((p) => String(p.id) === String(productId) || p.slug === productId) || allProducts[0];
+  }, [liveProduct, productId]);
 
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState(
@@ -156,8 +181,8 @@ export default function ProductDetailPage() {
   }, [product?.category]);
 
   const relatedProducts = useMemo(() => {
-    return allProducts.filter((p) => p.id !== product?.id).slice(0, 4);
-  }, [product?.id]);
+    return allLiveProducts.filter((p) => String(p.id) !== String(product?.id) && p.slug !== product?.slug).slice(0, 4);
+  }, [allLiveProducts, product?.id, product?.slug]);
 
   const unitPrice = Number(product?.price || 0);
   const originalPrice = Number(product?.originalPrice || unitPrice);

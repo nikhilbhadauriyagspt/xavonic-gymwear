@@ -13,8 +13,17 @@ export default function CartDrawer() {
     updateQuantity,
     removeFromCart,
     subtotal,
+    totalItemsCount,
     freeShippingGoal,
     progressToFreeShipping,
+    bundleDiscountAmount,
+    cartTierDiscount,
+    couponDiscount,
+    prepaidDiscount,
+    finalTotal,
+    appliedCoupon,
+    applyCouponCode,
+    removeAppliedCoupon,
   } = useCart();
 
   useEffect(() => {
@@ -201,19 +210,83 @@ export default function CartDrawer() {
               )}
             </div>
 
-            {/* 4. Drawer Footer / Clean Checkout Area */}
+            {/* 4. Drawer Footer / Clean Checkout Area with Global Offers Breakdown */}
             {cartItems.length > 0 && (
-              <div className="border-t border-zinc-100 p-6 bg-white shrink-0 space-y-3.5">
+              <div className="border-t border-zinc-200 p-5 bg-[#fafafa] shrink-0 space-y-3 font-sans">
                 
-                {/* Subtotal line */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-zinc-500 font-normal">Subtotal</span>
-                  <span className="text-sm font-semibold text-zinc-950">₹{subtotal}</span>
+                {/* Coupon Code Input */}
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    placeholder="Enter Coupon Code (e.g. VIP10)"
+                    id="cart-coupon-input"
+                    className="flex-1 bg-white border border-zinc-200 focus:border-zinc-900 px-3 py-1.5 text-xs uppercase font-mono outline-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = e.target.value;
+                        if (val) applyCouponCode(val);
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const input = document.getElementById('cart-coupon-input');
+                      if (input && input.value) applyCouponCode(input.value);
+                    }}
+                    className="px-3.5 py-1.5 bg-neutral-900 hover:bg-black text-white text-xs font-semibold rounded-none cursor-pointer"
+                  >
+                    Apply
+                  </button>
                 </div>
 
-                <p className="text-[10px] text-zinc-400 leading-tight">
-                  Taxes and shipping calculated at checkout. Easy 7-day doorstep returns.
-                </p>
+                {appliedCoupon && (
+                  <div className="flex items-center justify-between text-[11px] bg-emerald-50 text-emerald-800 px-2.5 py-1 border border-emerald-200">
+                    <span>Coupon <strong>{appliedCoupon.code}</strong> Applied</span>
+                    <button onClick={removeAppliedCoupon} className="underline text-emerald-900 font-medium">Remove</button>
+                  </div>
+                )}
+
+                {/* Price Breakdown */}
+                <div className="space-y-1.5 text-xs pt-1 border-t border-zinc-200 text-zinc-600">
+                  <div className="flex items-center justify-between">
+                    <span>Subtotal ({totalItemsCount} items)</span>
+                    <span>₹{subtotal.toLocaleString('en-IN')}.00</span>
+                  </div>
+
+                  {bundleDiscountAmount > 0 && (
+                    <div className="flex items-center justify-between text-emerald-700 font-medium">
+                      <span>Volume Bundle Savings</span>
+                      <span>-₹{bundleDiscountAmount.toLocaleString('en-IN')}.00</span>
+                    </div>
+                  )}
+
+                  {cartTierDiscount > 0 && (
+                    <div className="flex items-center justify-between text-emerald-700 font-medium">
+                      <span>Order Value Tier Discount</span>
+                      <span>-₹{cartTierDiscount.toLocaleString('en-IN')}.00</span>
+                    </div>
+                  )}
+
+                  {couponDiscount > 0 && (
+                    <div className="flex items-center justify-between text-emerald-700 font-medium">
+                      <span>Coupon Discount</span>
+                      <span>-₹{couponDiscount.toLocaleString('en-IN')}.00</span>
+                    </div>
+                  )}
+
+                  {prepaidDiscount > 0 && (
+                    <div className="flex items-center justify-between text-emerald-700 font-medium">
+                      <span>Prepaid Instant Savings</span>
+                      <span>-₹{prepaidDiscount.toLocaleString('en-IN')}.00</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-200 text-zinc-950 font-semibold text-sm">
+                    <span>Final Total</span>
+                    <span>₹{finalTotal.toLocaleString('en-IN')}.00</span>
+                  </div>
+                </div>
 
                 {/* Main Minimal Checkout Button */}
                 <button
@@ -223,14 +296,14 @@ export default function CartDrawer() {
                   }}
                   className="w-full flex items-center justify-center gap-2 py-3 bg-zinc-950 hover:bg-red-600 text-white text-xs font-medium uppercase tracking-[0.15em] transition-colors rounded-none cursor-pointer"
                 >
-                  <span>Checkout</span>
+                  <span>Proceed to Checkout</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 
                 {/* Subtle Trust Line */}
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-zinc-400">
                   <ShieldCheck className="w-3 h-3 text-zinc-400" />
-                  <span>Secure 256-Bit Encrypted Checkout</span>
+                  <span>Extra 10% OFF on UPI & Card Payments</span>
                 </div>
 
               </div>

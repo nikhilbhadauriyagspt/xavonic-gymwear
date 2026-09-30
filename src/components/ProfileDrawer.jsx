@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Trash2,
   Phone,
+  Smartphone,
   Mail,
   ShieldCheck,
   CreditCard,
@@ -36,7 +37,11 @@ export default function ProfileDrawer() {
     updateProfile, 
     addAddress, 
     deleteAddress, 
-    setDefaultAddress, 
+    setDefaultAddress,
+    linkEmailSendOtp,
+    verifyLinkEmail,
+    linkPhoneSendOtp,
+    verifyLinkPhone,
     logout 
   } = useAuth();
 
@@ -52,6 +57,15 @@ export default function ProfileDrawer() {
     chestSize: 'L (42")',
     lowerSize: 'M (32")'
   });
+
+  // Inline Verification States for Email & Phone
+  const [isEmailOtpSent, setIsEmailOtpSent] = useState(false);
+  const [emailOtpInput, setEmailOtpInput] = useState('');
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+
+  const [isPhoneOtpSent, setIsPhoneOtpSent] = useState(false);
+  const [phoneOtpInput, setPhoneOtpInput] = useState('');
+  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
 
   // Add Address Form State
   const [addressForm, setAddressForm] = useState({
@@ -181,11 +195,22 @@ export default function ProfileDrawer() {
               {currentView === 'menu' ? (
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-black text-white font-semibold text-xs flex items-center justify-center tracking-wider shadow-xs">
-                    {user.initials || 'NS'}
+                    {user.initials || 'AT'}
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-950">{user.name}</h3>
-                    <p className="text-xs text-zinc-500">{user.phone}</p>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm font-semibold text-zinc-950">
+                        {user.name || user.displayName || 'Athlete'}
+                      </h3>
+                      {user.customerId && (
+                        <span className="text-[10px] font-mono px-1.5 py-0.2 bg-zinc-200/70 text-zinc-700 font-semibold rounded-xs">
+                          {user.customerId}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500 font-mono">
+                      {user.phone ? `+${user.phone.replace(/[^0-9]/g, '')}` : 'Complete your profile'}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -644,42 +669,194 @@ export default function ProfileDrawer() {
 
               {/* ================= VIEW 6: PROFILE DETAILS & SIZES ================= */}
               {currentView === 'profile' && (
-                <form onSubmit={handleProfileSubmit} className="space-y-4 animate-in fade-in duration-200 text-xs">
-                  <h4 className="font-semibold text-zinc-900 px-1">Personal Details & Sizing</h4>
+                <div className="space-y-4 animate-in fade-in duration-200 text-xs">
+                  <h4 className="font-semibold text-zinc-900 px-1">Personal Details & Verifications</h4>
 
+                  {/* 1. Full Name */}
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-zinc-700">Full Name</label>
                     <input
                       type="text"
                       value={profileForm.name}
                       onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                      className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-[8px] focus:outline-none"
-                      required
+                      placeholder="Enter your name (e.g. Nikhil Sharma)"
+                      className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-sm focus:outline-none"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-zinc-700">Email Address</label>
-                    <input
-                      type="email"
-                      value={profileForm.email}
-                      onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                      className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-[8px] focus:outline-none"
-                      required
-                    />
+                  {/* 2. Mobile Number (WhatsApp) */}
+                  <div className="space-y-1.5 p-3 bg-zinc-50 border border-zinc-200 rounded-sm">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-medium text-zinc-700 flex items-center gap-1.5">
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>WhatsApp Mobile Number</span>
+                      </label>
+                      {user.phoneVerified ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-xs border border-emerald-300">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-xs border border-amber-300">
+                          Unverified
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="tel"
+                        value={profileForm.phone}
+                        disabled={user.phoneVerified}
+                        onChange={(e) => {
+                          setProfileForm({ ...profileForm, phone: e.target.value.replace(/[^0-9]/g, '') });
+                          setIsPhoneOtpSent(false);
+                        }}
+                        placeholder="Enter 10-digit mobile number"
+                        className={`w-full border px-3 py-1.5 text-xs rounded-sm focus:outline-none font-mono ${
+                          user.phoneVerified 
+                            ? 'bg-zinc-100/80 border-zinc-200 text-zinc-800 cursor-not-allowed' 
+                            : 'border-zinc-300 focus:border-zinc-950 bg-white'
+                        }`}
+                      />
+                      {!user.phoneVerified && profileForm.phone.length >= 10 && (
+                        <button
+                          type="button"
+                          disabled={isPhoneLoading}
+                          onClick={async () => {
+                            setIsPhoneLoading(true);
+                            await linkPhoneSendOtp(profileForm.phone);
+                            setIsPhoneLoading(false);
+                            setIsPhoneOtpSent(true);
+                          }}
+                          className="shrink-0 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-medium rounded-sm transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {isPhoneLoading ? 'Sending...' : isPhoneOtpSent ? 'Resend' : 'Verify'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Inline Phone OTP Verification Box */}
+                    {!user.phoneVerified && isPhoneOtpSent && (
+                      <div className="pt-2 border-t border-zinc-200/80 space-y-2 animate-in fade-in">
+                        <div className="flex items-center justify-between text-[11px] text-zinc-600">
+                          <span>Enter WhatsApp OTP sent to +91 {profileForm.phone}:</span>
+                          <span className="font-mono text-zinc-900 font-semibold">(Code: 1234)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={phoneOtpInput}
+                            onChange={(e) => setPhoneOtpInput(e.target.value)}
+                            placeholder="1234"
+                            className="w-24 border border-zinc-300 px-2 py-1.5 text-xs text-center font-mono rounded-sm bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!phoneOtpInput) return;
+                              setIsPhoneLoading(true);
+                              const res = await verifyLinkPhone(profileForm.phone, phoneOtpInput);
+                              setIsPhoneLoading(false);
+                              if (res?.success) setIsPhoneOtpSent(false);
+                            }}
+                            className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-sm hover:bg-zinc-800 cursor-pointer"
+                          >
+                            Confirm OTP
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-zinc-700">Mobile Number (Verified)</label>
-                    <input
-                      type="tel"
-                      value={profileForm.phone}
-                      disabled
-                      className="w-full border border-zinc-200 bg-zinc-100 text-zinc-500 px-3 py-2 text-xs rounded-[8px] cursor-not-allowed"
-                    />
+                  {/* 3. Email Address (Nodemailer) */}
+                  <div className="space-y-1.5 p-3 bg-zinc-50 border border-zinc-200 rounded-sm">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-medium text-zinc-700 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-red-600" />
+                        <span>Email Address</span>
+                      </label>
+                      {user.emailVerified ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-xs border border-emerald-300">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-medium text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-xs border border-amber-300">
+                          Unverified
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="email"
+                        value={profileForm.email}
+                        disabled={user.emailVerified}
+                        onChange={(e) => {
+                          setProfileForm({ ...profileForm, email: e.target.value });
+                          setIsEmailOtpSent(false);
+                        }}
+                        placeholder="Enter email (e.g. athlete@guidelya.com)"
+                        className={`w-full border px-3 py-1.5 text-xs rounded-sm focus:outline-none ${
+                          user.emailVerified
+                            ? 'bg-zinc-100/80 border-zinc-200 text-zinc-800 cursor-not-allowed'
+                            : 'border-zinc-300 focus:border-zinc-950 bg-white'
+                        }`}
+                      />
+                      {!user.emailVerified && profileForm.email.includes('@') && (
+                        <button
+                          type="button"
+                          disabled={isEmailLoading}
+                          onClick={async () => {
+                            setIsEmailLoading(true);
+                            await linkEmailSendOtp(profileForm.email);
+                            setIsEmailLoading(false);
+                            setIsEmailOtpSent(true);
+                          }}
+                          className="shrink-0 px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium rounded-sm transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {isEmailLoading ? 'Sending...' : isEmailOtpSent ? 'Resend' : 'Verify'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Inline Email OTP Verification Box */}
+                    {!user.emailVerified && isEmailOtpSent && (
+                      <div className="pt-2 border-t border-zinc-200/80 space-y-2 animate-in fade-in">
+                        <div className="flex items-center justify-between text-[11px] text-zinc-600">
+                          <span>Enter Email OTP sent to {profileForm.email}:</span>
+                          <span className="font-mono text-zinc-900 font-semibold">(Code: 1234)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            maxLength={4}
+                            value={emailOtpInput}
+                            onChange={(e) => setEmailOtpInput(e.target.value)}
+                            placeholder="1234"
+                            className="w-24 border border-zinc-300 px-2 py-1.5 text-xs text-center font-mono rounded-sm bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!emailOtpInput) return;
+                              setIsEmailLoading(true);
+                              const res = await verifyLinkEmail(profileForm.email, emailOtpInput);
+                              setIsEmailLoading(false);
+                              if (res?.success) setIsEmailOtpSent(false);
+                            }}
+                            className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-sm hover:bg-zinc-800 cursor-pointer"
+                          >
+                            Confirm OTP
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Size Preferences */}
+                  {/* 4. Size Preferences */}
                   <div className="pt-2 border-t border-zinc-100 space-y-3">
                     <div className="flex items-center gap-1.5 font-semibold text-zinc-900">
                       <Ruler className="w-3.5 h-3.5 text-red-600" />
@@ -692,7 +869,7 @@ export default function ProfileDrawer() {
                         <select
                           value={profileForm.chestSize}
                           onChange={(e) => setProfileForm({ ...profileForm, chestSize: e.target.value })}
-                          className="w-full border border-zinc-300 focus:border-zinc-950 px-2.5 py-2 text-xs rounded-[8px] bg-white focus:outline-none"
+                          className="w-full border border-zinc-300 focus:border-zinc-950 px-2.5 py-1.5 text-xs rounded-sm bg-white focus:outline-none"
                         >
                           <option value="S (38&quot;)">S (38")</option>
                           <option value="M (40&quot;)">M (40")</option>
@@ -707,7 +884,7 @@ export default function ProfileDrawer() {
                         <select
                           value={profileForm.lowerSize}
                           onChange={(e) => setProfileForm({ ...profileForm, lowerSize: e.target.value })}
-                          className="w-full border border-zinc-300 focus:border-zinc-950 px-2.5 py-2 text-xs rounded-[8px] bg-white focus:outline-none"
+                          className="w-full border border-zinc-300 focus:border-zinc-950 px-2.5 py-1.5 text-xs rounded-sm bg-white focus:outline-none"
                         >
                           <option value="S (30&quot;)">S (30")</option>
                           <option value="M (32&quot;)">M (32")</option>
@@ -720,12 +897,13 @@ export default function ProfileDrawer() {
                   </div>
 
                   <button
-                    type="submit"
-                    className="w-full py-3 bg-black hover:bg-red-600 text-white text-xs font-semibold rounded-[8px] transition-colors cursor-pointer mt-2"
+                    type="button"
+                    onClick={handleProfileSubmit}
+                    className="w-full py-2.5 bg-black hover:bg-red-600 text-white text-xs font-semibold rounded-sm transition-colors cursor-pointer mt-2"
                   >
-                    Save Changes
+                    Save Changes to Database
                   </button>
-                </form>
+                </div>
               )}
 
               {/* ================= VIEW 7: SUPPORT & HELP ================= */}

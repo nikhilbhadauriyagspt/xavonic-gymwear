@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   Search, 
   User, 
@@ -10,23 +10,50 @@ import {
   ChevronDown,
   ArrowRight,
   Home,
-  Layers
+  Layers,
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
 import logoWhite from '../assets/logo_white.png';
 import logoBlack from '../assets/logo_balck.png';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { fetchLiveCategories } from '../services/productService';
 import SearchModal from './SearchModal';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = useState(null);
-  const { openCart, totalItemsCount } = useCart();
-  const { openAuth, openProfile, handleAccountClick, isLoggedIn, user } = useAuth();
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
-  // Scroll listener with hysteresis threshold to prevent jumpy glitch
+  const location = useLocation();
+  const { openCart, totalItemsCount } = useCart();
+  const { handleAccountClick, isLoggedIn, user } = useAuth();
+
+  // 1. Fetch live categories from backend / MySQL DB
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCategories() {
+      try {
+        const cats = await fetchLiveCategories();
+        if (isMounted && Array.isArray(cats) && cats.length > 0) {
+          setCategoriesList(cats);
+        }
+      } catch (err) {
+        console.warn('Could not load live categories for header navigation:', err);
+      } finally {
+        if (isMounted) setIsLoadingCategories(false);
+      }
+    }
+    loadCategories();
+    return () => { isMounted = false; };
+  }, []);
+
+  // 2. Scroll listener with hysteresis threshold to prevent jumpy glitch
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -40,101 +67,152 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Clean Mega Menu Data (Natural Font Case, Normal Weight)
-  const megaMenus = {
-    Men: {
-      categories: [
+  // Close mega menu and mobile drawer on route change
+  useEffect(() => {
+    setActiveMegaMenu(null);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // 3. Build Dynamic Mega Menu & Navigation Structure from Live Categories Tree
+  const { navLinks, megaMenus } = useMemo(() => {
+    const mainCats = categoriesList.filter(c => c.level === 'main' || !c.parent_id);
+    const subCats = categoriesList.filter(c => c.level === 'sub');
+    const itemTypes = categoriesList.filter(c => c.level === 'item_type');
+
+    const menus = {};
+    const links = [];
+
+    // Fallback data if categories haven't loaded yet
+    const menImage = categoriesList.find(c => c.slug === 'men')?.image_url || 'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805028/guidelya/products/fytbuv7tb2t6q5lkfukh.jpg';
+    const womenImage = categoriesList.find(c => c.slug === 'women')?.image_url || 'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805017/guidelya/products/jar1kslgtpww9gjudcro.jpg';
+
+    // Populate Men mega menu
+    const menMain = mainCats.find(c => c.slug === 'men') || { id: 1, name: 'Men', slug: 'men' };
+    const menSubs = subCats.filter(c => c.parent_id === menMain.id || c.gender_target === 'Men');
+    
+    menus['Men'] = {
+      name: 'Men',
+      slug: 'men',
+      categories: menSubs.length > 0 ? menSubs.map(sub => ({
+        id: sub.id,
+        title: sub.name,
+        slug: sub.slug,
+        items: itemTypes
+          .filter(item => item.parent_id === sub.id)
+          .map(item => ({
+            name: item.name,
+            slug: item.slug,
+            path: `/collections/${item.slug}`
+          }))
+      })) : [
         {
-          title: 'Topwear',
+          title: 'Gym T-Shirts & Tops',
+          slug: 'men-t-shirts',
           items: [
-            'Oversized T-Shirts',
-            'Acid Wash & Drop Cut Tees',
-            'Stringers & Gym Tanks',
-            'Compression & Baselayers',
-            'Hoodies & Sweatshirts',
-            'Performance Tees'
+            { name: 'Compression T-Shirts', slug: 'compression', path: '/collections/compression' },
+            { name: 'Oversized T-Shirts', slug: 'oversized', path: '/collections/oversized' },
+            { name: 'Drop Cut T-Shirts', slug: 'drop-cut', path: '/collections/drop-cut' },
+            { name: 'Tanks & Stringers', slug: 'tanks', path: '/collections/tanks' },
+            { name: 'Acid Wash Collection', slug: 'acid-wash', path: '/collections/acid-wash' },
           ]
         },
         {
-          title: 'Bottomwear',
+          title: 'Gym Lowers & Bottoms',
+          slug: 'men-lowers-bottoms',
           items: [
-            '5" & 7" Gym Shorts',
-            '2-in-1 Compression Shorts',
-            'Heavyweight Cargo Joggers',
-            'Athletic Track Pants',
-            'Casual Sweatpants'
-          ]
-        },
-        {
-          title: 'Shop by Fabric',
-          items: [
-            '240 GSM Heavyweight Cotton',
-            '4-Way Stretch Performance',
-            'Seamless Anti-Odor Wear',
-            'Winter Warm Fleece'
+            { name: 'Gym Lowers & Joggers', slug: 'lowers', path: '/collections/lowers' },
+            { name: 'Athletic Trackpants', slug: 'trackpants', path: '/collections/trackpants' },
+            { name: '5" Training Shorts', slug: 'shorts', path: '/collections/shorts' },
+            { name: 'Cargo Gym Lowers', slug: 'cargo-lowers', path: '/collections/cargo-lowers' },
           ]
         }
       ],
       featuredCard: {
         title: 'Acid Wash Drop',
         desc: 'Heavyweight pump cover essentials engineered for performance.',
-        cta: 'Explore Collection',
-        image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=600&auto=format&fit=crop'
+        cta: 'Explore Men Collection',
+        path: '/collections/men',
+        image: menImage
       }
-    },
-    Women: {
-      categories: [
+    };
+
+    // Populate Women mega menu
+    const womenMain = mainCats.find(c => c.slug === 'women') || { id: 2, name: 'Women', slug: 'women' };
+    const womenSubs = subCats.filter(c => c.parent_id === womenMain.id || c.gender_target === 'Women');
+
+    menus['Women'] = {
+      name: 'Women',
+      slug: 'women',
+      categories: womenSubs.length > 0 ? womenSubs.map(sub => ({
+        id: sub.id,
+        title: sub.name,
+        slug: sub.slug,
+        items: itemTypes
+          .filter(item => item.parent_id === sub.id)
+          .map(item => ({
+            name: item.name,
+            slug: item.slug,
+            path: `/collections/${item.slug}`
+          }))
+      })) : [
         {
-          title: 'Activewear',
+          title: 'Activewear Tops',
+          slug: 'women-tops',
           items: [
-            'High Impact Sports Bras',
-            'Seamless High-Waist Leggings',
-            'Crop Tops & Ribbed Tanks',
-            'Oversized Pump Covers',
-            'Contour Sculpt Shorts'
+            { name: 'High Impact Sports Bras', slug: 'sports-bras', path: '/collections/sports-bras' },
+            { name: 'Seamless Ribbed Tanks', slug: 'ribbed-tanks', path: '/collections/ribbed-tanks' },
+            { name: 'Oversized Pump Covers', slug: 'women-oversized', path: '/collections/women-oversized' },
           ]
         },
         {
-          title: 'Outerwear & Sets',
+          title: 'Bottoms & Leggings',
+          slug: 'women-bottoms',
           items: [
-            'Matching Gym Co-ord Sets',
-            'Zip-up Gym Jackets',
-            'Cropped Hoodies',
-            'Comfort Joggers'
+            { name: 'Seamless Squat Leggings', slug: 'squat-leggings', path: '/collections/squat-leggings' },
+            { name: 'Contour Sculpt Shorts', slug: 'contour-shorts', path: '/collections/contour-shorts' },
+            { name: 'Aesthetic Flared Pants', slug: 'flared-pants', path: '/collections/flared-pants' },
           ]
         },
         {
-          title: 'Collections',
+          title: 'Co-ords & Outerwear',
+          slug: 'women-outerwear',
           items: [
-            'Contour Sculpt Series',
-            'Pure Comfort Loungewear',
-            'Ultra-Flex Yoga Series'
+            { name: 'Matching Gym Co-ord Sets', slug: 'coord-sets', path: '/collections/coord-sets' },
+            { name: 'Zip-up Gym Jackets', slug: 'gym-jackets', path: '/collections/gym-jackets' },
+            { name: 'Cropped Fleece Hoodies', slug: 'cropped-hoodies', path: '/collections/cropped-hoodies' },
           ]
         }
       ],
       featuredCard: {
         title: 'Seamless Sculpt',
         desc: 'Zero distraction, 100% squat-proof aesthetic activewear.',
-        cta: 'Shop Collection',
-        image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=600&auto=format&fit=crop'
+        cta: 'Shop Women Collection',
+        path: '/collections/women',
+        image: womenImage
       }
-    }
-  };
+    };
 
-  const navLinks = [
-    { name: 'Men', type: 'mega', key: 'Men' },
-    { name: 'Women', type: 'mega', key: 'Women' },
-    { name: 'Oversized', type: 'link', path: '/oversized' },
-    { name: 'Tanks & Stringers', type: 'link', path: '/tanks' },
-    { name: 'Bestsellers', type: 'link', path: '/bestsellers', isHighlight: true },
-    { name: 'New Drops', type: 'link', path: '/new-drops' },
-  ];
+    // Primary Navigation items list
+    links.push({ name: 'Men', type: 'mega', key: 'Men', path: '/collections/men' });
+    links.push({ name: 'Women', type: 'mega', key: 'Women', path: '/collections/women' });
+    links.push({ name: 'Oversized', type: 'link', path: '/collections/oversized' });
+    links.push({ name: 'Tanks & Stringers', type: 'link', path: '/collections/tanks' });
+    links.push({ name: 'Bestsellers', type: 'link', path: '/bestsellers', isHighlight: true });
+    links.push({ name: 'New Drops', type: 'link', path: '/new-drops' });
+    links.push({ name: 'Collections', type: 'link', path: '/collections' });
+
+    return { navLinks: links, megaMenus: menus };
+  }, [categoriesList]);
+
+  const toggleMobileCategory = (catKey) => {
+    setExpandedMobileCategory(prev => prev === catKey ? null : catKey);
+  };
 
   return (
     <>
-      {/* 1. TOP ANNOUNCEMENT BAR (Normal Page Flow - naturally scrolls away without layout shift) */}
+      {/* 1. TOP ANNOUNCEMENT BAR */}
       <div className="w-full bg-white text-zinc-900 border-b border-zinc-300 py-2 px-4 sm:px-8 text-center text-xs font-normal flex items-center justify-center gap-2.5 rounded-none tracking-normal">
-        <span className="w-1.5 h-1.5 bg-red-600 inline-block"></span>
+        <span className="w-1.5 h-1.5 bg-red-600 inline-block animate-pulse"></span>
         <span>Free express shipping on all orders over ₹999</span>
         <span className="hidden md:inline text-zinc-300">|</span>
         <span className="hidden md:inline text-zinc-700">
@@ -175,7 +253,7 @@ export default function Header() {
             </Link>
           </div>
 
-          {/* CENTER: Natural Typography Navigation Links */}
+          {/* CENTER: Dynamic Navigation Links */}
           <nav className="hidden lg:flex items-center gap-7">
             {navLinks.map((item, idx) => (
               <div
@@ -189,12 +267,13 @@ export default function Header() {
                     activeMegaMenu === item.key
                       ? 'border-red-600 text-red-600 font-medium'
                       : item.isHighlight
-                      ? 'border-transparent text-red-600 font-medium'
+                      ? 'border-transparent text-red-600 font-medium flex items-center gap-1'
                       : isScrolled
                       ? 'border-transparent text-zinc-700 hover:text-black font-normal'
                       : 'border-transparent text-zinc-300 hover:text-white font-normal'
                   }`}
                 >
+                  {item.isHighlight && <Sparkles className="w-3.5 h-3.5 text-red-600" />}
                   <span>{item.name}</span>
                   {item.type === 'mega' && (
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${
@@ -249,19 +328,20 @@ export default function Header() {
               )}
             </button>
 
-            <button
+            <Link
+              to="/collections"
               className={`hidden sm:flex p-2.5 transition-colors cursor-pointer rounded-none ${
                 isScrolled 
                   ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' 
                   : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
               }`}
-              title="Wishlist"
+              title="Browse Collections"
               aria-label="Wishlist"
             >
               <Heart className="w-5 h-5 stroke-[1.6]" />
-            </button>
+            </Link>
 
-            {/* Cart with Sharp Red Badge (Opens Cart Drawer) */}
+            {/* Cart with Sharp Red Badge */}
             <button
               onClick={openCart}
               className={`relative p-2 sm:p-2.5 transition-colors cursor-pointer rounded-none ${
@@ -274,7 +354,7 @@ export default function Header() {
             >
               <ShoppingBag className="w-5 h-5 stroke-[1.6]" />
               {totalItemsCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 min-w-3.5 h-3.5 bg-red-600 text-white font-normal text-[9px] flex items-center justify-center px-0.5 rounded-none leading-none">
+                <span className="absolute top-1.5 right-1.5 min-w-3.5 h-3.5 bg-red-600 text-white font-normal text-[9px] flex items-center justify-center px-0.5 rounded-none leading-none animate-scale-in">
                   {totalItemsCount}
                 </span>
               )}
@@ -283,141 +363,205 @@ export default function Header() {
 
         </div>
 
-      {/* 3. MEGA DROPDOWN (Normal weight, clean natural spacing) */}
-      {activeMegaMenu && megaMenus[activeMegaMenu] && (
-        <div 
-          className="w-full bg-black border-b border-zinc-800 shadow-2xl transition-all duration-150 rounded-none animate-in fade-in slide-in-from-top-1"
-          onMouseEnter={() => setActiveMegaMenu(activeMegaMenu)}
-          onMouseLeave={() => setActiveMegaMenu(null)}
-        >
-          <div className="w-full px-4 sm:px-8 lg:px-12 py-8 grid grid-cols-12 gap-10">
-            
-            {/* Left 8 Cols: Clean Category Lists */}
-            <div className="col-span-12 lg:col-span-8 grid grid-cols-3 gap-8">
-              {megaMenus[activeMegaMenu].categories.map((col, cIdx) => (
-                <div key={cIdx} className="space-y-3.5">
-                  <h4 className="text-xs font-medium text-white border-b border-zinc-800 pb-2.5 flex items-center gap-2 tracking-normal">
-                    <span className="w-1 h-1 bg-red-600 inline-block"></span>
-                    {col.title}
-                  </h4>
-                  <ul className="space-y-2">
-                    {col.items.map((item, iIdx) => (
-                      <li key={iIdx}>
+        {/* 3. DYNAMIC MEGA DROPDOWN */}
+        {activeMegaMenu && megaMenus[activeMegaMenu] && (
+          <div 
+            className="w-full bg-black border-b border-zinc-800 shadow-2xl transition-all duration-150 rounded-none animate-in fade-in slide-in-from-top-1"
+            onMouseEnter={() => setActiveMegaMenu(activeMegaMenu)}
+            onMouseLeave={() => setActiveMegaMenu(null)}
+          >
+            <div className="w-full px-4 sm:px-8 lg:px-12 py-8 grid grid-cols-12 gap-10">
+              
+              {/* Left 8 Cols: Dynamic Category Columns */}
+              <div className="col-span-12 lg:col-span-8 grid grid-cols-3 gap-8">
+                {megaMenus[activeMegaMenu].categories.map((col, cIdx) => (
+                  <div key={cIdx} className="space-y-3.5">
+                    <Link
+                      to={`/collections/${col.slug}`}
+                      className="group flex items-center gap-2 text-xs font-semibold text-white border-b border-zinc-800 pb-2.5 tracking-normal hover:text-red-500 transition-colors"
+                    >
+                      <span className="w-1.5 h-1.5 bg-red-600 inline-block"></span>
+                      <span>{col.title}</span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-red-500" />
+                    </Link>
+                    
+                    <ul className="space-y-2">
+                      {col.items && col.items.length > 0 ? (
+                        col.items.map((item, iIdx) => (
+                          <li key={iIdx}>
+                            <Link
+                              to={item.path}
+                              className="group/item flex items-center text-xs font-normal text-zinc-400 hover:text-white transition-colors tracking-normal"
+                            >
+                              <span className="group-hover/item:text-red-500 group-hover/item:translate-x-1 transition-all duration-150">
+                                {item.name}
+                              </span>
+                            </Link>
+                          </li>
+                        ))
+                      ) : (
+                        <li>
+                          <Link
+                            to={`/collections/${col.slug}`}
+                            className="text-xs text-zinc-500 hover:text-zinc-300"
+                          >
+                            Explore All in {col.title}
+                          </Link>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              {/* Right 4 Cols: Clean Sharp Featured Card */}
+              <div className="col-span-12 lg:col-span-4">
+                <Link
+                  to={megaMenus[activeMegaMenu].featuredCard.path}
+                  className="relative block border border-zinc-800 bg-zinc-950 group h-full min-h-[220px] overflow-hidden rounded-none"
+                >
+                  <img
+                    src={megaMenus[activeMegaMenu].featuredCard.image}
+                    alt={megaMenus[activeMegaMenu].featuredCard.title}
+                    className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 brightness-75 rounded-none"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+
+                  <div className="relative z-10 p-6 flex flex-col justify-end h-full space-y-1.5">
+                    <div className="w-6 h-0.5 bg-red-600"></div>
+                    <h3 className="text-base font-semibold text-white tracking-normal group-hover:text-red-400 transition-colors">
+                      {megaMenus[activeMegaMenu].featuredCard.title}
+                    </h3>
+                    <p className="text-xs text-zinc-300 leading-relaxed font-normal tracking-normal">
+                      {megaMenus[activeMegaMenu].featuredCard.desc}
+                    </p>
+                    <div className="inline-flex items-center gap-1.5 text-xs font-normal text-white group-hover:text-red-500 transition-colors pt-1 tracking-normal">
+                      <span>{megaMenus[activeMegaMenu].featuredCard.cta}</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-red-500" />
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* 4. MOBILE DRAWER WITH ACCORDION CATEGORIES */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden w-full bg-black border-b border-zinc-800 px-5 py-6 space-y-4 max-h-[85vh] overflow-y-auto rounded-none tracking-normal">
+            <div className="space-y-2">
+              {navLinks.map((item, idx) => (
+                <div key={idx} className="border-b border-zinc-900 py-3">
+                  {item.type === 'mega' ? (
+                    <div>
+                      <div className="flex items-center justify-between">
                         <Link
-                          to="#"
-                          className="group/item flex items-center text-xs font-normal text-zinc-400 hover:text-white transition-colors tracking-normal"
+                          to={item.path || '#'}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="text-sm font-medium text-zinc-100 hover:text-red-500"
                         >
-                          <span className="group-hover/item:text-red-500 group-hover/item:translate-x-1 transition-all duration-150">
-                            {item}
-                          </span>
+                          {item.name}
                         </Link>
-                      </li>
-                    ))}
-                  </ul>
+                        <button
+                          onClick={() => toggleMobileCategory(item.key)}
+                          className="p-1.5 text-zinc-400 hover:text-white cursor-pointer"
+                        >
+                          <ChevronDown 
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              expandedMobileCategory === item.key ? 'rotate-180 text-red-600' : ''
+                            }`} 
+                          />
+                        </button>
+                      </div>
+
+                      {/* Expandable subcategories & item-types */}
+                      {expandedMobileCategory === item.key && megaMenus[item.key] && (
+                        <div className="pl-3 pt-3 space-y-3">
+                          {megaMenus[item.key].categories.map((col, cIdx) => (
+                            <div key={cIdx} className="space-y-1.5 border-l border-zinc-800 pl-3">
+                              <Link
+                                to={`/collections/${col.slug}`}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="block text-xs font-semibold text-red-500 hover:underline"
+                              >
+                                {col.title}
+                              </Link>
+                              {col.items?.map((sub, sIdx) => (
+                                <Link
+                                  key={sIdx}
+                                  to={sub.path}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className="block text-xs text-zinc-400 hover:text-white py-1 font-normal"
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          ))}
+                          
+                          <Link
+                            to={megaMenus[item.key].featuredCard.path}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="inline-flex items-center gap-1.5 text-xs text-red-500 font-medium pt-2"
+                          >
+                            <span>{megaMenus[item.key].featuredCard.cta}</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link
+                      to={item.path || '#'}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-1.5 text-sm font-normal ${
+                        item.isHighlight ? 'text-red-600 font-medium' : 'text-zinc-200 hover:text-white'
+                      }`}
+                    >
+                      {item.isHighlight && <Sparkles className="w-3.5 h-3.5 text-red-600" />}
+                      <span>{item.name}</span>
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>
 
-            {/* Right 4 Cols: Clean Sharp Featured Card */}
-            <div className="col-span-12 lg:col-span-4">
-              <div className="relative border border-zinc-800 bg-zinc-950 group h-full min-h-[220px] flex flex-col justify-end p-6 rounded-none">
-                <img
-                  src={megaMenus[activeMegaMenu].featuredCard.image}
-                  alt="Featured"
-                  className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 brightness-75 rounded-none"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
-
-                <div className="relative z-10 space-y-1.5">
-                  <div className="w-5 h-0.5 bg-red-600"></div>
-                  <h3 className="text-base font-semibold text-white tracking-normal">
-                    {megaMenus[activeMegaMenu].featuredCard.title}
-                  </h3>
-                  <p className="text-xs text-zinc-300 leading-relaxed font-normal tracking-normal">
-                    {megaMenus[activeMegaMenu].featuredCard.desc}
-                  </p>
-                  <Link
-                    to="#"
-                    className="inline-flex items-center gap-1.5 text-xs font-normal text-white group-hover:text-red-500 transition-colors pt-1 tracking-normal"
-                  >
-                    <span>{megaMenus[activeMegaMenu].featuredCard.cta}</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* 4. MOBILE DRAWER */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden w-full bg-black border-b border-zinc-800 px-5 py-6 space-y-4 max-h-[85vh] overflow-y-auto rounded-none tracking-normal">
-          <div className="space-y-2">
-            {navLinks.map((item, idx) => (
-              <div key={idx} className="border-b border-zinc-900 py-3">
-                <Link
-                  to="#"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block text-sm font-normal ${
-                    item.isHighlight ? 'text-red-600 font-medium' : 'text-zinc-200'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-                {item.type === 'mega' && megaMenus[item.key] && (
-                  <div className="pl-3 pt-2.5 space-y-2.5">
-                    {megaMenus[item.key].categories.map((cat, cIdx) => (
-                      <div key={cIdx} className="space-y-1">
-                        <span className="text-xs font-medium text-red-600">{cat.title}</span>
-                        {cat.items.slice(0, 4).map((sub, sIdx) => (
-                          <Link
-                            key={sIdx}
-                            to="#"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="block text-xs text-zinc-400 hover:text-white py-1 font-normal"
-                          >
-                            {sub}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
+            {/* User Account & Direct Wishlist Links in Mobile Menu */}
+            <div className="pt-4 flex items-center justify-around text-xs font-normal text-zinc-400 border-t border-zinc-900">
+              <button 
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleAccountClick();
+                }}
+                className="flex items-center gap-2 py-2 text-zinc-300 hover:text-white font-normal cursor-pointer"
+              >
+                {isLoggedIn ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center">
+                      {user?.initials || 'NS'}
+                    </div>
+                    <span className="font-medium text-white">{user?.name}</span>
                   </div>
+                ) : (
+                  <>
+                    <User className="w-4 h-4 text-red-600" />
+                    <span>Account Login</span>
+                  </>
                 )}
-              </div>
-            ))}
-          </div>
+              </button>
 
-          <div className="pt-4 flex items-center justify-around text-xs font-normal text-zinc-400 border-t border-zinc-900">
-            <button 
-              onClick={() => {
-                setMobileMenuOpen(false);
-                handleAccountClick();
-              }}
-              className="flex items-center gap-2 py-2 text-zinc-300 hover:text-white font-normal cursor-pointer"
-            >
-              {isLoggedIn ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center">
-                    {user?.initials || 'NS'}
-                  </div>
-                  <span className="font-medium text-white">{user?.name}</span>
-                </div>
-              ) : (
-                <>
-                  <User className="w-4 h-4 text-red-600" />
-                  <span>Account Login</span>
-                </>
-              )}
-            </button>
-            <button className="flex items-center gap-1.5 py-2 text-zinc-300 hover:text-white font-normal">
-              <Heart className="w-4 h-4 text-red-600" />
-              <span>Wishlist</span>
-            </button>
+              <Link 
+                to="/collections" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-1.5 py-2 text-zinc-300 hover:text-white font-normal"
+              >
+                <Heart className="w-4 h-4 text-red-600" />
+                <span>Collections</span>
+              </Link>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </header>
 
       {/* 5. ULTRA-LIGHTWEIGHT MOBILE BOTTOM NAVIGATION BAR */}
@@ -434,7 +578,7 @@ export default function Header() {
           <span className="text-[10px] font-medium tracking-tight">Home</span>
         </Link>
 
-        {/* Categories / Shop trigger */}
+        {/* Collections / Shop */}
         <Link 
           to="/collections" 
           className="flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-500 hover:text-black transition-colors"

@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node backend/server.js",
+    "db:export": "node backend/scripts/exportDb.js",
+    "db:restore": "node backend/scripts/restoreDb.js",
+    "db:setup": "node backend/scripts/restoreDb.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

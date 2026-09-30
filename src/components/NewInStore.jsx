@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import {
   Plus,
   Minus,
@@ -8,36 +9,14 @@ import {
   X,
   Check,
 } from 'lucide-react';
-
-import spotlightFront from '../assets/spotlight_front.jpg';
-import spotlightBack from '../assets/spotlight_back.jpg';
-import spotlightFabric from '../assets/spotlight_fabric.jpg';
-import heroOversized from '../assets/hero_oversized.jpg';
-import catDropcut from '../assets/cat_dropcut.jpg';
-import spotlightSide from '../assets/spotlight_side.jpg';
-
 import { useCart } from '../context/CartContext';
+import { fetchLiveProducts } from '../services/productService';
 
 export default function NewInStore() {
-  const { addToCart } = useCart();
-  const galleryImages = [
-    { src: spotlightFront, label: 'Front Fit' },
-    { src: spotlightBack, label: 'Back Angle' },
-    { src: spotlightFabric, label: 'Fabric Texture' },
-    { src: heroOversized, label: 'Gym Action' },
-    { src: catDropcut, label: 'Full Silhouette' },
-    { src: spotlightSide, label: 'Side Profile' },
-  ];
-
-  const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
-  const colors = [
-    { name: 'Washed Onyx', hex: '#262626' },
-    { name: 'Vintage Charcoal', hex: '#3f3f46' },
-    { name: 'Crimson Red', hex: '#dc2626' },
-  ];
-
+  const { addToCart, openCart } = useCart();
+  const [product, setProduct] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState('Washed Onyx');
+  const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('L');
   const [quantity, setQuantity] = useState(1);
 
@@ -49,6 +28,51 @@ export default function NewInStore() {
     x: 0,
     y: 0,
   });
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadSpotlight() {
+      try {
+        const prods = await fetchLiveProducts();
+        if (isMounted && prods && prods.length > 0) {
+          // Take the first or latest featured product (e.g. Acid Wash Heavyweight Tee or Pro Muscle-Lock)
+          const chosen = prods[0];
+          setProduct(chosen);
+          if (chosen.colors && chosen.colors.length > 0) {
+            setSelectedColor(chosen.colors[0].name);
+          }
+          if (chosen.sizes && chosen.sizes.length > 0) {
+            setSelectedSize(chosen.sizes[1] || chosen.sizes[0]);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic spotlight in NewInStore:', err);
+      }
+    }
+    loadSpotlight();
+    return () => { isMounted = false; };
+  }, []);
+
+  const galleryImages = React.useMemo(() => {
+    if (!product) return [];
+    if (product.gallery && product.gallery.length > 0) {
+      return product.gallery.map((src, i) => ({
+        src,
+        label: `View ${i + 1}`,
+      }));
+    }
+    const imgs = [];
+    if (product.imageFront) imgs.push({ src: product.imageFront, label: 'Front Fit' });
+    if (product.imageBack) imgs.push({ src: product.imageBack, label: 'Back Fit' });
+    return imgs;
+  }, [product]);
+
+  const sizes = product?.sizes || ['S', 'M', 'L', 'XL', 'XXL'];
+  const colors = product?.colors || [
+    { name: 'Washed Onyx', hex: '#262626' },
+    { name: 'Vintage Charcoal', hex: '#3f3f46' },
+    { name: 'Crimson Red', hex: '#dc2626' },
+  ];
 
   const openLightbox = (index) => {
     setLightboxIndex(index);
@@ -84,33 +108,21 @@ export default function NewInStore() {
   };
 
   const handleAddToCart = () => {
+    if (!product) return;
     addToCart(
       {
-        id: 'new-in-store-1',
-        title: 'Acid Wash Heavyweight Oversized Tee',
-        price: 1499,
-        originalPrice: 2299,
-        imageFront: galleryImages[activeImageIndex]?.src || spotlightFront,
+        ...product,
+        imageFront: galleryImages[activeImageIndex]?.src || product.imageFront,
       },
       selectedSize,
       quantity,
       selectedColor
     );
+    openCart();
   };
 
   const handleBuyNow = () => {
-    addToCart(
-      {
-        id: 'new-in-store-1',
-        title: 'Acid Wash Heavyweight Oversized Tee',
-        price: 1499,
-        originalPrice: 2299,
-        imageFront: galleryImages[activeImageIndex]?.src || spotlightFront,
-      },
-      selectedSize,
-      quantity,
-      selectedColor
-    );
+    handleAddToCart();
   };
 
   useEffect(() => {
@@ -143,6 +155,13 @@ export default function NewInStore() {
     };
   }, [lightboxOpen, galleryImages.length]);
 
+  if (!product || galleryImages.length === 0) {
+    return null;
+  }
+
+  const priceFormatted = typeof product.price === 'number' ? `₹${product.price.toLocaleString('en-IN')}` : product.price;
+  const origPriceFormatted = product.originalPrice ? (typeof product.originalPrice === 'number' ? `₹${product.originalPrice.toLocaleString('en-IN')}` : product.originalPrice) : null;
+
   return (
     <>
       <section className="w-full bg-white text-[#101828] py-10 md:py-14 lg:py-16 select-none font-sans border-b border-zinc-200">
@@ -152,18 +171,17 @@ export default function NewInStore() {
             
             {/* =========================================================
                 LEFT COMBINED GALLERY: (THUMBNAILS + MAIN BIG IMAGE)
-                Responsive: Sleek Mobile Slider + Desktop Vertical Strip
             ========================================================= */}
             <div className="lg:col-span-7 flex flex-col-reverse lg:flex-row gap-3 sm:gap-4 w-full h-auto lg:h-[640px] xl:h-[680px] items-stretch">
               
-              {/* Thumbnails: Horizontal scroll strip on mobile, Vertical on Desktop */}
+              {/* Thumbnails */}
               <div className="w-full lg:w-[82px] xl:w-[90px] shrink-0 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden h-auto lg:h-full pb-1 lg:pb-0 pr-0 lg:pr-1 scrollbar-none custom-gallery-scrollbar">
                 {galleryImages.map((item, index) => {
                   const active = activeImageIndex === index;
 
                   return (
                     <button
-                      key={item.label}
+                      key={`${item.label}-${index}`}
                       type="button"
                       onClick={() => setActiveImageIndex(index)}
                       className={`
@@ -202,7 +220,7 @@ export default function NewInStore() {
               {/* Main Big Product Display Container */}
               <div className="group/mainimg flex-1 min-w-0 aspect-[3/4] sm:aspect-[4/5] lg:aspect-auto lg:h-full relative overflow-hidden bg-[#f1f1f1] border border-zinc-200 rounded-none shadow-xs">
                 
-                {/* Mobile Left & Right Quick Arrow Buttons */}
+                {/* Mobile Quick Arrows */}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -242,7 +260,7 @@ export default function NewInStore() {
                   className="w-full h-full relative cursor-pointer lg:cursor-none"
                   aria-label="Open full screen gallery"
                 >
-                  {/* Continuous Vertical Slide Track on Desktop / Instant Smooth on Mobile */}
+                  {/* Continuous Vertical Slide Track */}
                   <div
                     className="w-full h-full flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
                     style={{
@@ -294,100 +312,90 @@ export default function NewInStore() {
             </div>
 
             {/* =========================================================
-                RIGHT COLUMN: PRODUCT DETAILS (TIGHTER, CLEANER SPACING)
+                RIGHT COLUMN: PRODUCT DETAILS
             ========================================================= */}
             <div className="lg:col-span-5 space-y-3.5 w-full">
               
-              {/* Eyebrow with Red Dot */}
-              <p
-                className="
-                  text-[10px]
-                  font-medium
-                  uppercase
-                  tracking-[0.38em]
-                  text-zinc-500
-                  flex
-                  items-center
-                  gap-2
-                "
-              >
+              {/* Eyebrow */}
+              <p className="text-[10px] font-medium uppercase tracking-[0.38em] text-zinc-500 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-red-600 inline-block"></span>
-                <span>New in store</span>
+                <span>Spotlight Release</span>
               </p>
 
               {/* Title */}
-              <h2
-                className="
-                  text-[24px]
-                  sm:text-[28px]
-                  font-medium
-                  leading-[1.2]
-                  tracking-[-0.025em]
-                  text-zinc-950
-                "
-              >
-                Acid Wash Heavyweight Oversized Tee
-              </h2>
+              <Link to={`/product/${product.slug || product.id}`}>
+                <h2 className="text-[24px] sm:text-[28px] font-medium leading-[1.2] tracking-[-0.025em] text-zinc-950 hover:text-red-600 transition-colors">
+                  {product.title}
+                </h2>
+              </Link>
 
               {/* Price */}
               <div className="flex items-center gap-3">
-                <span
-                  className="
-                    text-[24px]
-                    sm:text-[26px]
-                    font-semibold
-                    tracking-[-0.03em]
-                    text-zinc-950
-                  "
-                >
-                  ₹1,499
+                <span className="text-[24px] sm:text-[26px] font-semibold tracking-[-0.03em] text-zinc-950">
+                  {priceFormatted}
                 </span>
-                <span className="text-sm text-zinc-400 line-through">
-                  ₹2,299
-                </span>
-                <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5">
-                  35% Off
-                </span>
+                {origPriceFormatted && (
+                  <span className="text-sm text-zinc-400 line-through">
+                    {origPriceFormatted}
+                  </span>
+                )}
+                {product.discount && (
+                  <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5">
+                    {product.discount}
+                  </span>
+                )}
               </div>
 
-              {/* Colors Available Swatches */}
-              <div className="pt-1">
-                <p className="mb-1.5 text-[12px] font-semibold text-zinc-900">
-                  Color: <span className="font-normal text-zinc-600">{selectedColor}</span>
-                </p>
+              {/* Description */}
+              <p className="text-xs text-zinc-600 leading-relaxed line-clamp-2">
+                {product.description || 'Engineered for dedicated lifters, combining authentic heavyweight streetwear aesthetic with unmatched gym durability.'}
+              </p>
 
-                <div className="flex items-center gap-2.5">
-                  {colors.map((color, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedColor(color.name)}
-                      className={`
-                        w-7
-                        h-7
-                        border
-                        transition-all
-                        cursor-pointer
-                        flex
-                        items-center
-                        justify-center
-                        rounded-none
-                        ${selectedColor === color.name
-                          ? 'border-zinc-950 ring-2 ring-zinc-950/20 scale-105'
-                          : 'border-zinc-300 hover:border-zinc-500'
-                        }
-                      `}
-                      style={{ backgroundColor: color.hex }}
-                      title={color.name}
-                      aria-label={color.name}
-                    >
-                      {selectedColor === color.name && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </button>
-                  ))}
+              {/* Colors Available */}
+              {colors.length > 0 && (
+                <div className="pt-1">
+                  <p className="mb-1.5 text-[12px] font-semibold text-zinc-900">
+                    Color: <span className="font-normal text-zinc-600">{selectedColor}</span>
+                  </p>
+
+                  <div className="flex items-center gap-2.5">
+                    {colors.map((color, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedColor(color.name);
+                          if (color.gallery && color.gallery.length > 0) {
+                            setActiveImageIndex(0);
+                          }
+                        }}
+                        className={`
+                          w-7
+                          h-7
+                          border
+                          transition-all
+                          cursor-pointer
+                          flex
+                          items-center
+                          justify-center
+                          rounded-none
+                          ${selectedColor === color.name
+                            ? 'border-zinc-950 ring-2 ring-zinc-950/20 scale-105'
+                            : 'border-zinc-300 hover:border-zinc-500'
+                          }
+                        `}
+                        style={{ backgroundColor: color.hex }}
+                        title={color.name}
+                        aria-label={color.name}
+                      >
+                        {selectedColor === color.name && (
+                          <Check className="w-3 h-3 text-white drop-shadow-sm" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Size Selector */}
               <div className="pt-1">
@@ -461,7 +469,7 @@ export default function NewInStore() {
                 </div>
               </div>
 
-              {/* Buttons */}
+              {/* Action Buttons */}
               <div className="pt-1 space-y-2">
                 <button
                   type="button"
@@ -517,24 +525,13 @@ export default function NewInStore() {
         </div>
       </section>
 
-      {/* ==================================================
-          FULL SCREEN IMAGE VIEWER
-      ================================================== */}
+      {/* Fullscreen Lightbox Modal */}
       {lightboxOpen && (
         <div
-          className="
-            fixed
-            inset-0
-            z-[9999]
-            flex
-            h-screen
-            w-screen
-            flex-col
-            bg-white
-          "
+          className="fixed inset-0 z-[9999] flex h-screen w-screen flex-col bg-white"
           onClick={() => setLightboxOpen(false)}
         >
-          {/* Top Bar with Close (X) Button */}
+          {/* Top Bar */}
           <div className="relative flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-white z-30">
             <div className="text-[12px] font-mono font-medium tracking-wider text-zinc-500">
               {String(lightboxIndex + 1).padStart(2, '0')}
@@ -548,15 +545,7 @@ export default function NewInStore() {
                 e.stopPropagation();
                 setLightboxOpen(false);
               }}
-              className="
-                p-2
-                rounded-full
-                hover:bg-zinc-100
-                text-zinc-800
-                hover:text-black
-                transition-colors
-                cursor-pointer
-              "
+              className="p-2 rounded-full hover:bg-zinc-100 text-zinc-800 hover:text-black transition-colors cursor-pointer"
               aria-label="Close full screen gallery"
             >
               <X size={24} strokeWidth={1.8} />
@@ -571,52 +560,21 @@ export default function NewInStore() {
                 event.stopPropagation();
                 previousLightboxImage();
               }}
-              className="
-                absolute
-                left-3
-                top-1/2
-                z-20
-                flex
-                h-12
-                w-12
-                -translate-y-1/2
-                items-center
-                justify-center
-                rounded-full
-                bg-white/95
-                text-zinc-900
-                shadow-[0_2px_18px_rgba(0,0,0,0.12)]
-                transition-transform
-                hover:scale-105
-                hover:text-red-600
-                cursor-pointer
-                sm:left-7
-              "
+              className="absolute left-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-zinc-900 shadow-md transition-transform hover:scale-105 hover:text-red-600 cursor-pointer sm:left-7"
               aria-label="Previous image"
             >
               <ChevronLeft size={24} strokeWidth={1.6} />
             </button>
 
             <div
-              className="
-                flex
-                h-full
-                w-full
-                items-center
-                justify-center
-              "
+              className="flex h-full w-full items-center justify-center"
               onClick={(event) => event.stopPropagation()}
             >
               <img
                 key={lightboxIndex}
                 src={galleryImages[lightboxIndex].src}
                 alt={galleryImages[lightboxIndex].label}
-                className="
-                  max-h-full
-                  max-w-full
-                  object-contain
-                  animate-[galleryFade_.25s_ease-out]
-                "
+                className="max-h-full max-w-full object-contain animate-[galleryFade_.25s_ease-out]"
               />
             </div>
 
@@ -626,27 +584,7 @@ export default function NewInStore() {
                 event.stopPropagation();
                 nextLightboxImage();
               }}
-              className="
-                absolute
-                right-3
-                top-1/2
-                z-20
-                flex
-                h-12
-                w-12
-                -translate-y-1/2
-                items-center
-                justify-center
-                rounded-full
-                bg-white/95
-                text-zinc-900
-                shadow-[0_2px_18px_rgba(0,0,0,0.12)]
-                transition-transform
-                hover:scale-105
-                hover:text-red-600
-                cursor-pointer
-                sm:right-7
-              "
+              className="absolute right-3 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-zinc-900 shadow-md transition-transform hover:scale-105 hover:text-red-600 cursor-pointer sm:right-7"
               aria-label="Next image"
             >
               <ChevronRight size={24} strokeWidth={1.6} />
@@ -655,52 +593,23 @@ export default function NewInStore() {
 
           {/* Fullscreen thumbnail slider */}
           <div
-            className="
-              border-t
-              border-zinc-200
-              bg-white
-              px-4
-              py-4
-            "
+            className="border-t border-zinc-200 bg-white px-4 py-4"
             onClick={(event) => event.stopPropagation()}
           >
-            <div
-              className="
-                mx-auto
-                flex
-                max-w-[760px]
-                items-center
-                justify-start
-                gap-2.5
-                overflow-x-auto
-                sm:justify-center
-              "
-            >
+            <div className="mx-auto flex max-w-[760px] items-center justify-start gap-2.5 overflow-x-auto sm:justify-center">
               {galleryImages.map((item, index) => {
                 const active = lightboxIndex === index;
 
                 return (
                   <button
-                    key={`lightbox-${item.label}`}
+                    key={`lightbox-${item.label}-${index}`}
                     type="button"
                     onClick={() => setLightboxIndex(index)}
-                    className={`
-                      h-[72px]
-                      w-[56px]
-                      shrink-0
-                      overflow-hidden
-                      border
-                      bg-[#f3f3f3]
-                      transition
-                      cursor-pointer
-                      rounded-none
-                      sm:h-[82px]
-                      sm:w-[64px]
-                      ${active
+                    className={`h-[72px] w-[56px] shrink-0 overflow-hidden border bg-[#f3f3f3] transition cursor-pointer rounded-none sm:h-[82px] sm:w-[64px] ${
+                      active
                         ? 'border-red-600 opacity-100 ring-1 ring-red-600'
                         : 'border-transparent opacity-55 hover:opacity-100'
-                      }
-                    `}
+                    }`}
                   >
                     <img
                       src={item.src}
@@ -717,28 +626,13 @@ export default function NewInStore() {
 
       <style>{`
         @keyframes galleryFade {
-          from {
-            opacity: 0.35;
-            transform: scale(0.99);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0.35; transform: scale(0.99); }
+          to { opacity: 1; transform: scale(1); }
         }
-        
-        .custom-gallery-scrollbar::-webkit-scrollbar {
-          width: 3px;
-        }
-        .custom-gallery-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-gallery-scrollbar::-webkit-scrollbar-thumb {
-          background: #d4d4d8;
-        }
-        .custom-gallery-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #a1a1aa;
-        }
+        .custom-gallery-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-gallery-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-gallery-scrollbar::-webkit-scrollbar-thumb { background: #d4d4d8; }
+        .custom-gallery-scrollbar::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
       `}</style>
     </>
   );
