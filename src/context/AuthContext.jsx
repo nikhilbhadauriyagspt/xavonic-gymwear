@@ -4,6 +4,7 @@ import { AUTH_API_BASE } from '../config/api';
 
 import spotlightFront from '../assets/spotlight_front.jpg';
 import heroCompression from '../assets/hero_compression.jpg';
+import catShorts from '../assets/cat_shorts.jpg';
 
 const AuthContext = createContext();
 
@@ -42,13 +43,53 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const createFullUserPayload = (apiUser) => {
-    const displayName = apiUser.name || (apiUser.email ? apiUser.email.split('@')[0] : (apiUser.phone ? `Athlete ${apiUser.phone.slice(-4)}` : 'Athlete'));
+  const createFullUserPayload = (apiUser = {}) => {
+    const displayName =
+      apiUser.name ||
+      (apiUser.email
+        ? apiUser.email.split('@')[0]
+        : apiUser.phone
+        ? `Athlete ${apiUser.phone.slice(-4)}`
+        : 'Athlete');
+
     const initials = apiUser.name
-      ? apiUser.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
+      ? apiUser.name
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .substring(0, 2)
+          .toUpperCase()
       : 'AT';
 
-    const customerId = apiUser.customerId || apiUser.customer_id || `GDL-${String(apiUser.id || '9842').padStart(5, '0')}`;
+    const customerId =
+      apiUser.customerId ||
+      apiUser.customer_id ||
+      `GDL-${String(apiUser.id || '9842').padStart(5, '0')}`;
+
+    let parsedAddresses = [];
+    if (Array.isArray(apiUser.addresses) && apiUser.addresses.length > 0) {
+      parsedAddresses = apiUser.addresses;
+    } else if (typeof apiUser.addresses === 'string') {
+      try {
+        parsedAddresses = JSON.parse(apiUser.addresses);
+      } catch (_) {}
+    }
+
+    if (parsedAddresses.length === 0) {
+      parsedAddresses = [
+        {
+          id: 'addr-1',
+          type: 'Home (Default)',
+          name: apiUser.name || displayName || 'Athlete',
+          addressLine: 'Plot 42, Sector 18, Cyber City',
+          city: 'Gurugram',
+          pincode: '122002',
+          state: 'Haryana',
+          phone: apiUser.phone || '',
+          isDefault: true,
+        },
+      ];
+    }
 
     return {
       id: customerId,
@@ -58,9 +99,17 @@ export function AuthProvider({ children }) {
       displayName,
       initials,
       phone: apiUser.phone || '',
-      phoneVerified: Boolean(apiUser.phone_verified !== undefined ? apiUser.phone_verified : apiUser.phoneVerified),
+      phoneVerified: Boolean(
+        apiUser.phone_verified !== undefined
+          ? apiUser.phone_verified
+          : apiUser.phoneVerified
+      ),
       email: apiUser.email || '',
-      emailVerified: Boolean(apiUser.email_verified !== undefined ? apiUser.email_verified : apiUser.emailVerified),
+      emailVerified: Boolean(
+        apiUser.email_verified !== undefined
+          ? apiUser.email_verified
+          : apiUser.emailVerified
+      ),
       gender: apiUser.gender || 'Male',
       tier: apiUser.tier || 'VIP Athlete Club',
       points: apiUser.points || 100,
@@ -117,19 +166,7 @@ export function AuthProvider({ children }) {
           shippingAddress: 'Plot 42, Sector 18, Cyber City, Gurugram, Haryana - 122002',
         },
       ],
-      addresses: [
-        {
-          id: 'addr-1',
-          type: 'Home (Default)',
-          name: apiUser.name || 'Athlete',
-          addressLine: 'Plot 42, Sector 18, Cyber City',
-          city: 'Gurugram',
-          pincode: '122002',
-          state: 'Haryana',
-          phone: apiUser.phone || '',
-          isDefault: true,
-        },
-      ],
+      addresses: parsedAddresses,
     };
   };
 

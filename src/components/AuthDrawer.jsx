@@ -88,8 +88,13 @@ export default function AuthDrawer() {
     if (newOtp.every((digit) => digit !== '')) {
       const fullCode = newOtp.join('');
       setIsSubmitting(true);
-      await verifyWhatsAppOtp(phoneNumber, fullCode);
+      const res = await verifyWhatsAppOtp(phoneNumber, fullCode);
       setIsSubmitting(false);
+      if (res?.success) {
+        closeAuth();
+        setStep('phone');
+        setOtp(['', '', '', '']);
+      }
     }
   };
 
@@ -102,8 +107,13 @@ export default function AuthDrawer() {
   const handleDemoOtp = async () => {
     setOtp(['1', '2', '3', '4']);
     setIsSubmitting(true);
-    await verifyWhatsAppOtp(phoneNumber || '9876543210', '1234');
+    const res = await verifyWhatsAppOtp(phoneNumber || '9876543210', '1234');
     setIsSubmitting(false);
+    if (res?.success) {
+      closeAuth();
+      setStep('phone');
+      setOtp(['', '', '', '']);
+    }
   };
 
   return (
