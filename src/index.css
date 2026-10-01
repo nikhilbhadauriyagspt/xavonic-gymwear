@@ -19,3 +19,120 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   Minimalist Light Clean Toast Design System (Linear / Vercel Aesthetic)
+   ========================================================================== */
+[data-sonner-toaster] {
+  --normal-bg: #ffffff;
+  --normal-border: #e4e4e7;
+  --normal-text: #09090b;
+  --success-bg: #ffffff;
+  --success-border: #d1fae5;
+  --success-text: #064e3b;
+  --error-bg: #ffffff;
+  --error-border: #fee2e2;
+  --error-text: #7f1d1d;
+  --warning-bg: #ffffff;
+  --warning-border: #fef3c7;
+  --warning-text: #78350f;
+  --info-bg: #ffffff;
+  --info-border: #e2e8f0;
+  --info-text: #0f172a;
+}
+
+[data-sonner-toast] {
+  font-family: var(--font-sans, "Poppins", -apple-system, BlinkMacSystemFont, sans-serif) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03) !important;
+  padding: 12px 15px !important;
+  background: #ffffff !important;
+  border: 1px solid #e4e4e7 !important;
+  color: #18181b !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 600 !important;
+  color: #09090b !important;
+  font-size: 12.5px !important;
+  line-height: 1.35 !important;
+}
+
+[data-sonner-toast] [data-description] {
+  color: #71717a !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  margin-top: 2px !important;
+  line-height: 1.4 !important;
+}
+
+[data-sonner-toast] [data-icon] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 2px !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-color: #d1fae5 !important;
+}
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #059669 !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-color: #fee2e2 !important;
+}
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #dc2626 !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  border-color: #fef3c7 !important;
+}
+[data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #d97706 !important;
+}
+
+[data-sonner-toast][data-type="info"] {
+  border-color: #e2e8f0 !important;
+}
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: #2563eb !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+  background: #ffffff !important;
+  border: 1px solid #e4e4e7 !important;
+  color: #a1a1aa !important;
+  border-radius: 6px !important;
+  transition: all 0.15s ease !important;
+  top: 8px !important;
+  right: 8px !important;
+}
+[data-sonner-toast] [data-close-button]:hover {
+  background: #f4f4f5 !important;
+  color: #18181b !important;
+  border-color: #d4d4d8 !important;
+}
+
+[data-sonner-toast] [data-button] {
+  background: #09090b !important;
+  color: #ffffff !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 5px 10px !important;
+  transition: background 0.15s ease !important;
+}
+[data-sonner-toast] [data-button]:hover {
+  background: #27272a !important;
+}
+

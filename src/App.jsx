@@ -148,8 +148,28 @@ export default function App() {
       <WishlistProvider>
         <CartProvider>
           <Router>
-            {/* Toast Notifications */}
-            <Toaster position="top-right" richColors closeButton theme="dark" />
+            {/* Minimalist Light Clean Toast Notifications */}
+            <Toaster
+              position="top-right"
+              theme="light"
+              closeButton
+              richColors={false}
+              duration={3500}
+              offset={18}
+              toastOptions={{
+                style: {
+                  background: '#ffffff',
+                  color: '#18181b',
+                  border: '1px solid #e4e4e7',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
+                  fontSize: '12.5px',
+                  fontWeight: 500,
+                  padding: '12px 14px',
+                },
+                className: 'font-sans shadow-lg',
+              }}
+            />
             <MainLayout />
           </Router>
         </CartProvider>
