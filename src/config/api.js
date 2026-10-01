@@ -7,5 +7,6 @@ export const ADMIN_API_BASE = `${API_BASE}/admin`;
 export const AUTH_API_BASE = `${API_BASE}/auth`;
 export const REVIEWS_API_BASE = `${API_BASE}/reviews`;
 export const ORDERS_API_BASE = `${API_BASE}/orders`;
+export const BANNERS_API_BASE = `${API_BASE}/banners`;
 
 

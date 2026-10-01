@@ -29,7 +29,7 @@ import { ADMIN_API_BASE } from '../config/api';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cartItems, subtotal, clearCart } = useCart();
+  const { cartItems, subtotal, clearCart, shippingConfig } = useCart();
   const { user, openAuth, addAddress } = useAuth();
 
   // Stepper state: 'details' (Shipping & Payment) | 'confirmed' (Order Success)
@@ -326,7 +326,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // Price Calculations
+  // Price Calculations based on Admin Live Settings
   const rawSubtotal = subtotal;
   const isPrepaid = paymentMethod === 'upi' || paymentMethod === 'card' || paymentMethod === 'netbanking';
 
@@ -336,9 +336,21 @@ export default function CheckoutPage() {
     : 0;
 
   const totalDiscount = prepaidDiscount + couponDiscount;
-  const shippingFee = rawSubtotal >= 999 || shippingMethod === 'express' ? 0 : 99;
-  const priorityFee = shippingMethod === 'priority' ? 149 : 0;
-  const codFee = paymentMethod === 'cod' ? 50 : 0;
+
+  // Dynamic Shipping Fee (Calculated via Admin free_shipping_threshold & standard_shipping_charge)
+  const freeThreshold = shippingConfig?.free_shipping_threshold ?? 999;
+  const standardShippingCharge = Number(shippingConfig?.standard_shipping_charge) || 0;
+  const shippingFee = (rawSubtotal >= freeThreshold && freeThreshold > 0) || freeThreshold === 0 ? 0 : standardShippingCharge;
+
+  // Dynamic Priority Shipping Fee
+  const priorityFee = shippingMethod === 'priority' ? (Number(shippingConfig?.express_shipping_charge) || 149) : 0;
+
+  // Dynamic COD Validation & Surcharge
+  const isCodGloballyEnabled = shippingConfig?.cod_enabled !== false;
+  const codMinLimit = Number(shippingConfig?.cod_min_order) || 0;
+  const codMaxLimit = Number(shippingConfig?.cod_max_order) || 15000;
+  const isCodAllowedForCart = isCodGloballyEnabled && rawSubtotal >= codMinLimit && rawSubtotal <= codMaxLimit;
+  const codFee = paymentMethod === 'cod' ? (Number(shippingConfig?.cod_extra_charge) || 0) : 0;
 
   const grandTotal = Math.max(
     0,
@@ -1125,24 +1137,57 @@ export default function CheckoutPage() {
 
                 {/* 3. Cash on Delivery (COD) */}
                 <div className={`border transition-all ${
-                  paymentMethod === 'cod' ? 'border-neutral-900 bg-neutral-50/50 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white'
+                  !isCodAllowedForCart
+                    ? 'opacity-60 bg-neutral-100 border-neutral-200 cursor-not-allowed'
+                    : paymentMethod === 'cod'
+                    ? 'border-neutral-900 bg-neutral-50/50 ring-1 ring-neutral-900 cursor-pointer'
+                    : 'border-neutral-200 bg-white cursor-pointer hover:border-neutral-400'
                 }`}>
                   <div
-                    onClick={() => setPaymentMethod('cod')}
-                    className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer"
+                    onClick={() => {
+                      if (isCodAllowedForCart) {
+                        setPaymentMethod('cod');
+                      } else if (!isCodGloballyEnabled) {
+                        toast.error('Cash on Delivery (COD) is currently unavailable on this store.');
+                      } else if (rawSubtotal < codMinLimit) {
+                        toast.error(`Minimum order of ₹${codMinLimit} required for COD`);
+                      } else if (rawSubtotal > codMaxLimit) {
+                        toast.error(`COD is not available for orders above ₹${codMaxLimit}. Please pay online.`);
+                      }
+                    }}
+                    className="p-3.5 sm:p-4 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`grid h-4 w-4 place-items-center rounded-full border ${
-                        paymentMethod === 'cod' ? 'border-neutral-900 bg-neutral-900' : 'border-neutral-300 bg-white'
+                        paymentMethod === 'cod' && isCodAllowedForCart ? 'border-neutral-900 bg-neutral-900' : 'border-neutral-300 bg-white'
                       }`}>
-                        {paymentMethod === 'cod' && <Check className="h-2.5 w-2.5 text-white" />}
+                        {paymentMethod === 'cod' && isCodAllowedForCart && <Check className="h-2.5 w-2.5 text-white" />}
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-neutral-900">
-                          Cash on Delivery (COD)
+                        <div className="text-xs font-medium text-neutral-900 flex items-center gap-2">
+                          <span>Cash on Delivery (COD)</span>
+                          {!isCodAllowedForCart ? (
+                            <span className="bg-neutral-200 text-neutral-700 text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
+                              {!isCodGloballyEnabled ? 'DISABLED' : `CART LIMIT EXCEEDED`}
+                            </span>
+                          ) : Number(shippingConfig?.cod_extra_charge) > 0 ? (
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
+                              +₹{shippingConfig.cod_extra_charge} COD FEE
+                            </span>
+                          ) : (
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
+                              FREE COD
+                            </span>
+                          )}
                         </div>
                         <p className="text-[11px] text-neutral-500 font-normal">
-                          Pay in cash or scan QR at doorstep delivery (+₹50 handling fee).
+                          {!isCodAllowedForCart
+                            ? !isCodGloballyEnabled
+                              ? 'COD is temporarily disabled. Please choose UPI or Card.'
+                              : `Available for orders between ₹${codMinLimit} and ₹${codMaxLimit}.`
+                            : Number(shippingConfig?.cod_extra_charge) > 0
+                            ? `Pay in cash or scan QR upon delivery (+₹${shippingConfig.cod_extra_charge} handling charge).`
+                            : 'Pay in cash or scan QR upon delivery with 0 extra fees.'}
                         </p>
                       </div>
                     </div>

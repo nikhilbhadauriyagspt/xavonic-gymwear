@@ -338,22 +338,73 @@ exports.getGoogleMapsConfig = async (req, res) => {
       if (r.setting_key === 'google_maps_gps_enabled') config.enable_gps_geocoding = r.setting_value === 'true';
     });
 
+// 13. Get Shipping & Delivery Configuration (Public & Admin)
+exports.getShippingConfig = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT setting_key, setting_value FROM store_settings WHERE setting_key LIKE 'shipping_%'"
+    );
+
+    const config = {
+      free_shipping_threshold: 999,
+      standard_shipping_charge: 99,
+      cod_enabled: true,
+      cod_extra_charge: 0,
+      cod_min_order: 0,
+      cod_max_order: 15000,
+      estimated_delivery_days: '2-4 Business Days',
+      courier_partner: 'Bluedart Express',
+      express_shipping_enabled: false,
+      express_shipping_charge: 149,
+    };
+
+    rows.forEach((r) => {
+      if (r.setting_key === 'shipping_free_threshold') config.free_shipping_threshold = Number(r.setting_value) || 999;
+      if (r.setting_key === 'shipping_charge') config.standard_shipping_charge = Number(r.setting_value) || 0;
+      if (r.setting_key === 'shipping_cod_enabled') config.cod_enabled = r.setting_value === 'true';
+      if (r.setting_key === 'shipping_cod_charge') config.cod_extra_charge = Number(r.setting_value) || 0;
+      if (r.setting_key === 'shipping_cod_min_order') config.cod_min_order = Number(r.setting_value) || 0;
+      if (r.setting_key === 'shipping_cod_max_order') config.cod_max_order = Number(r.setting_value) || 15000;
+      if (r.setting_key === 'shipping_estimated_days' && r.setting_value) config.estimated_delivery_days = r.setting_value;
+      if (r.setting_key === 'shipping_courier_partner' && r.setting_value) config.courier_partner = r.setting_value;
+      if (r.setting_key === 'shipping_express_enabled') config.express_shipping_enabled = r.setting_value === 'true';
+      if (r.setting_key === 'shipping_express_charge') config.express_shipping_charge = Number(r.setting_value) || 149;
+    });
+
     return res.status(200).json({ success: true, config });
   } catch (err) {
-    console.error('Error in getGoogleMapsConfig:', err);
-    return res.status(500).json({ success: false, message: 'Failed to retrieve Google Maps configuration.' });
+    console.error('Error in getShippingConfig:', err);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve shipping configuration.' });
   }
 };
 
-// 12. Save Google Maps Configuration
-exports.saveGoogleMapsConfig = async (req, res) => {
+// 14. Save Shipping & Delivery Configuration (Admin Protected)
+exports.saveShippingConfig = async (req, res) => {
   try {
-    const { api_key, enable_places_autocomplete, enable_gps_geocoding } = req.body;
+    const {
+      free_shipping_threshold,
+      standard_shipping_charge,
+      cod_enabled,
+      cod_extra_charge,
+      cod_min_order,
+      cod_max_order,
+      estimated_delivery_days,
+      courier_partner,
+      express_shipping_enabled,
+      express_shipping_charge,
+    } = req.body;
 
     const updates = [
-      { key: 'google_maps_api_key', value: (api_key || '').trim() },
-      { key: 'google_maps_places_enabled', value: enable_places_autocomplete !== false ? 'true' : 'false' },
-      { key: 'google_maps_gps_enabled', value: enable_gps_geocoding !== false ? 'true' : 'false' },
+      { key: 'shipping_free_threshold', value: String(free_shipping_threshold ?? 999) },
+      { key: 'shipping_charge', value: String(standard_shipping_charge ?? 99) },
+      { key: 'shipping_cod_enabled', value: cod_enabled !== false ? 'true' : 'false' },
+      { key: 'shipping_cod_charge', value: String(cod_extra_charge ?? 0) },
+      { key: 'shipping_cod_min_order', value: String(cod_min_order ?? 0) },
+      { key: 'shipping_cod_max_order', value: String(cod_max_order ?? 15000) },
+      { key: 'shipping_estimated_days', value: (estimated_delivery_days || '2-4 Business Days').trim() },
+      { key: 'shipping_courier_partner', value: (courier_partner || 'Bluedart Express').trim() },
+      { key: 'shipping_express_enabled', value: express_shipping_enabled === true ? 'true' : 'false' },
+      { key: 'shipping_express_charge', value: String(express_shipping_charge ?? 149) },
     ];
 
     for (const item of updates) {
@@ -365,12 +416,13 @@ exports.saveGoogleMapsConfig = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Google Maps settings saved successfully in database!',
+      message: 'Shipping & COD settings saved successfully in database!',
     });
   } catch (err) {
-    console.error('Error saving Google Maps config:', err);
-    return res.status(500).json({ success: false, message: 'Failed to save Google Maps configuration.' });
+    console.error('Error saving shipping config:', err);
+    return res.status(500).json({ success: false, message: 'Failed to save shipping configuration.' });
   }
 };
+
 
 

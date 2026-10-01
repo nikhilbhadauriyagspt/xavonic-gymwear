@@ -464,37 +464,90 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const addAddress = (newAddr) => {
+  const addAddress = async (newAddr) => {
+    const id = newAddr.id || 'addr-' + Date.now();
+    const token = localStorage.getItem('xavonic_user_token');
+
+    // Optimistically update local user state
     setUser((prev) => {
       if (!prev) return prev;
-      const id = 'addr-' + Date.now();
-      const updatedList = prev.addresses ? [...prev.addresses] : [];
+      let updatedList = prev.addresses ? [...prev.addresses] : [];
       if (newAddr.isDefault) {
-        updatedList.forEach((a) => (a.isDefault = false));
+        updatedList = updatedList.map((a) => ({ ...a, isDefault: false }));
+      }
+      const existingIdx = updatedList.findIndex((a) => a.id === id);
+      if (existingIdx > -1) {
+        updatedList[existingIdx] = { ...newAddr, id };
+      } else {
+        updatedList = [{ ...newAddr, id }, ...updatedList];
       }
       return {
         ...prev,
-        addresses: [{ ...newAddr, id }, ...updatedList],
+        addresses: updatedList,
       };
     });
-    toast.success('New address added successfully!');
+
+    if (token) {
+      try {
+        const res = await fetch(`${AUTH_API_BASE}/addresses`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ ...newAddr, id }),
+        });
+        const data = await res.json();
+        if (data.success && data.addresses) {
+          setUser((prev) => (prev ? { ...prev, addresses: data.addresses } : prev));
+        }
+      } catch (err) {
+        console.error('Failed to sync address to backend:', err);
+      }
+    }
+    toast.success('Address saved to address book!');
   };
 
-  const deleteAddress = (addressId) => {
+  const deleteAddress = async (addressId) => {
+    const token = localStorage.getItem('xavonic_user_token');
+
     setUser((prev) => {
       if (!prev) return prev;
+      const filtered = (prev.addresses || []).filter((a) => a.id !== addressId);
+      if (filtered.length > 0 && !filtered.some((a) => a.isDefault)) {
+        filtered[0].isDefault = true;
+      }
       return {
         ...prev,
-        addresses: prev.addresses.filter((a) => a.id !== addressId),
+        addresses: filtered,
       };
     });
-    toast.info('Address removed');
+
+    if (token) {
+      try {
+        const res = await fetch(`${AUTH_API_BASE}/addresses/${addressId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (data.success && data.addresses) {
+          setUser((prev) => (prev ? { ...prev, addresses: data.addresses } : prev));
+        }
+      } catch (err) {
+        console.error('Failed to delete address on backend:', err);
+      }
+    }
+    toast.info('Address removed from address book.');
   };
 
-  const setDefaultAddress = (addressId) => {
+  const setDefaultAddress = async (addressId) => {
+    const token = localStorage.getItem('xavonic_user_token');
+
     setUser((prev) => {
       if (!prev) return prev;
-      const updated = prev.addresses.map((a) => ({
+      const updated = (prev.addresses || []).map((a) => ({
         ...a,
         isDefault: a.id === addressId,
       }));
@@ -503,7 +556,24 @@ export function AuthProvider({ children }) {
         addresses: updated,
       };
     });
-    toast.success('Default delivery address updated');
+
+    if (token) {
+      try {
+        const res = await fetch(`${AUTH_API_BASE}/addresses/${addressId}/default`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (data.success && data.addresses) {
+          setUser((prev) => (prev ? { ...prev, addresses: data.addresses } : prev));
+        }
+      } catch (err) {
+        console.error('Failed to set default address on backend:', err);
+      }
+    }
+    toast.success('Default shipping address updated');
   };
 
   const logout = () => {

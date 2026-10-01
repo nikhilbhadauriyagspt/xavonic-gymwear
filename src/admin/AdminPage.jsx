@@ -12,6 +12,8 @@ import AddProductTab from './components/AddProductTab';
 import OffersDiscountsTab from './components/OffersDiscountsTab';
 import ReviewsTab from './components/ReviewsTab';
 import OrdersTab from './components/OrdersTab';
+import BannersTab from './components/BannersTab';
+import ShippingTab from './components/ShippingTab';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE, ORDERS_API_BASE } from '../config/api';
 
@@ -145,6 +147,10 @@ export default function AdminPage() {
               <CustomersTab />
             )}
 
+            {activeTab === 'banners' && (
+              <BannersTab />
+            )}
+
             {activeTab === 'reviews' && (
               <ReviewsTab />
             )}
@@ -153,11 +159,15 @@ export default function AdminPage() {
               <OffersDiscountsTab />
             )}
 
+            {activeTab === 'shipping' && (
+              <ShippingTab />
+            )}
+
             {activeTab === 'settings' && (
               <WhatsAppSettingsTab />
             )}
 
-            {activeTab !== 'overview' && activeTab !== 'orders' && activeTab !== 'customers' && activeTab !== 'reviews' && activeTab !== 'offers' && activeTab !== 'products' && activeTab !== 'add-product' && activeTab !== 'categories' && activeTab !== 'add-category' && activeTab !== 'settings' && (
+            {activeTab !== 'overview' && activeTab !== 'orders' && activeTab !== 'customers' && activeTab !== 'banners' && activeTab !== 'reviews' && activeTab !== 'offers' && activeTab !== 'shipping' && activeTab !== 'products' && activeTab !== 'add-product' && activeTab !== 'categories' && activeTab !== 'add-category' && activeTab !== 'settings' && (
               <div className="w-full bg-white border border-neutral-200 rounded-sm p-8 sm:p-12 text-center space-y-3">
                 <div className="h-10 w-10 rounded-sm bg-neutral-100 text-neutral-800 flex items-center justify-center mx-auto text-sm font-semibold uppercase">
                   {activeTab.slice(0, 2)}

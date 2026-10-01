@@ -775,9 +775,22 @@ export default function ProfileDrawer() {
               {currentView === 'addresses' && (
                 <div className="space-y-3.5 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between px-1">
-                    <h4 className="text-xs font-semibold text-zinc-900">Saved Addresses</h4>
+                    <h4 className="text-xs font-semibold text-zinc-900">Saved Addresses ({user.addresses?.length || 0})</h4>
                     <button
-                      onClick={() => setCurrentView('add-address')}
+                      onClick={() => {
+                        setAddressForm({
+                          id: '',
+                          name: user.name || '',
+                          phone: user.phone || '',
+                          addressLine: '',
+                          city: '',
+                          state: 'Haryana',
+                          pincode: '',
+                          type: 'Home',
+                          isDefault: !user.addresses || user.addresses.length === 0,
+                        });
+                        setCurrentView('add-address');
+                      }}
                       className="text-xs text-red-600 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -785,52 +798,132 @@ export default function ProfileDrawer() {
                     </button>
                   </div>
 
-                  {user.addresses?.map((addr) => (
-                    <div key={addr.id} className="border border-zinc-200 rounded-[10px] p-4 space-y-2 bg-white relative">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-red-600 shrink-0" />
-                          <span className="text-xs font-semibold text-zinc-900">{addr.name}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {addr.isDefault ? (
-                            <span className="px-2 py-0.5 bg-zinc-100 text-zinc-800 text-[10px] font-semibold rounded">
-                              Default
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => setDefaultAddress(addr.id)}
-                              className="text-[10px] text-zinc-500 hover:text-black underline cursor-pointer"
-                            >
-                              Set Default
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deleteAddress(addr.id)}
-                            className="p-1 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer ml-1"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-zinc-600 leading-relaxed pl-6">
-                        {addr.addressLine}, {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
-                      </p>
-                      <p className="text-[11px] text-zinc-400 pl-6">Phone: {addr.phone}</p>
+                  {(!user.addresses || user.addresses.length === 0) ? (
+                    <div className="p-8 text-center bg-zinc-50 rounded-[10px] border border-zinc-200 space-y-2">
+                      <MapPin className="w-8 h-8 text-zinc-300 mx-auto" />
+                      <p className="text-xs font-medium text-zinc-700">No saved addresses yet</p>
+                      <p className="text-[11px] text-zinc-400">Save Home or Office delivery locations for 1-click checkout.</p>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentView('add-address')}
+                        className="px-3 py-1.5 bg-black text-white text-xs font-medium rounded-md hover:bg-zinc-800 transition-colors"
+                      >
+                        Add Delivery Address
+                      </button>
                     </div>
-                  ))}
+                  ) : (
+                    user.addresses.map((addr) => (
+                      <div key={addr.id} className="border border-zinc-200 rounded-[10px] p-4 space-y-2.5 bg-white relative hover:border-zinc-300 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded flex items-center gap-1 uppercase tracking-wider ${
+                              addr.type === 'Office'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : addr.type === 'Other'
+                                ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                : 'bg-zinc-100 text-zinc-800 border border-zinc-200'
+                            }`}>
+                              {addr.type === 'Office' ? '🏢 Office' : addr.type === 'Other' ? '📍 Other' : '🏠 Home'}
+                            </span>
+                            <span className="text-xs font-semibold text-zinc-900">{addr.name}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            {addr.isDefault ? (
+                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold rounded">
+                                Default
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setDefaultAddress(addr.id)}
+                                className="text-[10px] text-zinc-500 hover:text-black underline cursor-pointer"
+                              >
+                                Set Default
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                setAddressForm({
+                                  id: addr.id,
+                                  name: addr.name || '',
+                                  phone: addr.phone || '',
+                                  addressLine: addr.addressLine || '',
+                                  city: addr.city || '',
+                                  state: addr.state || 'Haryana',
+                                  pincode: addr.pincode || '',
+                                  type: addr.type || 'Home',
+                                  isDefault: Boolean(addr.isDefault),
+                                });
+                                setCurrentView('add-address');
+                              }}
+                              className="p-1 text-zinc-400 hover:text-black transition-colors cursor-pointer ml-1"
+                              title="Edit Address"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteAddress(addr.id)}
+                              className="p-1 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
+                              title="Delete Address"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-zinc-600 leading-relaxed">
+                          {addr.addressLine}, {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
+                        </p>
+                        <p className="text-[11px] text-zinc-400 font-mono">📱 +{addr.phone}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
 
-              {/* ================= VIEW 5: ADD NEW ADDRESS FORM ================= */}
+              {/* ================= VIEW 5: ADD / EDIT ADDRESS FORM ================= */}
               {currentView === 'add-address' && (
                 <form onSubmit={handleAddressSubmit} className="space-y-3.5 animate-in fade-in duration-200 text-xs">
-                  <h4 className="font-semibold text-zinc-900 px-1">Add Delivery Location</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-zinc-900 px-1">
+                      {addressForm.id ? 'Edit Delivery Location' : 'Add Delivery Location'}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('addresses')}
+                      className="text-[11px] text-zinc-500 hover:text-zinc-900"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {/* Address Type Selector (Home / Office / Other) */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-medium text-zinc-700 block">Address Label</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'Home', label: '🏠 Home' },
+                        { id: 'Office', label: '🏢 Office' },
+                        { id: 'Other', label: '📍 Other' },
+                      ].map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setAddressForm({ ...addressForm, type: t.id })}
+                          className={`py-2 px-3 text-xs font-semibold rounded-[8px] border transition-colors cursor-pointer text-center ${
+                            addressForm.type === t.id
+                              ? 'bg-zinc-950 text-white border-zinc-950'
+                              : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100'
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-zinc-700">Recipient Name</label>
+                    <label className="text-[11px] font-medium text-zinc-700">Recipient Name *</label>
                     <input
                       type="text"
                       value={addressForm.name}
@@ -842,7 +935,7 @@ export default function ProfileDrawer() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-zinc-700">Contact Number</label>
+                    <label className="text-[11px] font-medium text-zinc-700">Contact Number *</label>
                     <input
                       type="tel"
                       value={addressForm.phone}
@@ -854,7 +947,7 @@ export default function ProfileDrawer() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-zinc-700">House No, Building, Street</label>
+                    <label className="text-[11px] font-medium text-zinc-700">House No, Building, Street *</label>
                     <input
                       type="text"
                       value={addressForm.addressLine}
@@ -867,7 +960,7 @@ export default function ProfileDrawer() {
 
                   <div className="grid grid-cols-2 gap-2.5">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-zinc-700">City</label>
+                      <label className="text-[11px] font-medium text-zinc-700">City *</label>
                       <input
                         type="text"
                         value={addressForm.city}
@@ -878,14 +971,14 @@ export default function ProfileDrawer() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-zinc-700">Pincode</label>
+                      <label className="text-[11px] font-medium text-zinc-700">Pincode *</label>
                       <input
                         type="text"
                         maxLength={6}
                         value={addressForm.pincode}
                         onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/[^0-9]/g, '') })}
                         placeholder="122002"
-                        className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-[8px] focus:outline-none"
+                        className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-[8px] focus:outline-none font-mono"
                         required
                       />
                     </div>
@@ -904,12 +997,21 @@ export default function ProfileDrawer() {
                     </label>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-black hover:bg-red-600 text-white text-xs font-semibold rounded-[8px] transition-colors cursor-pointer mt-2"
-                  >
-                    Save Address
-                  </button>
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('addresses')}
+                      className="w-1/3 py-2.5 border border-zinc-200 text-zinc-700 text-xs font-semibold rounded-[8px] hover:bg-zinc-50 transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="w-2/3 py-2.5 bg-black hover:bg-zinc-800 text-white text-xs font-semibold rounded-[8px] transition-colors cursor-pointer"
+                    >
+                      {addressForm.id ? 'Update Address' : 'Save Address'}
+                    </button>
+                  </div>
                 </form>
               )}
 

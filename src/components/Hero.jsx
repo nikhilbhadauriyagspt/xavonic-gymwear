@@ -1,18 +1,61 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { getPublicBanners } from '../services/bannerService';
 
 import heroCompression from '../assets/hero_compression.jpg';
 import heroOversized from '../assets/hero_oversized.jpg';
 import heroJoggers from '../assets/hero_joggers.jpg';
 
+const defaultSlides = [
+  {
+    image: heroCompression,
+    alt: 'Guidelya Xtreme Compression Gymwear',
+    title: 'Guidelya Xtreme Compression',
+    subtitle: 'Second-Skin Ultra Flex Performance',
+    link: '/collections',
+  },
+  {
+    image: heroOversized,
+    alt: 'Guidelya Heavyweight Oversized Tees',
+    title: 'Heavyweight Aesthetic Drop',
+    subtitle: '260 GSM French Terry Cotton',
+    link: '/collections',
+  },
+  {
+    image: heroJoggers,
+    alt: 'Guidelya Tapered Gym Joggers and Lowers',
+    title: 'Performance Tapered Joggers',
+    subtitle: 'Engineered For Elite Aesthetics',
+    link: '/collections',
+  },
+];
+
 export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slides, setSlides] = useState(defaultSlides);
 
-  const slides = [
-    { image: heroCompression, alt: 'Guidelya Xtreme Compression Gymwear' },
-    { image: heroOversized, alt: 'Guidelya Heavyweight Oversized Tees' },
-    { image: heroJoggers, alt: 'Guidelya Tapered Gym Joggers and Lowers' },
-  ];
+  // Fetch dynamic active hero banners from API
+  useEffect(() => {
+    let isMounted = true;
+    getPublicBanners('hero').then((fetchedBanners) => {
+      if (isMounted && Array.isArray(fetchedBanners) && fetchedBanners.length > 0) {
+        const mapped = fetchedBanners.map((b) => ({
+          image: b.image_url,
+          alt: b.title,
+          title: b.title,
+          subtitle: b.subtitle,
+          link: b.link_url || '/collections',
+          buttonText: b.button_text || 'Shop Collection',
+          badge: b.badge_text,
+        }));
+        setSlides(mapped);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -39,9 +82,10 @@ export default function Hero() {
       {slides.map((slide, index) => {
         const isActive = index === currentSlide;
         return (
-          <div
+          <Link
             key={index}
-            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+            to={slide.link || '/collections'}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out block ${
               isActive ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
@@ -50,7 +94,7 @@ export default function Hero() {
               alt={slide.alt}
               className="w-full h-full object-cover object-center"
             />
-          </div>
+          </Link>
         );
       })}
 

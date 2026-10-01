@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
+  Bell,
   Camera,
   Check,
   CheckCircle2,
@@ -37,6 +38,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { fetchLiveProductBySlugOrId, fetchLiveProducts } from '../services/productService';
 import { fetchProductReviews, submitCustomerReview, markReviewHelpful } from '../services/reviewService';
+import { AUTH_API_BASE } from '../config/api';
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
@@ -117,6 +119,17 @@ export default function ProductDetailPage() {
     fit: 'True to Size',
     images: [],
   });
+
+  // Out of Stock Notification States
+  const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState(user?.email || '');
+  const [notifyPhone, setNotifyPhone] = useState(user?.phone || '');
+  const [isSubmittingNotify, setIsSubmittingNotify] = useState(false);
+
+  useEffect(() => {
+    if (user?.email && !notifyEmail) setNotifyEmail(user.email);
+    if (user?.phone && !notifyPhone) setNotifyPhone(user.phone);
+  }, [user]);
 
   // Fetch Live Database Reviews
   useEffect(() => {
@@ -402,6 +415,41 @@ export default function ProductDetailPage() {
       })
     );
     await markReviewHelpful(reviewId);
+  };
+
+  const handleNotifyMeSubmit = async (e) => {
+    e.preventDefault();
+    if (!notifyEmail && !notifyPhone) {
+      toast.error('Please enter an email or WhatsApp phone number');
+      return;
+    }
+    setIsSubmittingNotify(true);
+    try {
+      const res = await fetch(`${AUTH_API_BASE}/stock-notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product?.id || productId,
+          productTitle: product?.title || 'Product',
+          variantSize: selectedSize || 'All',
+          variantColor: activeColor?.name || '',
+          email: notifyEmail.trim(),
+          phone: notifyPhone.trim(),
+          name: user?.name || '',
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || `You're on the waitlist! We'll notify you as soon as Size ${selectedSize} is restocked.`);
+        setIsNotifyModalOpen(false);
+      } else {
+        toast.error(data.message || 'Could not subscribe to alerts.');
+      }
+    } catch (err) {
+      toast.error('Connection error. Please try again.');
+    } finally {
+      setIsSubmittingNotify(false);
+    }
   };
 
   const filteredReviews = useMemo(() => {
@@ -811,58 +859,62 @@ export default function ProductDetailPage() {
                 </div>
               ) : null}
 
-              {/* Quantity + Add to Cart + Buy Now */}
-              <div className="space-y-2 pt-1">
-                <div className="flex gap-2">
-                  <div className={`flex h-11 items-center border border-neutral-300 ${isSelectedSizeOutOfStock ? 'opacity-50 pointer-events-none bg-neutral-100' : 'bg-white'}`}>
+              {/* Quantity + Add to Cart + Buy Now / Out of Stock Notify Me */}
+              {isSelectedSizeOutOfStock ? (
+                <div className="space-y-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsNotifyModalOpen(true)}
+                    className="flex h-12 w-full items-center justify-center gap-2.5 bg-neutral-950 px-4 text-xs font-medium uppercase tracking-widest text-white hover:bg-black active:scale-[0.99] transition-all shadow-sm cursor-pointer"
+                  >
+                    <Bell className="h-4 w-4 text-amber-400" />
+                    Notify Me When Available
+                  </button>
+                  <p className="text-[11px] text-center text-neutral-500 font-normal">
+                    Get an instant WhatsApp / Email alert as soon as Size {selectedSize} is back in stock.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2 pt-1">
+                  <div className="flex gap-2">
+                    <div className="flex h-11 items-center border border-neutral-300 bg-white">
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                        className="grid h-full w-9 place-items-center text-neutral-600 hover:text-black transition-colors"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="w-8 text-center text-xs font-medium text-neutral-900">{quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((q) => Math.min(Math.min(10, selectedSizeStock), q + 1))}
+                        className="grid h-full w-9 place-items-center text-neutral-600 hover:text-black transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
                     <button
                       type="button"
-                      disabled={isSelectedSizeOutOfStock}
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="grid h-full w-9 place-items-center text-neutral-600 hover:text-black transition-colors"
+                      onClick={() => handleAddToCart(true)}
+                      className="flex h-11 flex-1 items-center justify-center gap-2 px-4 text-xs font-medium uppercase tracking-widest text-white transition-all bg-neutral-900 hover:bg-black active:scale-[0.99] cursor-pointer"
                     >
-                      <Minus className="h-3.5 w-3.5" />
-                    </button>
-                    <span className="w-8 text-center text-xs font-medium text-neutral-900">{quantity}</span>
-                    <button
-                      type="button"
-                      disabled={isSelectedSizeOutOfStock}
-                      onClick={() => setQuantity((q) => Math.min(Math.min(10, selectedSizeStock), q + 1))}
-                      className="grid h-full w-9 place-items-center text-neutral-600 hover:text-black transition-colors"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
+                      <ShoppingBag className="h-3.5 w-3.5" />
+                      Add to cart
                     </button>
                   </div>
 
                   <button
                     type="button"
-                    disabled={isSelectedSizeOutOfStock}
-                    onClick={() => handleAddToCart(true)}
-                    className={`flex h-11 flex-1 items-center justify-center gap-2 px-4 text-xs font-medium uppercase tracking-widest text-white transition-all ${
-                      isSelectedSizeOutOfStock
-                        ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
-                        : 'bg-neutral-900 hover:bg-black active:scale-[0.99] cursor-pointer'
-                    }`}
+                    onClick={handleBuyNow}
+                    className="flex h-11 w-full items-center justify-center gap-2 border border-neutral-900 bg-white text-xs font-medium uppercase tracking-widest text-neutral-900 hover:bg-neutral-50 active:scale-[0.99] transition-all cursor-pointer"
                   >
-                    <ShoppingBag className="h-3.5 w-3.5" />
-                    {isSelectedSizeOutOfStock ? 'Sold Out' : 'Add to cart'}
+                    <Zap className="h-3.5 w-3.5" />
+                    Buy now
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  disabled={isSelectedSizeOutOfStock}
-                  onClick={handleBuyNow}
-                  className={`flex h-11 w-full items-center justify-center gap-2 border text-xs font-medium uppercase tracking-widest transition-all ${
-                    isSelectedSizeOutOfStock
-                      ? 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                      : 'border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 active:scale-[0.99] cursor-pointer'
-                  }`}
-                >
-                  <Zap className="h-3.5 w-3.5" />
-                  {isSelectedSizeOutOfStock ? 'Unavailable in Size' : 'Buy now'}
-                </button>
-              </div>
+              )}
 
               {/* Trust Features Bar */}
               <div className="grid grid-cols-3 border-y border-neutral-200 py-3 text-center">
@@ -1661,6 +1713,108 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* OUT OF STOCK "NOTIFY ME WHEN AVAILABLE" MODAL */}
+      {isNotifyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md border border-neutral-200 bg-white p-6 shadow-2xl">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsNotifyModalOpen(false)}
+              className="absolute right-4 top-4 text-neutral-400 hover:text-neutral-900 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-start gap-3 mb-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-amber-400">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold uppercase tracking-wide text-neutral-900">
+                  Notify Me When In Stock
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Size: <strong className="text-neutral-800">{selectedSize}</strong> • Color: <strong className="text-neutral-800">{activeColor.name}</strong>
+                </p>
+              </div>
+            </div>
+
+            {/* Product Summary Preview */}
+            <div className="flex items-center gap-3 bg-neutral-50 border border-neutral-200 p-3 mb-5">
+              <img
+                src={currentImages[0]}
+                alt={product.title}
+                className="h-14 w-11 object-cover bg-neutral-200 shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-neutral-900 truncate uppercase">{product.title}</p>
+                <p className="text-xs text-neutral-600 font-semibold mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</p>
+                <span className="inline-block text-[10px] text-red-600 font-medium uppercase mt-0.5">Currently Sold Out</span>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleNotifyMeSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1.5">
+                  WhatsApp Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={notifyPhone}
+                  onChange={(e) => setNotifyPhone(e.target.value)}
+                  placeholder="e.g. 9876543210"
+                  className="w-full border border-neutral-300 px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1.5">
+                  Email Address (Optional)
+                </label>
+                <input
+                  type="email"
+                  value={notifyEmail}
+                  onChange={(e) => setNotifyEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full border border-neutral-300 px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-900"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsNotifyModalOpen(false)}
+                  className="flex-1 border border-neutral-300 py-2.5 text-xs font-medium uppercase tracking-wider text-neutral-700 hover:bg-neutral-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingNotify}
+                  className="flex-1 bg-neutral-950 py-2.5 text-xs font-medium uppercase tracking-widest text-white hover:bg-black disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-xs"
+                >
+                  {isSubmittingNotify ? (
+                    <span>Subscribing...</span>
+                  ) : (
+                    <>
+                      <Bell className="h-3.5 w-3.5 text-amber-400" />
+                      <span>Alert Me</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <p className="text-[10px] text-center text-neutral-400 font-normal">
+                We'll only notify you once when this item is restocked. No spam.
+              </p>
+            </form>
           </div>
         </div>
       )}

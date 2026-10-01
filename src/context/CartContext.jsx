@@ -126,8 +126,20 @@ export function CartProvider({ children }) {
 
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [isPrepaidSelected, setIsPrepaidSelected] = useState(true);
+  const [shippingConfig, setShippingConfig] = useState({
+    free_shipping_threshold: 999,
+    standard_shipping_charge: 99,
+    cod_enabled: true,
+    cod_extra_charge: 0,
+    cod_min_order: 0,
+    cod_max_order: 15000,
+    estimated_delivery_days: '2-4 Business Days',
+    courier_partner: 'Bluedart Express',
+    express_shipping_enabled: false,
+    express_shipping_charge: 149,
+  });
 
-  // Fetch live global offers from backend
+  // Fetch live global offers and shipping rules from backend
   React.useEffect(() => {
     fetch(`${ADMIN_API_BASE}/settings/offers`)
       .then(res => res.json())
@@ -135,12 +147,19 @@ export function CartProvider({ children }) {
         if (data.success && data.config) setOffersConfig(data.config);
       })
       .catch(() => {});
+
+    fetch(`${ADMIN_API_BASE}/settings/shipping`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.config) setShippingConfig(data.config);
+      })
+      .catch(() => {});
   }, []);
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const totalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const freeShippingGoal = offersConfig.free_shipping_threshold || 999;
-  const progressToFreeShipping = Math.min(100, (subtotal / freeShippingGoal) * 100);
+  const freeShippingGoal = shippingConfig.free_shipping_threshold ?? (offersConfig.free_shipping_threshold || 999);
+  const progressToFreeShipping = Math.min(100, (subtotal / (freeShippingGoal || 1)) * 100);
 
   // Dynamic Volume Bundle Discount (Buy 2 = 5% off, Buy 3 = 10% off)
   let bundleDiscountAmount = 0;
@@ -218,6 +237,7 @@ export function CartProvider({ children }) {
         freeShippingGoal,
         progressToFreeShipping,
         offersConfig,
+        shippingConfig,
         bundleDiscountAmount,
         cartTierDiscount,
         couponDiscount,

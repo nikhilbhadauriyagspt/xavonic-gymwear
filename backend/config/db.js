@@ -238,6 +238,47 @@ function initDatabaseTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `;
 
+  // Create Banners Table (For dynamic homepage hero sliders, promo mid banners, active/inactive & date scheduling)
+  const createBannersTable = `
+    CREATE TABLE IF NOT EXISTS banners (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      subtitle VARCHAR(255) NULL,
+      slot ENUM('hero', 'mid_banner', 'mid_feature', 'last_mid', 'announcement') DEFAULT 'hero',
+      image_url VARCHAR(500) NOT NULL,
+      mobile_image_url VARCHAR(500) NULL,
+      link_url VARCHAR(255) DEFAULT '/collections',
+      button_text VARCHAR(100) DEFAULT 'Shop Collection',
+      badge_text VARCHAR(50) NULL,
+      sort_order INT DEFAULT 0,
+      status ENUM('active', 'inactive') DEFAULT 'active',
+      start_date DATETIME NULL,
+      end_date DATETIME NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_slot_status (slot, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `;
+
+  // Create Stock Notifications Table (For Out-of-Stock -> Notify Me alerts)
+  const createStockNotificationsTable = `
+    CREATE TABLE IF NOT EXISTS stock_notifications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      product_id INT NOT NULL,
+      product_title VARCHAR(255) NOT NULL,
+      variant_size VARCHAR(50) DEFAULT 'All',
+      variant_color VARCHAR(100) DEFAULT '',
+      customer_email VARCHAR(150) NULL,
+      customer_phone VARCHAR(50) NULL,
+      customer_name VARCHAR(150) NULL,
+      user_id INT NULL,
+      status ENUM('pending', 'notified', 'cancelled') DEFAULT 'pending',
+      notified_at DATETIME NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_prod_status (product_id, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `;
+
   Promise.all([
     promisePool.query(createAdminsTable),
     promisePool.query(createUsersTable),
@@ -247,9 +288,11 @@ function initDatabaseTables() {
     promisePool.query(createProductsTable),
     promisePool.query(createOrdersTable),
     promisePool.query(createReviewsTable),
+    promisePool.query(createBannersTable),
+    promisePool.query(createStockNotificationsTable),
   ])
     .then(async () => {
-      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews)');
+      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews, banners, stock_notifications)');
       
       // Auto-migrate users table columns if missing
       try {
@@ -395,6 +438,7 @@ function initDatabaseTables() {
       seedDefaultAdmin(promisePool);
       seedDefaultSettings(promisePool);
       seedDefaultCategories(promisePool);
+      seedDefaultBanners(promisePool);
     })
     .catch((tableErr) => {
       console.error('❌ Error initializing tables:', tableErr.message);
@@ -520,6 +564,73 @@ async function seedDefaultCategories(promisePool) {
     console.log('✅ Initial Hierarchical Categories Tree seeded (Men/Women -> Sub -> Item Types)');
   } catch (err) {
     console.error('❌ Error seeding categories:', err.message);
+  }
+}
+
+// Seed Default Dynamic Homepage & Promotional Banners
+async function seedDefaultBanners(promisePool) {
+  try {
+    const [count] = await promisePool.query('SELECT COUNT(*) as total FROM banners');
+    if (count[0].total > 0) return;
+
+    const defaultBanners = [
+      {
+        title: 'Guidelya Xtreme Compression Gymwear',
+        subtitle: 'Second-Skin Ultra Flex Performance',
+        slot: 'hero',
+        image_url: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=1600&q=85',
+        link_url: '/collections/men-compression-tees',
+        button_text: 'Shop Compression',
+        badge_text: 'Best Seller',
+        sort_order: 1,
+        status: 'active',
+      },
+      {
+        title: 'Heavyweight Aesthetic Oversized Drop',
+        subtitle: '260 GSM French Terry Cotton',
+        slot: 'hero',
+        image_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=1600&q=85',
+        link_url: '/collections/men-dropcut-tees',
+        button_text: 'Shop Oversized',
+        badge_text: 'New Arrival',
+        sort_order: 2,
+        status: 'active',
+      },
+      {
+        title: 'Performance Tapered Gym Joggers',
+        subtitle: 'Engineered For Elite Aesthetics',
+        slot: 'hero',
+        image_url: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=1600&q=85',
+        link_url: '/collections/men-compression-lowers',
+        button_text: 'Shop Joggers',
+        badge_text: 'Trending',
+        sort_order: 3,
+        status: 'active',
+      },
+      {
+        title: 'Nothing Fits Like Xavonic',
+        subtitle: 'Gear That Moves With You',
+        slot: 'mid_banner',
+        image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=85',
+        link_url: '/collections',
+        button_text: 'Explore All',
+        badge_text: 'Spotlight',
+        sort_order: 1,
+        status: 'active',
+      },
+    ];
+
+    for (const b of defaultBanners) {
+      await promisePool.query(
+        `INSERT INTO banners (title, subtitle, slot, image_url, link_url, button_text, badge_text, sort_order, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [b.title, b.subtitle, b.slot, b.image_url, b.link_url, b.button_text, b.badge_text, b.sort_order, b.status]
+      );
+    }
+
+    console.log('✅ Default Homepage & Promo Banners seeded in database');
+  } catch (err) {
+    console.error('❌ Error seeding banners:', err.message);
   }
 }
 

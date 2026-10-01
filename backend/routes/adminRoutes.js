@@ -17,6 +17,8 @@ const {
   saveOffersConfig,
   getGoogleMapsConfig,
   saveGoogleMapsConfig,
+  getShippingConfig,
+  saveShippingConfig,
 } = require('../controllers/adminSettingsController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
 
@@ -55,8 +57,23 @@ const {
   deleteOrder,
 } = require('../controllers/orderController');
 
+const {
+  getAdminBanners,
+  createBanner,
+  updateBanner,
+  toggleBannerStatus,
+  deleteBanner,
+} = require('../controllers/bannerController');
+
 // Public: Admin Login
 router.post('/login', loginAdmin);
+
+// Banners Management for Admin
+router.get('/banners', verifyAdminToken, getAdminBanners);
+router.post('/banners', verifyAdminToken, upload.single('image'), createBanner);
+router.put('/banners/:id', verifyAdminToken, upload.single('image'), updateBanner);
+router.patch('/banners/:id/status', verifyAdminToken, toggleBannerStatus);
+router.delete('/banners/:id', verifyAdminToken, deleteBanner);
 
 // Orders Management for Admin
 router.get('/orders', verifyAdminToken, getAdminOrders);
@@ -112,6 +129,10 @@ router.post('/settings/offers', verifyAdminToken, saveOffersConfig);
 // Public/Protected: Google Maps API & Geolocation
 router.get('/settings/maps', getGoogleMapsConfig);
 router.post('/settings/maps', verifyAdminToken, saveGoogleMapsConfig);
+
+// Public/Protected: Shipping & COD Delivery Rules
+router.get('/settings/shipping', getShippingConfig);
+router.post('/settings/shipping', verifyAdminToken, saveShippingConfig);
 
 module.exports = router;
 

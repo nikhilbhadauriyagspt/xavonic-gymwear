@@ -14,6 +14,8 @@ import {
   X,
   Tag,
   Star,
+  Image as ImageIcon,
+  Truck,
 } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 
@@ -214,7 +216,25 @@ export default function AdminSidebar({
               </span>
             </button>
 
-            {/* 5. Reviews & Ratings Moderation */}
+            {/* 5. Banners Management */}
+            <button
+              onClick={() => {
+                setActiveTab('banners');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-sm transition-colors cursor-pointer ${
+                activeTab === 'banners'
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <ImageIcon className={`h-3.5 w-3.5 ${activeTab === 'banners' ? 'text-white' : 'text-red-500'}`} />
+                <span>Banners</span>
+              </div>
+            </button>
+
+            {/* 6. Reviews & Ratings Moderation */}
             <button
               onClick={() => {
                 setActiveTab('reviews');
@@ -232,7 +252,7 @@ export default function AdminSidebar({
               </div>
             </button>
 
-            {/* 6. Global Offers & Discounts */}
+            {/* 7. Global Offers & Discounts */}
             <button
               onClick={() => {
                 setActiveTab('offers');
@@ -250,7 +270,25 @@ export default function AdminSidebar({
               </div>
             </button>
 
-            {/* 6. Settings */}
+            {/* 8. Shipping & COD Delivery Settings */}
+            <button
+              onClick={() => {
+                setActiveTab('shipping');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-sm transition-colors cursor-pointer ${
+                activeTab === 'shipping'
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Truck className={`h-3.5 w-3.5 ${activeTab === 'shipping' ? 'text-white' : 'text-blue-500'}`} />
+                <span>Shipping & COD</span>
+              </div>
+            </button>
+
+            {/* 9. Settings */}
             <button
               onClick={() => {
                 setActiveTab('settings');

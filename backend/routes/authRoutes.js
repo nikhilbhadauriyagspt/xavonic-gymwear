@@ -13,6 +13,10 @@ const {
   verifyLinkPhone,
   updateProfile,
   getMe,
+  saveAddress,
+  deleteAddress,
+  setDefaultAddress,
+  createStockNotification,
 } = require('../controllers/authController');
 
 // Customer WhatsApp Auth Endpoints
@@ -31,6 +35,14 @@ router.post('/link-email/verify', verifyLinkEmail);
 router.post('/link-phone/send-otp', linkPhoneSendOtp);
 router.post('/link-phone/verify', verifyLinkPhone);
 router.put('/profile', updateProfile);
+
+// Address Book Endpoints (Home / Office / Other)
+router.post('/addresses', saveAddress);
+router.delete('/addresses/:addressId', deleteAddress);
+router.patch('/addresses/:addressId/default', setDefaultAddress);
+
+// Out-of-Stock "Notify Me" Alert Registration
+router.post('/stock-notifications', createStockNotification);
 
 // Get Profile
 router.get('/me', getMe);
