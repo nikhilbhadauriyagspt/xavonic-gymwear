@@ -138,7 +138,7 @@ export default function AdminPage() {
 
         {/* Dynamic Content Area (Independent scrollable viewport) */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 w-full min-w-0 h-full">
-          <div className="w-full max-w-7xl mx-auto">
+          <div className="w-full">
             {activeTab === 'overview' && (
               <DashboardOverview onNavigateTab={setActiveTab} />
             )}

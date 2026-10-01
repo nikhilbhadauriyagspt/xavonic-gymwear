@@ -330,7 +330,7 @@ export default function BrandContentTab() {
   }
 
   return (
-    <div className="max-w-5xl space-y-6 font-sans pb-16">
+    <div className="w-full space-y-6 font-sans pb-16">
       {/* 1. Header with Save Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 border border-neutral-200 rounded-sm">
         <div>

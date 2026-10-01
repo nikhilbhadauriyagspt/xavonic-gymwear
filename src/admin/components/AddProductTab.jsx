@@ -313,7 +313,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
   const activeColor = colors[activePreviewColorIdx] || colors[0];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 font-sans pb-12">
+    <div className="w-full space-y-6 font-sans pb-12">
       
       {/* 1. Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 border border-neutral-200 rounded-sm">

@@ -130,7 +130,7 @@ export default function AddCategoryTab({ onCategoryCreated, onCancel }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 font-sans">
+    <div className="w-full space-y-6 font-sans pb-12">
       
       {/* Top Header */}
       <div className="flex items-center justify-between bg-white p-4 sm:p-5 border border-neutral-200 rounded-sm">

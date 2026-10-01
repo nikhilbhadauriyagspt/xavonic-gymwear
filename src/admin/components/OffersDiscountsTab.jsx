@@ -162,7 +162,7 @@ export default function OffersDiscountsTab() {
   }
 
   return (
-    <div className="max-w-5xl space-y-6 font-sans pb-12">
+    <div className="w-full space-y-6 font-sans pb-12">
       
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 border border-neutral-200 rounded-sm">
