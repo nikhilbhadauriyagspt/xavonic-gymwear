@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { loginAdmin, getAdminProfile } = require('../controllers/adminAuthController');
+const {
+  loginAdmin,
+  getAdminProfile,
+  updateAdminPassword,
+  updateAdminProfile,
+} = require('../controllers/adminAuthController');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -97,8 +102,10 @@ router.post('/products', verifyAdminToken, upload.any(), createProduct);
 router.put('/products/:id', verifyAdminToken, upload.any(), updateProduct);
 router.delete('/products/:id', verifyAdminToken, deleteProduct);
 
-// Protected: Admin Profile
+// Protected: Admin Profile & Security Settings
 router.get('/me', verifyAdminToken, getAdminProfile);
+router.patch('/profile', verifyAdminToken, updateAdminProfile);
+router.patch('/password', verifyAdminToken, updateAdminPassword);
 
 // Protected: Customers List & Management
 router.get('/customers', verifyAdminToken, getCustomers);

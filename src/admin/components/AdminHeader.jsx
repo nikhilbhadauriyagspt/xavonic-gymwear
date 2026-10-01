@@ -17,20 +17,25 @@ import {
   Users,
   AlertCircle,
   RefreshCw,
-  Trash2
+  Trash2,
+  Lock,
+  Key,
 } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
+import AdminSecurityModal from './AdminSecurityModal';
 
 export default function AdminHeader({
   isMobileSidebarOpen,
   setIsMobileSidebarOpen,
   onLogout,
   adminUser = { name: 'Alex Vance', role: 'Store Administrator', email: 'admin@xavonic.com' },
+  onProfileUpdated,
 }) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -344,9 +349,9 @@ export default function AdminHeader({
 
           {/* Profile Dropdown Card */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border border-neutral-200 rounded-sm z-50 overflow-hidden py-1">
+            <div className="absolute right-0 mt-2 w-52 bg-white border border-neutral-200 rounded-sm z-50 overflow-hidden py-1 shadow-lg">
               <div className="px-3 py-2 border-b border-neutral-100 bg-neutral-50">
-                <p className="text-xs font-medium text-neutral-900">{adminUser.name}</p>
+                <p className="text-xs font-semibold text-neutral-900">{adminUser.name}</p>
                 <p className="text-[10px] text-neutral-500 truncate">{adminUser.email}</p>
               </div>
 
@@ -354,20 +359,34 @@ export default function AdminHeader({
                 <Link
                   to="/"
                   target="_blank"
-                  className="flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-50 hover:text-red-600 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-50 hover:text-red-600 transition-colors"
                 >
                   <Eye className="h-3.5 w-3.5 text-neutral-400" />
                   <span>Open Store</span>
                 </Link>
+
                 <button
+                  type="button"
                   onClick={() => {
                     setIsProfileOpen(false);
-                    toast.info('Account profile details');
+                    setIsSecurityModalOpen(true);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-neutral-50 transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-50 hover:text-neutral-900 transition-colors text-left cursor-pointer"
+                >
+                  <Lock className="h-3.5 w-3.5 text-red-600" />
+                  <span className="font-medium">Change Password</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    setIsSecurityModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-50 transition-colors text-left cursor-pointer"
                 >
                   <User className="h-3.5 w-3.5 text-neutral-400" />
-                  <span>Account</span>
+                  <span>Account Settings</span>
                 </button>
               </div>
 
@@ -377,7 +396,7 @@ export default function AdminHeader({
                     setIsProfileOpen(false);
                     onLogout();
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-medium cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors text-left font-medium cursor-pointer"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Sign Out</span>
@@ -388,6 +407,14 @@ export default function AdminHeader({
         </div>
 
       </div>
+
+      {/* Admin Security & Password Change Modal */}
+      <AdminSecurityModal
+        isOpen={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+        adminUser={adminUser}
+        onProfileUpdated={onProfileUpdated}
+      />
     </header>
   );
 }

@@ -121,6 +121,7 @@ export default function AdminPage() {
         setIsMobileSidebarOpen={setIsMobileSidebarOpen}
         onLogout={handleLogout}
         adminUser={adminUser}
+        onProfileUpdated={(updated) => setAdminUser(updated)}
       />
 
       {/* Main Admin Workspace Layout (Fixed height, independent scrolling) */}
