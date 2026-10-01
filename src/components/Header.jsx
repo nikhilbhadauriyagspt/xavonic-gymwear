@@ -12,8 +12,15 @@ import {
   Home,
   Layers,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Tag,
+  Gift,
+  Copy,
+  CheckCircle2,
+  ExternalLink,
+  Percent
 } from 'lucide-react';
+import { toast } from 'sonner';
 import logoWhite from '../assets/logo_white.png';
 import logoBlack from '../assets/logo_balck.png';
 import { useCart } from '../context/CartContext';
@@ -21,6 +28,8 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import SearchModal from './SearchModal';
 import { ADMIN_API_BASE } from '../config/api';
+import { getPublicBanners } from '../services/bannerService';
+import { fetchLiveCategories } from '../services/productService';
 
 const DEFAULT_ANNOUNCEMENTS = [
   { text: 'Free express shipping on all orders over ₹999', highlight: 'Free Delivery', code: null },
@@ -41,6 +50,11 @@ export default function Header() {
   // Dynamic Announcement Ticker States
   const [announcements, setAnnouncements] = useState(DEFAULT_ANNOUNCEMENTS);
   const [currentAnnouncementIdx, setCurrentAnnouncementIdx] = useState(0);
+
+  // Announcement & Promo Popup Modal State
+  const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
+  const [announcementBanners, setAnnouncementBanners] = useState([]);
+  const [copiedCode, setCopiedCode] = useState(null);
 
   const location = useLocation();
   const { openCart, totalItemsCount } = useCart();
@@ -89,6 +103,31 @@ export default function Header() {
     loadOffers();
     return () => { isMounted = false; };
   }, []);
+
+  // Fetch live announcement banners
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBanners() {
+      try {
+        const banners = await getPublicBanners('announcement');
+        if (isMounted && Array.isArray(banners) && banners.length > 0) {
+          setAnnouncementBanners(banners);
+        }
+      } catch (err) {
+        console.warn('Could not load announcement banners:', err);
+      }
+    }
+    loadBanners();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleCopyCoupon = (code) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success(`Coupon code "${code}" copied to clipboard!`);
+    setTimeout(() => setCopiedCode(null), 2500);
+  };
 
   // Rotate announcements every 3.8 seconds with smooth fade transition
   useEffect(() => {
@@ -275,8 +314,12 @@ export default function Header() {
 
   return (
     <>
-      {/* 1. TOP ANNOUNCEMENT BAR (Smooth Dynamic Rotation) */}
-      <div className="w-full bg-white text-zinc-900 border-b border-zinc-200 py-2 px-4 sm:px-8 text-center text-xs font-normal flex items-center justify-center gap-2.5 rounded-none tracking-normal overflow-hidden h-8.5 select-none">
+      {/* 1. TOP ANNOUNCEMENT BAR (Smooth Dynamic Rotation & Clickable Promo Drawer) */}
+      <div 
+        onClick={() => setIsOffersModalOpen(true)}
+        className="w-full bg-white hover:bg-neutral-50 text-zinc-900 border-b border-zinc-200 py-2 px-4 sm:px-8 text-center text-xs font-normal flex items-center justify-center gap-2.5 rounded-none tracking-normal overflow-hidden h-8.5 select-none cursor-pointer transition-colors group"
+        title="Click to view all active deals & promo codes"
+      >
         <span className="w-1.5 h-1.5 bg-red-600 inline-block animate-pulse shrink-0"></span>
         <div className="relative overflow-hidden h-5 flex items-center justify-center min-w-0 max-w-2xl">
           {announcements.map((ann, idx) => {
@@ -290,14 +333,14 @@ export default function Header() {
                     : 'opacity-0 translate-y-3 absolute pointer-events-none'
                 }`}
               >
-                <span className="truncate text-xs font-medium text-neutral-800">
+                <span className="truncate text-xs font-medium text-neutral-800 group-hover:text-black">
                   {ann.text}
                 </span>
                 {ann.code && (
                   <span className="inline-flex items-center gap-1 shrink-0">
                     <span className="hidden sm:inline text-zinc-400 font-light">|</span>
                     <span className="text-[11px] text-zinc-600 font-normal">Use code</span>
-                    <strong className="text-red-600 font-bold bg-neutral-100 px-1.5 py-0.5 border border-neutral-300 font-mono tracking-wider text-[11px]">
+                    <strong className="text-red-600 font-bold bg-neutral-100 group-hover:bg-white px-1.5 py-0.5 border border-neutral-300 font-mono tracking-wider text-[11px]">
                       {ann.code}
                     </strong>
                   </span>
@@ -306,6 +349,9 @@ export default function Header() {
             );
           })}
         </div>
+        <span className="hidden lg:inline-block text-[10px] uppercase font-bold text-neutral-400 group-hover:text-red-600 tracking-wider ml-1 transition-colors">
+          View All Offers →
+        </span>
       </div>
 
       {/* 2. STICKY MAIN NAVIGATION BAR */}
@@ -733,6 +779,192 @@ export default function Header() {
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)} 
       />
+
+      {/* 7. ULTRA-SLEEK ANNOUNCEMENTS & PROMOTIONAL OFFERS POPUP MODAL */}
+      {isOffersModalOpen && (
+        <div 
+          className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200 font-sans"
+          onClick={() => setIsOffersModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-lg bg-white rounded-none border border-neutral-300 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-neutral-200 bg-neutral-950 text-white">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white">
+                    Exclusive Deals & Store Offers
+                  </h3>
+                  <p className="text-[10px] text-neutral-400">
+                    Apply promo codes at checkout for instant savings
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsOffersModalOpen(false)}
+                className="text-neutral-400 hover:text-white p-1 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content / Scrollable Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-5 divide-y divide-neutral-100">
+              
+              {/* Active Promotional Banners (If Configured in Admin) */}
+              {announcementBanners.length > 0 && (
+                <div className="space-y-3 pb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block">
+                    Featured Campaign
+                  </span>
+                  <div className="space-y-3">
+                    {announcementBanners.map((b) => (
+                      <Link
+                        key={b.id}
+                        to={b.link_url || '/collections'}
+                        onClick={() => setIsOffersModalOpen(false)}
+                        className="group relative block overflow-hidden border border-neutral-200 bg-neutral-100 aspect-21/9"
+                      >
+                        <img 
+                          src={b.image_url} 
+                          alt={b.title} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4 text-white">
+                          {b.badge_text && (
+                            <span className="inline-block self-start px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold uppercase tracking-widest mb-1">
+                              {b.badge_text}
+                            </span>
+                          )}
+                          <h4 className="text-sm font-bold uppercase tracking-wide leading-tight">{b.title}</h4>
+                          {b.subtitle && (
+                            <p className="text-[11px] text-neutral-300 line-clamp-1 mt-0.5">{b.subtitle}</p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Coupons & Promo Codes List */}
+              <div className="space-y-3 pt-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block">
+                  Active Coupons & Promo Codes
+                </span>
+
+                <div className="space-y-2.5">
+                  {announcements.filter(a => a.code).length > 0 ? (
+                    announcements.filter(a => a.code).map((ann, idx) => (
+                      <div 
+                        key={idx} 
+                        className="flex items-center justify-between gap-3 p-3.5 bg-neutral-50 border border-neutral-200 rounded-none hover:border-neutral-400 transition-colors"
+                      >
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Tag className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                            <span className="font-bold text-xs text-neutral-900 font-mono tracking-wider bg-white px-2 py-0.5 border border-neutral-300">
+                              {ann.code}
+                            </span>
+                          </div>
+                          <p className="text-xs text-neutral-600 font-medium pt-1">
+                            {ann.text}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCoupon(ann.code)}
+                          className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                            copiedCode === ann.code
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-neutral-900 text-white hover:bg-black'
+                          }`}
+                        >
+                          {copiedCode === ann.code ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center justify-between gap-3 p-3.5 bg-neutral-50 border border-neutral-200">
+                      <div>
+                        <span className="font-bold text-xs text-neutral-900 font-mono bg-white px-2 py-0.5 border border-neutral-300">
+                          PUMP10
+                        </span>
+                        <p className="text-xs text-neutral-600 font-medium mt-1">
+                          Get 10% OFF on all activewear & orders
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyCoupon('PUMP10')}
+                        className="px-3 py-1.5 bg-neutral-900 text-white text-xs font-semibold uppercase tracking-wider"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Special Store Perks */}
+              <div className="space-y-3 pt-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 block">
+                  Storewide Benefits
+                </span>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="p-3 bg-neutral-50 border border-neutral-200 flex items-start gap-2.5">
+                    <span className="p-1.5 bg-white border border-neutral-200 text-neutral-900 shrink-0">🚚</span>
+                    <div>
+                      <h5 className="text-xs font-bold uppercase text-neutral-900">Free Express Shipping</h5>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">On all orders above ₹999 across India</p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-neutral-50 border border-neutral-200 flex items-start gap-2.5">
+                    <span className="p-1.5 bg-white border border-neutral-200 text-neutral-900 shrink-0">💳</span>
+                    <div>
+                      <h5 className="text-xs font-bold uppercase text-neutral-900">10% Prepaid Bonus</h5>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">Instant off with UPI, Cards & NetBanking</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Bottom CTA */}
+            <div className="p-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between gap-3">
+              <span className="text-[11px] text-neutral-500 font-medium">
+                Tap anywhere to explore collections
+              </span>
+              <Link
+                to="/collections"
+                onClick={() => setIsOffersModalOpen(false)}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm"
+              >
+                <span>Shop Now</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
