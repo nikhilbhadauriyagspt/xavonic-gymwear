@@ -21,6 +21,7 @@ const {
   saveShippingConfig,
   getBrandContent,
   saveBrandContent,
+  uploadBrandLogo,
 } = require('../controllers/adminSettingsController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
 
@@ -139,6 +140,7 @@ router.post('/settings/shipping', verifyAdminToken, saveShippingConfig);
 // Public/Protected: Brand Identity, About Story, Social Links & Policy CMS
 router.get('/settings/brand-content', getBrandContent);
 router.post('/settings/brand-content', verifyAdminToken, saveBrandContent);
+router.post('/settings/upload-logo', verifyAdminToken, upload.single('logo'), uploadBrandLogo);
 
 // Protected: Admin Live System Notifications
 const {

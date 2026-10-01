@@ -206,6 +206,37 @@ export default function BrandContentTab() {
 
   const [newFaq, setNewFaq] = useState({ q: '', a: '' });
   const [newSearchTag, setNewSearchTag] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(null); // 'logo_white' | 'logo_black' | null
+
+  const handleLogoUpload = async (file, logoType) => {
+    if (!file) return;
+    setUploadingLogo(logoType);
+    try {
+      const token = localStorage.getItem('xavonic_admin_token');
+      const formData = new FormData();
+      formData.append('logo', file);
+      formData.append('logo_type', logoType);
+
+      const res = await fetch(`${ADMIN_API_BASE}/settings/upload-logo`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      const resData = await res.json();
+      if (resData.success && resData.url) {
+        setData((prev) => ({ ...prev, [logoType]: resData.url }));
+        toast.success(`${logoType === 'logo_white' ? 'White Logo' : 'Black Logo'} uploaded and updated!`);
+      } else {
+        toast.error(resData.message || 'Failed to upload logo');
+      }
+    } catch (err) {
+      toast.error('Failed to connect to backend server');
+    } finally {
+      setUploadingLogo(null);
+    }
+  };
 
   // Fetch Data
   const loadBrandContent = async () => {
@@ -392,7 +423,7 @@ export default function BrandContentTab() {
               <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
                 <ImageIcon className="w-4 h-4 text-neutral-900" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-900">
-                  Brand Name & Logos (Light & Dark Themes)
+                  Brand Name & Logos (Upload Directly from Computer or Paste URL)
                 </h3>
               </div>
 
@@ -427,23 +458,61 @@ export default function BrandContentTab() {
                     <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-300">
                       1. White Logo (For Dark Header / Black Background)
                     </span>
+                    {data.logo_white && (
+                      <button
+                        type="button"
+                        onClick={() => setData({ ...data, logo_white: '' })}
+                        className="text-[10px] text-red-400 hover:text-red-300 underline cursor-pointer"
+                      >
+                        Reset to Default
+                      </button>
+                    )}
                   </div>
                   
-                  <div className="h-20 bg-neutral-900 border border-neutral-800 rounded-xs flex items-center justify-center p-3">
+                  <div className="h-24 bg-neutral-900 border border-neutral-800 rounded-xs flex items-center justify-center p-3 relative group">
                     {data.logo_white ? (
-                      <img src={data.logo_white} alt="White Logo" className="max-h-12 w-auto object-contain" />
+                      <img src={data.logo_white} alt="White Logo" className="max-h-16 w-auto object-contain" />
                     ) : (
                       <span className="text-xs text-neutral-500 italic">Default white logo in use</span>
                     )}
+                    {uploadingLogo === 'logo_white' && (
+                      <div className="absolute inset-0 bg-black/80 flex items-center justify-center gap-2 text-xs font-semibold text-white">
+                        <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
+                        <span>Uploading...</span>
+                      </div>
+                    )}
                   </div>
 
-                  <input
-                    type="text"
-                    placeholder="Paste Cloudinary / Image URL for White Logo"
-                    value={data.logo_white}
-                    onChange={(e) => setData({ ...data, logo_white: e.target.value })}
-                    className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-xs px-3 py-1.5 text-xs outline-none font-mono"
-                  />
+                  <div className="space-y-2">
+                    {/* Direct File Upload Button */}
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) handleLogoUpload(e.target.files[0], 'logo_white');
+                          }}
+                        />
+                        <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium rounded-xs border border-neutral-700 transition-colors">
+                          <Upload className="w-3.5 h-3.5 text-red-400" />
+                          <span>Upload File from PC</span>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-neutral-400 block font-mono">Or paste image URL:</span>
+                      <input
+                        type="text"
+                        placeholder="https://res.cloudinary.com/.../logo_white.png"
+                        value={data.logo_white}
+                        onChange={(e) => setData({ ...data, logo_white: e.target.value })}
+                        className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-xs px-3 py-1.5 text-xs outline-none font-mono"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Black Logo (For Light Scrolled Header & Invoices) */}
@@ -452,23 +521,61 @@ export default function BrandContentTab() {
                     <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-700">
                       2. Black Logo (For Light Header, Invoices & Mobile Drawer)
                     </span>
-                  </div>
-
-                  <div className="h-20 bg-white border border-neutral-200 rounded-xs flex items-center justify-center p-3">
-                    {data.logo_black ? (
-                      <img src={data.logo_black} alt="Black Logo" className="max-h-12 w-auto object-contain" />
-                    ) : (
-                      <span className="text-xs text-neutral-400 italic">Default black logo in use</span>
+                    {data.logo_black && (
+                      <button
+                        type="button"
+                        onClick={() => setData({ ...data, logo_black: '' })}
+                        className="text-[10px] text-red-600 hover:text-red-700 underline cursor-pointer"
+                      >
+                        Reset to Default
+                      </button>
                     )}
                   </div>
 
-                  <input
-                    type="text"
-                    placeholder="Paste Cloudinary / Image URL for Black Logo"
-                    value={data.logo_black}
-                    onChange={(e) => setData({ ...data, logo_black: e.target.value })}
-                    className="w-full bg-white border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
-                  />
+                  <div className="h-24 bg-white border border-neutral-200 rounded-xs flex items-center justify-center p-3 relative group">
+                    {data.logo_black ? (
+                      <img src={data.logo_black} alt="Black Logo" className="max-h-16 w-auto object-contain" />
+                    ) : (
+                      <span className="text-xs text-neutral-400 italic">Default black logo in use</span>
+                    )}
+                    {uploadingLogo === 'logo_black' && (
+                      <div className="absolute inset-0 bg-white/90 flex items-center justify-center gap-2 text-xs font-semibold text-neutral-900">
+                        <RefreshCw className="w-4 h-4 animate-spin text-neutral-900" />
+                        <span>Uploading...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* Direct File Upload Button */}
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) handleLogoUpload(e.target.files[0], 'logo_black');
+                          }}
+                        />
+                        <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-neutral-100 text-neutral-800 text-xs font-medium rounded-xs border border-neutral-300 transition-colors shadow-xs">
+                          <Upload className="w-3.5 h-3.5 text-neutral-700" />
+                          <span>Upload File from PC</span>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-neutral-500 block font-mono">Or paste image URL:</span>
+                      <input
+                        type="text"
+                        placeholder="https://res.cloudinary.com/.../logo_black.png"
+                        value={data.logo_black}
+                        onChange={(e) => setData({ ...data, logo_black: e.target.value })}
+                        className="w-full bg-white border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                      />
+                    </div>
+                  </div>
                 </div>
 
               </div>

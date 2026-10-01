@@ -570,5 +570,41 @@ exports.saveBrandContent = async (req, res) => {
   }
 };
 
+// 17. Upload Brand Logo directly to Cloudinary & update settings (Admin Protected)
+exports.uploadBrandLogo = async (req, res) => {
+  try {
+    const { uploadToCloudinary } = require('../services/cloudinaryService');
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ success: false, message: 'No image file uploaded.' });
+    }
+
+    const { logo_type } = req.body; // 'logo_white' or 'logo_black'
+    const result = await uploadToCloudinary(req.file.buffer, 'guidelya/brand');
+    const secureUrl = result.secure_url;
+
+    if (logo_type === 'logo_white' || logo_type === 'logo_black') {
+      const settingKey = `brand_${logo_type}`;
+      await db.query(
+        'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+        [settingKey, secureUrl, secureUrl]
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Logo uploaded successfully to cloud storage!',
+      url: secureUrl,
+      logo_type,
+    });
+  } catch (err) {
+    console.error('Error in uploadBrandLogo:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload logo to cloud storage.',
+      error: err.message,
+    });
+  }
+};
+
 
 
