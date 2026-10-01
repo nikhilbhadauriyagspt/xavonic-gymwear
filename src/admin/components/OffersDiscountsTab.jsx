@@ -41,8 +41,16 @@ export default function OffersDiscountsTab() {
     coupons: [
       { code: 'VIP10', discount_type: 'percent', value: 10, min_cart: 999, description: '10% OFF on all activewear' },
       { code: 'PUMP200', discount_type: 'flat', value: 200, min_cart: 1499, description: 'Flat ₹200 OFF on orders above ₹1499' }
+    ],
+    announcements: [
+      { text: 'Free express shipping on all orders over ₹999', code: '' },
+      { text: 'Get 10% OFF on all gymwear', code: 'PUMP10' },
+      { text: 'Extra 10% instant discount on Prepaid Orders', code: '' },
+      { text: 'Engineered for Performance • New Drops Live Now', code: '' }
     ]
   });
+
+  const [newAnnouncement, setNewAnnouncement] = useState({ text: '', code: '' });
 
   const [newCoupon, setNewCoupon] = useState({
     code: '',
@@ -124,6 +132,26 @@ export default function OffersDiscountsTab() {
     }));
   };
 
+  const addAnnouncement = () => {
+    if (!newAnnouncement.text.trim()) {
+      toast.error('Announcement message text is required');
+      return;
+    }
+    setConfig(prev => ({
+      ...prev,
+      announcements: [...(prev.announcements || []), { text: newAnnouncement.text.trim(), code: newAnnouncement.code.trim().toUpperCase() }]
+    }));
+    setNewAnnouncement({ text: '', code: '' });
+    toast.success('Announcement ticker added to rotation!');
+  };
+
+  const removeAnnouncement = (idx) => {
+    setConfig(prev => ({
+      ...prev,
+      announcements: (prev.announcements || []).filter((_, i) => i !== idx)
+    }));
+  };
+
   if (loading) {
     return (
       <div className="p-12 text-center text-neutral-400 bg-white border border-neutral-200 rounded-sm">
@@ -164,6 +192,80 @@ export default function OffersDiscountsTab() {
 
       <form onSubmit={handleSave} className="space-y-5">
         
+        {/* ======================================================== */}
+        {/* CARD 0: TOP ROTATING ANNOUNCEMENT TICKER BAR             */}
+        {/* ======================================================== */}
+        <div className="bg-white p-5 border border-neutral-200 rounded-sm space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500" />
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-900">
+                  Header Announcement Bar (Auto-Rotating Ticker)
+                </h3>
+                <p className="text-[11px] text-neutral-500">
+                  Rotating promotion messages & coupon codes shown at the top of the website (changes every ~4s)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Tickers List */}
+          <div className="space-y-2">
+            {(config.announcements || []).map((ann, idx) => (
+              <div key={idx} className="flex items-center justify-between gap-3 p-2.5 bg-neutral-50 border border-neutral-200 rounded-xs text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full bg-red-600 shrink-0"></span>
+                  <span className="font-medium text-neutral-900 truncate">{ann.text}</span>
+                  {ann.code && (
+                    <span className="px-1.5 py-0.5 bg-red-50 text-red-600 font-bold border border-red-200 text-[10px] uppercase font-mono shrink-0">
+                      Code: {ann.code}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeAnnouncement(idx)}
+                  className="text-neutral-400 hover:text-red-600 p-1 transition-colors"
+                  title="Remove message"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add New Announcement Ticker */}
+          <div className="p-3 bg-neutral-50 border border-dashed border-neutral-300 rounded-xs space-y-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-700 block">
+              + Add New Announcement Slide
+            </span>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                placeholder="Message text (e.g. Free express shipping on all orders over ₹999)"
+                value={newAnnouncement.text}
+                onChange={(e) => setNewAnnouncement({ ...newAnnouncement, text: e.target.value })}
+                className="flex-1 bg-white border border-neutral-200 px-3 py-1.5 text-xs text-neutral-900 outline-none rounded-xs"
+              />
+              <input
+                type="text"
+                placeholder="Coupon Code (Optional, e.g. PUMP10)"
+                value={newAnnouncement.code}
+                onChange={(e) => setNewAnnouncement({ ...newAnnouncement, code: e.target.value })}
+                className="w-full sm:w-48 bg-white border border-neutral-200 px-3 py-1.5 text-xs text-neutral-900 outline-none rounded-xs uppercase font-mono"
+              />
+              <button
+                type="button"
+                onClick={addAnnouncement}
+                className="px-4 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors shrink-0"
+              >
+                Add Slide
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* ======================================================== */}
         {/* CARD 1: VOLUME BUNDLE OFFERS (BUY MORE, SAVE MORE)       */}
         {/* ======================================================== */}

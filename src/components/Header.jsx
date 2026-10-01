@@ -19,8 +19,15 @@ import logoBlack from '../assets/logo_balck.png';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
-import { fetchLiveCategories } from '../services/productService';
 import SearchModal from './SearchModal';
+import { ADMIN_API_BASE } from '../config/api';
+
+const DEFAULT_ANNOUNCEMENTS = [
+  { text: 'Free express shipping on all orders over ₹999', highlight: 'Free Delivery', code: null },
+  { text: 'Get 10% OFF on all gymwear', highlight: 'Use Code', code: 'PUMP10' },
+  { text: 'Extra 10% instant discount on Prepaid Orders', highlight: 'Prepaid Offer', code: null },
+  { text: 'Engineered for Performance • New Drops Live Now', highlight: 'New In', code: null },
+];
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,10 +38,66 @@ export default function Header() {
   const [categoriesList, setCategoriesList] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
+  // Dynamic Announcement Ticker States
+  const [announcements, setAnnouncements] = useState(DEFAULT_ANNOUNCEMENTS);
+  const [currentAnnouncementIdx, setCurrentAnnouncementIdx] = useState(0);
+
   const location = useLocation();
   const { openCart, totalItemsCount } = useCart();
   const { handleAccountClick, isLoggedIn, user } = useAuth();
   const { wishlistCount } = useWishlist();
+
+  // Fetch live announcement & offers configuration
+  useEffect(() => {
+    let isMounted = true;
+    async function loadOffers() {
+      try {
+        const res = await fetch(`${ADMIN_API_BASE}/settings/offers`);
+        const data = await res.json();
+        if (isMounted && data.success && data.config) {
+          const cfg = data.config;
+          const list = [];
+          
+          if (Array.isArray(cfg.announcements) && cfg.announcements.length > 0) {
+            cfg.announcements.forEach(a => {
+              if (a.text) list.push(a);
+            });
+          }
+
+          if (list.length === 0) {
+            if (cfg.free_shipping_threshold) {
+              list.push({ text: `Free express shipping on all orders over ₹${cfg.free_shipping_threshold}`, highlight: 'Free Delivery', code: null });
+            }
+            if (Array.isArray(cfg.coupons) && cfg.coupons.length > 0) {
+              cfg.coupons.forEach(c => {
+                list.push({ text: `${c.description || `${c.value}% OFF`}`, highlight: 'Use Code', code: c.code });
+              });
+            }
+            if (cfg.prepaid_discount_enabled) {
+              list.push({ text: cfg.prepaid_discount_label || `Extra ${cfg.prepaid_discount_percent || 10}% OFF on Prepaid Orders`, highlight: 'Prepaid Deal', code: null });
+            }
+          }
+
+          if (list.length > 0) {
+            setAnnouncements(list);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load announcements:', err);
+      }
+    }
+    loadOffers();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Rotate announcements every 3.8 seconds with smooth fade transition
+  useEffect(() => {
+    if (!announcements || announcements.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentAnnouncementIdx((prev) => (prev + 1) % announcements.length);
+    }, 3800);
+    return () => clearInterval(interval);
+  }, [announcements]);
 
   // 1. Fetch live categories from backend / MySQL DB
   useEffect(() => {
@@ -212,14 +275,37 @@ export default function Header() {
 
   return (
     <>
-      {/* 1. TOP ANNOUNCEMENT BAR */}
-      <div className="w-full bg-white text-zinc-900 border-b border-zinc-300 py-2 px-4 sm:px-8 text-center text-xs font-normal flex items-center justify-center gap-2.5 rounded-none tracking-normal">
-        <span className="w-1.5 h-1.5 bg-red-600 inline-block animate-pulse"></span>
-        <span>Free express shipping on all orders over ₹999</span>
-        <span className="hidden md:inline text-zinc-300">|</span>
-        <span className="hidden md:inline text-zinc-700">
-          Use code <strong className="text-red-600 font-medium bg-zinc-100 px-1.5 py-0.5 border border-zinc-300">PUMP10</strong> for 10% off
-        </span>
+      {/* 1. TOP ANNOUNCEMENT BAR (Smooth Dynamic Rotation) */}
+      <div className="w-full bg-white text-zinc-900 border-b border-zinc-200 py-2 px-4 sm:px-8 text-center text-xs font-normal flex items-center justify-center gap-2.5 rounded-none tracking-normal overflow-hidden h-8.5 select-none">
+        <span className="w-1.5 h-1.5 bg-red-600 inline-block animate-pulse shrink-0"></span>
+        <div className="relative overflow-hidden h-5 flex items-center justify-center min-w-0 max-w-2xl">
+          {announcements.map((ann, idx) => {
+            const isActive = idx === currentAnnouncementIdx;
+            return (
+              <div
+                key={idx}
+                className={`flex items-center justify-center gap-2 transition-all duration-500 transform ${
+                  isActive
+                    ? 'opacity-100 translate-y-0 relative'
+                    : 'opacity-0 translate-y-3 absolute pointer-events-none'
+                }`}
+              >
+                <span className="truncate text-xs font-medium text-neutral-800">
+                  {ann.text}
+                </span>
+                {ann.code && (
+                  <span className="inline-flex items-center gap-1 shrink-0">
+                    <span className="hidden sm:inline text-zinc-400 font-light">|</span>
+                    <span className="text-[11px] text-zinc-600 font-normal">Use code</span>
+                    <strong className="text-red-600 font-bold bg-neutral-100 px-1.5 py-0.5 border border-neutral-300 font-mono tracking-wider text-[11px]">
+                      {ann.code}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 2. STICKY MAIN NAVIGATION BAR */}
