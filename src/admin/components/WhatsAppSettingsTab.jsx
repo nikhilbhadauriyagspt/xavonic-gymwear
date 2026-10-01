@@ -18,12 +18,16 @@ import {
   Lock,
   MapPin,
   Navigation,
+  Truck,
+  CheckCircle2,
+  Box,
+  Globe,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
 
 export default function GatewaySettingsTab() {
-  const [activeSubTab, setActiveSubTab] = useState('whatsapp'); // 'whatsapp' | 'email' | 'cloudinary' | 'maps'
+  const [activeSubTab, setActiveSubTab] = useState('whatsapp'); // 'whatsapp' | 'email' | 'cloudinary' | 'maps' | 'logistics'
 
   // WhatsApp Config State
   const [waConfig, setWaConfig] = useState({
@@ -59,13 +63,34 @@ export default function GatewaySettingsTab() {
     enable_gps_geocoding: true,
   });
 
+  // Courier & Logistics Config State (Shiprocket / NimbusPost / Manual)
+  const [logisticsConfig, setLogisticsConfig] = useState({
+    default_gateway: 'shiprocket', // 'shiprocket' | 'nimbuspost' | 'manual'
+    shiprocket_mode: 'test',
+    shiprocket_email: '',
+    shiprocket_password: '',
+    shiprocket_pickup_location: 'Primary',
+    nimbuspost_mode: 'test',
+    nimbuspost_email: '',
+    nimbuspost_token: '',
+    nimbuspost_warehouse_id: '',
+    default_courier_partner: 'Bluedart Express',
+    default_estimated_days: '2-4 Business Days',
+    auto_send_whatsapp: 'true',
+    auto_send_email: 'true',
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isTestingShiprocket, setIsTestingShiprocket] = useState(false);
+  const [isTestingNimbus, setIsTestingNimbus] = useState(false);
   const [showWaToken, setShowWaToken] = useState(false);
   const [showSmtpPass, setShowSmtpPass] = useState(false);
   const [showCloudSecret, setShowCloudSecret] = useState(false);
   const [showMapsKey, setShowMapsKey] = useState(false);
+  const [showShiprocketPass, setShowShiprocketPass] = useState(false);
+  const [showNimbusToken, setShowNimbusToken] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testEmail, setTestEmail] = useState('');
 
@@ -79,7 +104,7 @@ export default function GatewaySettingsTab() {
       setIsLoading(true);
       const token = localStorage.getItem('xavonic_admin_token');
 
-      const [waRes, smtpRes, cloudRes, mapsRes] = await Promise.all([
+      const [waRes, smtpRes, cloudRes, mapsRes, logRes] = await Promise.all([
         fetch(`${ADMIN_API_BASE}/settings/whatsapp`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -92,17 +117,22 @@ export default function GatewaySettingsTab() {
         fetch(`${ADMIN_API_BASE}/settings/maps`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${ADMIN_API_BASE}/settings/logistics`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       const waData = await waRes.json();
       const smtpData = await smtpRes.json();
       const cloudData = await cloudRes.json();
       const mapsData = await mapsRes.json();
+      const logData = await logRes.json();
 
       if (waData.success && waData.config) setWaConfig(waData.config);
       if (smtpData.success && smtpData.config) setSmtpConfig(smtpData.config);
       if (cloudData.success && cloudData.config) setCloudinaryConfig(cloudData.config);
       if (mapsData.success && mapsData.config) setMapsConfig(mapsData.config);
+      if (logData.success && logData.config) setLogisticsConfig((prev) => ({ ...prev, ...logData.config }));
     } catch (err) {
       console.warn('Failed to fetch gateway configs:', err);
     } finally {
@@ -282,6 +312,100 @@ export default function GatewaySettingsTab() {
     }
   };
 
+  // Save Courier & Logistics Config
+  const handleSaveLogistics = async (e) => {
+    e?.preventDefault?.();
+    try {
+      setIsSaving(true);
+      const token = localStorage.getItem('xavonic_admin_token');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/logistics`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(logisticsConfig),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Courier & Logistics settings saved to MySQL database!');
+      } else {
+        toast.error(data.message || 'Failed to save logistics settings.');
+      }
+    } catch (err) {
+      toast.error('Could not connect to backend server.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Test Shiprocket Connection
+  const handleTestShiprocket = async () => {
+    if (!logisticsConfig.shiprocket_email || !logisticsConfig.shiprocket_password) {
+      toast.error('Please enter Shiprocket API Email and API Password.');
+      return;
+    }
+    try {
+      setIsTestingShiprocket(true);
+      const token = localStorage.getItem('xavonic_admin_token');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/logistics/test-shiprocket`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: logisticsConfig.shiprocket_email,
+          password: logisticsConfig.shiprocket_password,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || 'Shiprocket API connected successfully!');
+      } else {
+        toast.error(data.message || 'Shiprocket test failed.');
+      }
+    } catch (err) {
+      toast.error('Failed to test Shiprocket connection.');
+    } finally {
+      setIsTestingShiprocket(false);
+    }
+  };
+
+  // Test NimbusPost Connection
+  const handleTestNimbusPost = async () => {
+    if (!logisticsConfig.nimbuspost_email || !logisticsConfig.nimbuspost_token) {
+      toast.error('Please enter NimbusPost API Email and Secret Token.');
+      return;
+    }
+    try {
+      setIsTestingNimbus(true);
+      const token = localStorage.getItem('xavonic_admin_token');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/logistics/test-nimbuspost`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: logisticsConfig.nimbuspost_email,
+          token: logisticsConfig.nimbuspost_token,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || 'NimbusPost API connected successfully!');
+      } else {
+        toast.error(data.message || 'NimbusPost test failed.');
+      }
+    } catch (err) {
+      toast.error('Failed to test NimbusPost connection.');
+    } finally {
+      setIsTestingNimbus(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-full p-12 bg-white border border-neutral-200 rounded-sm text-center">
@@ -301,12 +425,12 @@ export default function GatewaySettingsTab() {
             Authentication Gateways & API Settings
           </h1>
           <p className="text-xs text-neutral-500 mt-0.5">
-            Configure Meta WhatsApp Cloud API credentials and Nodemailer SMTP Email delivery
+            Configure WhatsApp, Email, Cloudinary, Maps, and Courier Logistics (Shiprocket/NimbusPost)
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center p-0.5 bg-neutral-100 rounded-sm border border-neutral-200 text-xs">
+        <div className="flex items-center flex-wrap gap-1 p-0.5 bg-neutral-100 rounded-sm border border-neutral-200 text-xs">
           <button
             type="button"
             onClick={() => setActiveSubTab('whatsapp')}
@@ -356,7 +480,20 @@ export default function GatewaySettingsTab() {
             }`}
           >
             <MapPin className="h-3.5 w-3.5 text-amber-600" />
-            <span>Google Maps API</span>
+            <span>Google Maps</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('logistics')}
+            className={`px-3 py-1.5 font-medium rounded-sm flex items-center gap-1.5 transition-colors cursor-pointer ${
+              activeSubTab === 'logistics'
+                ? 'bg-white text-neutral-900 shadow-xs'
+                : 'text-neutral-500 hover:text-neutral-900'
+            }`}
+          >
+            <Truck className="h-3.5 w-3.5 text-indigo-600" />
+            <span>Courier & Delivery</span>
           </button>
         </div>
       </div>
@@ -943,6 +1080,428 @@ export default function GatewaySettingsTab() {
         </form>
       )}
 
+      {/* ======================================================== */}
+      {/* 5. COURIER & LOGISTICS DELIVERY GATEWAY TAB (NEW)        */}
+      {/* ======================================================== */}
+      {activeSubTab === 'logistics' && (
+        <form onSubmit={handleSaveLogistics} className="space-y-6">
+          <div className="bg-white border border-neutral-200 rounded-sm p-4 sm:p-6 space-y-6 shadow-xs">
+            
+            {/* Top Heading */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-neutral-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-sm bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+                  <Truck className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-neutral-900 uppercase tracking-wide">
+                      Logistics & Courier Delivery Gateway
+                    </h2>
+                    <span className="text-[10px] px-2 py-0.5 font-semibold bg-indigo-100 text-indigo-800 rounded-full">
+                      Shiprocket • NimbusPost • Manual
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Connect shipping aggregators for 1-click AWB generation, label printing, and automated tracking alerts.
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-500 font-medium">Default Mode:</span>
+                <span className="px-2.5 py-1 text-xs font-semibold bg-neutral-900 text-white rounded-sm uppercase tracking-wider">
+                  {logisticsConfig.default_gateway}
+                </span>
+              </div>
+            </div>
+
+            {/* 1. Default Courier Gateway Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-neutral-800 block">
+                Select Default Shipping Partner
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                
+                {/* Shiprocket Option */}
+                <label
+                  onClick={() => setLogisticsConfig({ ...logisticsConfig, default_gateway: 'shiprocket' })}
+                  className={`p-4 border rounded-sm cursor-pointer transition-all ${
+                    logisticsConfig.default_gateway === 'shiprocket'
+                      ? 'border-indigo-600 bg-indigo-50/40 ring-1 ring-indigo-600'
+                      : 'border-neutral-200 hover:border-neutral-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-indigo-600 flex items-center justify-center">
+                        {logisticsConfig.default_gateway === 'shiprocket' && (
+                          <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-neutral-900">Shiprocket API</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 font-medium bg-emerald-100 text-emerald-800 rounded-xs">
+                      Recommended
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 mt-2">
+                    India's most popular D2C aggregator with automated WhatsApp tracking & courier allocation.
+                  </p>
+                </label>
+
+                {/* NimbusPost Option */}
+                <label
+                  onClick={() => setLogisticsConfig({ ...logisticsConfig, default_gateway: 'nimbuspost' })}
+                  className={`p-4 border rounded-sm cursor-pointer transition-all ${
+                    logisticsConfig.default_gateway === 'nimbuspost'
+                      ? 'border-indigo-600 bg-indigo-50/40 ring-1 ring-indigo-600'
+                      : 'border-neutral-200 hover:border-neutral-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-indigo-600 flex items-center justify-center">
+                        {logisticsConfig.default_gateway === 'nimbuspost' && (
+                          <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-neutral-900">NimbusPost API</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 font-medium bg-blue-100 text-blue-800 rounded-xs">
+                      Lowest Rates
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 mt-2">
+                    Ultra low shipping rates starting ₹21/500g with 15+ integrated courier partners.
+                  </p>
+                </label>
+
+                {/* Manual Option */}
+                <label
+                  onClick={() => setLogisticsConfig({ ...logisticsConfig, default_gateway: 'manual' })}
+                  className={`p-4 border rounded-sm cursor-pointer transition-all ${
+                    logisticsConfig.default_gateway === 'manual'
+                      ? 'border-indigo-600 bg-indigo-50/40 ring-1 ring-indigo-600'
+                      : 'border-neutral-200 hover:border-neutral-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-indigo-600 flex items-center justify-center">
+                        {logisticsConfig.default_gateway === 'manual' && (
+                          <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-neutral-900">Manual Courier</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.5 font-medium bg-neutral-100 text-neutral-700 rounded-xs">
+                      Self Delivery
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 mt-2">
+                    Enter any courier partner (Bluedart, Delhivery, DTDC, Speed Post) and tracking ID manually.
+                  </p>
+                </label>
+
+              </div>
+            </div>
+
+            {/* 2. SHIPROCKET API CREDENTIALS CARD */}
+            <div className="p-4 sm:p-5 bg-neutral-50 border border-neutral-200 rounded-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-neutral-200">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+                    1. Shiprocket API Credentials
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTestShiprocket}
+                    disabled={isTestingShiprocket}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 text-xs font-medium text-neutral-800 rounded-sm transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isTestingShiprocket ? <RefreshCw className="h-3 w-3 animate-spin text-indigo-600" /> : <Zap className="h-3 w-3 text-amber-500" />}
+                    <span>Test Shiprocket Connection</span>
+                  </button>
+                  <a
+                    href="https://app.shiprocket.in/api-user"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-indigo-600 hover:underline inline-flex items-center gap-0.5"
+                  >
+                    <span>Get API Key</span>
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Shiprocket Mode */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Environment Mode
+                  </label>
+                  <select
+                    value={logisticsConfig.shiprocket_mode}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_mode: e.target.value })}
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 outline-none"
+                  >
+                    <option value="test">Test / Sandbox Simulator</option>
+                    <option value="live">Live Production Account</option>
+                  </select>
+                </div>
+
+                {/* Shiprocket Email */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Shiprocket API Email
+                  </label>
+                  <input
+                    type="email"
+                    value={logisticsConfig.shiprocket_email}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_email: e.target.value })}
+                    placeholder="logistics@guidelya.com"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                  />
+                </div>
+
+                {/* Shiprocket Password */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-neutral-700">
+                      API Password / Secret
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowShiprocketPass(!showShiprocketPass)}
+                      className="text-[10px] text-neutral-500 hover:text-neutral-900"
+                    >
+                      {showShiprocketPass ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <input
+                    type={showShiprocketPass ? 'text' : 'password'}
+                    value={logisticsConfig.shiprocket_password}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_password: e.target.value })}
+                    placeholder="••••••••••••"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                  />
+                </div>
+
+                {/* Pickup Location */}
+                <div className="sm:col-span-3">
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Pickup Location / Warehouse Nickname (as set in Shiprocket Dashboard)
+                  </label>
+                  <input
+                    type="text"
+                    value={logisticsConfig.shiprocket_pickup_location}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_pickup_location: e.target.value })}
+                    placeholder="Primary"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                  />
+                  <p className="text-[10px] text-neutral-400 mt-1">
+                    Matches your default dispatch warehouse address configured on Shiprocket.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. NIMBUSPOST API CREDENTIALS CARD */}
+            <div className="p-4 sm:p-5 bg-neutral-50 border border-neutral-200 rounded-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-neutral-200">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-600" />
+                  <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+                    2. NimbusPost API Credentials
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleTestNimbusPost}
+                    disabled={isTestingNimbus}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 text-xs font-medium text-neutral-800 rounded-sm transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isTestingNimbus ? <RefreshCw className="h-3 w-3 animate-spin text-blue-600" /> : <Zap className="h-3 w-3 text-amber-500" />}
+                    <span>Test NimbusPost Connection</span>
+                  </button>
+                  <a
+                    href="https://app.nimbuspost.com/api"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-blue-600 hover:underline inline-flex items-center gap-0.5"
+                  >
+                    <span>Get API Token</span>
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Nimbus Mode */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Environment Mode
+                  </label>
+                  <select
+                    value={logisticsConfig.nimbuspost_mode}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, nimbuspost_mode: e.target.value })}
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 outline-none"
+                  >
+                    <option value="test">Test / Sandbox Simulator</option>
+                    <option value="live">Live Production Account</option>
+                  </select>
+                </div>
+
+                {/* Nimbus Email */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    NimbusPost Account Email
+                  </label>
+                  <input
+                    type="email"
+                    value={logisticsConfig.nimbuspost_email}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, nimbuspost_email: e.target.value })}
+                    placeholder="shipping@guidelya.com"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                  />
+                </div>
+
+                {/* Nimbus Token */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-neutral-700">
+                      API Secret Token / Key
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowNimbusToken(!showNimbusToken)}
+                      className="text-[10px] text-neutral-500 hover:text-neutral-900"
+                    >
+                      {showNimbusToken ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <input
+                    type={showNimbusToken ? 'text' : 'password'}
+                    value={logisticsConfig.nimbuspost_token}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, nimbuspost_token: e.target.value })}
+                    placeholder="np_live_token_••••••••"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 4. MANUAL COURIER & NOTIFICATION RULES */}
+            <div className="p-4 sm:p-5 bg-neutral-50 border border-neutral-200 rounded-sm space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-neutral-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                <h3 className="text-xs font-bold text-neutral-900 uppercase tracking-wide">
+                  3. Automated Dispatch & Notification Settings
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Default Courier Partner */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Default Courier Partner for Manual Dispatch
+                  </label>
+                  <select
+                    value={logisticsConfig.default_courier_partner}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, default_courier_partner: e.target.value })}
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 outline-none"
+                  >
+                    <option value="Bluedart Express">Bluedart Express</option>
+                    <option value="Delhivery Surface">Delhivery Surface</option>
+                    <option value="Delhivery Express">Delhivery Express</option>
+                    <option value="DTDC Priority">DTDC Priority</option>
+                    <option value="Ekart Logistics">Ekart Logistics</option>
+                    <option value="Shadowfax">Shadowfax</option>
+                    <option value="Xpressbees">Xpressbees</option>
+                    <option value="India Post Speed Post">India Post Speed Post</option>
+                    <option value="Trackon Couriers">Trackon Couriers</option>
+                  </select>
+                </div>
+
+                {/* Default Estimated Delivery Timeline */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Estimated Delivery Timeline Template
+                  </label>
+                  <input
+                    type="text"
+                    value={logisticsConfig.default_estimated_days}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, default_estimated_days: e.target.value })}
+                    placeholder="Within 2–4 Business Days"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Notification Toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <label className="flex items-center gap-2.5 p-3 bg-white border border-neutral-200 rounded-sm cursor-pointer hover:bg-neutral-100">
+                  <input
+                    type="checkbox"
+                    checked={logisticsConfig.auto_send_whatsapp === 'true' || logisticsConfig.auto_send_whatsapp === true}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, auto_send_whatsapp: e.target.checked ? 'true' : 'false' })}
+                    className="accent-neutral-900 h-4 w-4"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-neutral-900 block flex items-center gap-1.5">
+                      <MessageSquare className="h-3 w-3 text-emerald-600" />
+                      Auto-Send WhatsApp Tracking Alert
+                    </span>
+                    <span className="text-[11px] text-neutral-500">
+                      Dispatches tracking code & live tracking URL to customer's WhatsApp on order dispatch
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2.5 p-3 bg-white border border-neutral-200 rounded-sm cursor-pointer hover:bg-neutral-100">
+                  <input
+                    type="checkbox"
+                    checked={logisticsConfig.auto_send_email === 'true' || logisticsConfig.auto_send_email === true}
+                    onChange={(e) => setLogisticsConfig({ ...logisticsConfig, auto_send_email: e.target.checked ? 'true' : 'false' })}
+                    className="accent-neutral-900 h-4 w-4"
+                  />
+                  <div className="text-xs">
+                    <span className="font-bold text-neutral-900 block flex items-center gap-1.5">
+                      <Mail className="h-3 w-3 text-red-600" />
+                      Auto-Send Email Tracking Alert
+                    </span>
+                    <span className="text-[11px] text-neutral-500">
+                      Sends branded HTML email with "Track Live Shipment" button on order dispatch
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+            </div>
+
+            {/* Save Button */}
+            <div className="pt-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-900 hover:bg-red-600 text-white text-xs font-medium uppercase tracking-wider rounded-sm transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {isSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                <span>Save Logistics & Courier Settings</span>
+              </button>
+            </div>
+
+          </div>
+        </form>
+      )}
+
     </div>
   );
 }
+

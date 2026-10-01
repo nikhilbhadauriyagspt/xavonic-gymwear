@@ -152,7 +152,55 @@ async function sendOrderWhatsAppNotification(orderData) {
     }
   }
 
-  console.log(`🧪 Simulated WhatsApp Order message for #${orderNum} to +${cleanPhone}`);
+  console.log(`🧪 Simulated WhatsApp order notification for #${orderNum} to +${cleanPhone}`);
+  return { success: true, mode: 'test' };
+}
+
+// 4. Send Order Dispatched & Tracking WhatsApp Notification
+async function sendOrderDispatchNotification(orderData) {
+  const settings = await getWhatsAppSettings();
+  const phone = orderData.customer_phone || orderData.customerPhone;
+  if (!phone) return { success: false, message: 'No phone number provided' };
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;
+  const courier = orderData.courier_partner || 'Bluedart Express';
+  const tracking = orderData.tracking_number || 'Generated';
+  const trackingUrl = orderData.tracking_url || `https://shiprocket.co//tracking/${tracking}`;
+  const estDelivery = orderData.estimated_delivery || 'Within 2–4 Business Days';
+
+  const messageText = `🚀 *Your Order is On Its Way! #${orderNum}*\n\nHey ${orderData.customer_name || 'Customer'},\nYour order from *Guidelya Activewear* has been dispatched via *${courier}*!\n\n📦 *Tracking AWB:* ${tracking}\n🚚 *Courier Partner:* ${courier}\n📅 *Expected Delivery:* ${estDelivery}\n\n🔗 *Track Live Order Status:*\n${trackingUrl}\n\nNeed help? Reply directly to this message. Thank you for shopping with Guidelya!`;
+
+  if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
+    try {
+      const metaUrl = `https://graph.facebook.com/v19.0/${settings.phone_number_id}/messages`;
+      const payload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'text',
+        text: { preview_url: true, body: messageText },
+      };
+
+      await fetch(metaUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.meta_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log(`✅ Dispatch notification sent via WhatsApp to +${cleanPhone}`);
+      return { success: true, mode: 'live' };
+    } catch (err) {
+      console.warn('Could not send live dispatch WhatsApp message:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  console.log(`🧪 Simulated WhatsApp Dispatch alert for #${orderNum} to +${cleanPhone}`);
+  console.log(`🚚 Courier: ${courier} | AWB: ${tracking} | Track: ${trackingUrl}`);
   return { success: true, mode: 'test' };
 }
 
@@ -160,5 +208,6 @@ module.exports = {
   getWhatsAppSettings,
   sendWhatsAppOtp,
   sendOrderWhatsAppNotification,
+  sendOrderDispatchNotification,
 };
 

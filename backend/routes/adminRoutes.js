@@ -27,6 +27,11 @@ const {
   getBrandContent,
   saveBrandContent,
   uploadBrandLogo,
+  getLogisticsConfig,
+  saveLogisticsConfig,
+  testShiprocketGateway,
+  testNimbusPostGateway,
+  shipAdminOrder,
 } = require('../controllers/adminSettingsController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
 
@@ -153,6 +158,15 @@ router.post('/settings/shipping', verifyAdminToken, saveShippingConfig);
 router.get('/settings/brand-content', getBrandContent);
 router.post('/settings/brand-content', verifyAdminToken, saveBrandContent);
 router.post('/settings/upload-logo', verifyAdminToken, upload.single('logo'), uploadBrandLogo);
+
+// Protected: Courier & Logistics Gateway Settings (Shiprocket, NimbusPost, Manual)
+router.get('/settings/logistics', verifyAdminToken, getLogisticsConfig);
+router.post('/settings/logistics', verifyAdminToken, saveLogisticsConfig);
+router.post('/settings/logistics/test-shiprocket', verifyAdminToken, testShiprocketGateway);
+router.post('/settings/logistics/test-nimbuspost', verifyAdminToken, testNimbusPostGateway);
+
+// Protected: 1-Click Ship Order & Dispatch (Shiprocket / NimbusPost / Manual)
+router.post('/orders/:orderId/ship', verifyAdminToken, shipAdminOrder);
 
 // Protected: Admin Live System Notifications
 const {

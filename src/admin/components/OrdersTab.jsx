@@ -38,6 +38,8 @@ import {
   updateAdminReturnRefund,
   cancelOrder,
   deleteAdminOrder,
+  shipAdminOrder,
+  fetchAdminLogisticsConfig,
 } from '../../services/orderService';
 import OrderInvoiceModal from '../../components/OrderInvoiceModal';
 import { printOrderInvoice, downloadInvoiceDocument } from '../../utils/invoiceGenerator';
@@ -59,6 +61,22 @@ export default function OrdersTab() {
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  // Shipping / Dispatch Modal State
+  const [isShipModalOpen, setIsShipModalOpen] = useState(false);
+  const [orderToShip, setOrderToShip] = useState(null);
+  const [isShipping, setIsShipping] = useState(false);
+  const [logisticsConfig, setLogisticsConfig] = useState(null);
+  const [shipForm, setShipForm] = useState({
+    gateway: 'manual', // 'manual', 'shiprocket', 'nimbuspost'
+    courierPartner: 'Delhivery',
+    trackingNumber: '',
+    trackingUrl: '',
+    estimatedDelivery: '3-5 Business Days',
+    deliveryNotes: '',
+    sendWhatsApp: true,
+    sendEmail: true,
+  });
+
   // Cancellation Modal State
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('Customer requested cancellation');
@@ -77,6 +95,92 @@ export default function OrdersTab() {
   // Invoice Modal State
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState(null);
+
+  useEffect(() => {
+    // Pre-fetch logistics config for default settings
+    fetchAdminLogisticsConfig()
+      .then((res) => {
+        if (res.success && res.config) {
+          setLogisticsConfig(res.config);
+          if (res.config.courier_active_gateway) {
+            setShipForm((prev) => ({
+              ...prev,
+              gateway: res.config.courier_active_gateway,
+              sendWhatsApp: res.config.courier_auto_notify_whatsapp !== false,
+              sendEmail: res.config.courier_auto_notify_email !== false,
+            }));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const openShipModal = (order) => {
+    setOrderToShip(order);
+    const activeGateway = logisticsConfig?.courier_active_gateway || 'manual';
+    setShipForm({
+      gateway: activeGateway,
+      courierPartner: order.courierPartner && order.courierPartner !== 'Standard Delivery' ? order.courierPartner : 'Delhivery',
+      trackingNumber: order.trackingNumber || '',
+      trackingUrl: order.trackingUrl || '',
+      estimatedDelivery: order.estimatedDelivery || '3-5 Business Days',
+      deliveryNotes: '',
+      sendWhatsApp: logisticsConfig?.courier_auto_notify_whatsapp !== false,
+      sendEmail: logisticsConfig?.courier_auto_notify_email !== false,
+    });
+    setIsShipModalOpen(true);
+  };
+
+  const handleShipSubmit = async (e) => {
+    e.preventDefault();
+    if (!orderToShip) return;
+
+    if (shipForm.gateway === 'manual' && !shipForm.trackingNumber.trim()) {
+      toast.error('Please enter an AWB / Tracking Number for manual dispatch.');
+      return;
+    }
+
+    setIsShipping(true);
+    try {
+      const res = await shipAdminOrder(orderToShip.id, shipForm);
+      if (res.success) {
+        toast.success(`Order #${orderToShip.orderNumber} dispatched successfully!`);
+        setIsShipModalOpen(false);
+        // Refresh local orders
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === orderToShip.id
+              ? {
+                  ...o,
+                  orderStatus: 'In Transit',
+                  trackingNumber: res.order?.trackingNumber || shipForm.trackingNumber,
+                  courierPartner: res.order?.courierPartner || shipForm.courierPartner,
+                  trackingUrl: res.order?.trackingUrl || shipForm.trackingUrl,
+                  estimatedDelivery: res.order?.estimatedDelivery || shipForm.estimatedDelivery,
+                }
+              : o
+          )
+        );
+        if (selectedOrder && selectedOrder.id === orderToShip.id) {
+          setSelectedOrder((prev) => ({
+            ...prev,
+            orderStatus: 'In Transit',
+            trackingNumber: res.order?.trackingNumber || shipForm.trackingNumber,
+            courierPartner: res.order?.courierPartner || shipForm.courierPartner,
+            trackingUrl: res.order?.trackingUrl || shipForm.trackingUrl,
+            estimatedDelivery: res.order?.estimatedDelivery || shipForm.estimatedDelivery,
+          }));
+        }
+        loadOrders(statusFilter, search);
+      } else {
+        toast.error(res.message || 'Failed to dispatch order');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Error processing shipment');
+    } finally {
+      setIsShipping(false);
+    }
+  };
 
   const loadOrders = async (status = statusFilter, query = search) => {
     setLoading(true);
@@ -607,6 +711,17 @@ export default function OrdersTab() {
                       {/* Actions */}
                       <td className="py-3 px-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
+                          {['Processing', 'Confirmed', 'Pending'].includes(ord.orderStatus) && (
+                            <button
+                              type="button"
+                              onClick={() => openShipModal(ord)}
+                              className="px-2 py-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xs transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                              title="Ship order with Shiprocket / NimbusPost / Manual Courier"
+                            >
+                              <Truck className="w-3 h-3 text-emerald-700" />
+                              <span>Ship</span>
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => {
@@ -682,6 +797,17 @@ export default function OrdersTab() {
               </div>
 
               <div className="flex items-center gap-2">
+                {['Processing', 'Confirmed', 'Pending'].includes(selectedOrder.orderStatus) && (
+                  <button
+                    type="button"
+                    onClick={() => openShipModal(selectedOrder)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xs transition-colors cursor-pointer shadow-xs"
+                    title="Dispatch with Shiprocket / NimbusPost / Manual Courier"
+                  >
+                    <Truck className="w-3.5 h-3.5 text-emerald-100" />
+                    <span>Ship Order</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -1107,6 +1233,280 @@ export default function OrdersTab() {
                   className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xs transition-colors flex items-center gap-1.5"
                 >
                   {isCancelling ? 'Processing...' : 'Confirm Cancellation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 1-CLICK DISPATCH & AWB GENERATION MODAL */}
+      {isShipModalOpen && orderToShip && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white border border-neutral-200 rounded-sm w-full max-w-2xl p-5 sm:p-6 space-y-4 shadow-2xl my-6">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-emerald-600" />
+                  <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wide font-mono">
+                    Dispatch Order #{orderToShip.orderNumber}
+                  </h4>
+                </div>
+                <p className="text-[11px] text-neutral-500 mt-0.5">
+                  Generate courier AWB tracking and automatically notify customer on WhatsApp & Email.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsShipModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-900 grid h-7 w-7 place-items-center rounded-full hover:bg-neutral-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Customer & Package Quick Details */}
+            <div className="bg-neutral-50 p-3.5 border border-neutral-200 rounded-xs grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-neutral-400 block">Deliver To</span>
+                <div className="font-semibold text-neutral-900">{orderToShip.customerName}</div>
+                <div className="text-neutral-600 font-mono">📱 +{orderToShip.customerPhone}</div>
+                <div className="text-neutral-600 truncate mt-0.5">
+                  {orderToShip.shippingAddress?.city}, {orderToShip.shippingAddress?.state} ({orderToShip.shippingAddress?.pincode})
+                </div>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-neutral-400 block">Order Value & Items</span>
+                <div className="font-bold text-neutral-900 font-mono text-sm">
+                  ₹{orderToShip.totalAmount?.toLocaleString('en-IN')}
+                </div>
+                <div className="text-neutral-600">
+                  {orderToShip.items?.length || 1} item(s) • Payment: <span className="font-semibold">{orderToShip.paymentMethod}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Gateway Selector */}
+            <form onSubmit={handleShipSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-neutral-700 uppercase tracking-wider mb-2">
+                  Select Courier Gateway / Mode
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <label
+                    className={`flex flex-col p-3 border rounded-xs cursor-pointer transition-all ${
+                      shipForm.gateway === 'manual'
+                        ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                        : 'border-neutral-200 bg-white hover:border-neutral-400 text-neutral-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs">Manual Courier</span>
+                      <input
+                        type="radio"
+                        name="ship_gateway"
+                        value="manual"
+                        checked={shipForm.gateway === 'manual'}
+                        onChange={(e) => setShipForm({ ...shipForm, gateway: e.target.value })}
+                        className="sr-only"
+                      />
+                    </div>
+                    <span className={`text-[10px] mt-1 ${shipForm.gateway === 'manual' ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                      Self dispatch / Any Indian Courier (Delhivery, Bluedart, Speed Post, etc.)
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex flex-col p-3 border rounded-xs cursor-pointer transition-all ${
+                      shipForm.gateway === 'shiprocket'
+                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-xs'
+                        : 'border-neutral-200 bg-white hover:border-neutral-400 text-neutral-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs">Shiprocket API</span>
+                      <input
+                        type="radio"
+                        name="ship_gateway"
+                        value="shiprocket"
+                        checked={shipForm.gateway === 'shiprocket'}
+                        onChange={(e) => setShipForm({ ...shipForm, gateway: e.target.value })}
+                        className="sr-only"
+                      />
+                    </div>
+                    <span className={`text-[10px] mt-1 ${shipForm.gateway === 'shiprocket' ? 'text-indigo-100' : 'text-neutral-500'}`}>
+                      Auto order creation & live AWB allocation
+                    </span>
+                  </label>
+
+                  <label
+                    className={`flex flex-col p-3 border rounded-xs cursor-pointer transition-all ${
+                      shipForm.gateway === 'nimbuspost'
+                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
+                        : 'border-neutral-200 bg-white hover:border-neutral-400 text-neutral-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs">NimbusPost API</span>
+                      <input
+                        type="radio"
+                        name="ship_gateway"
+                        value="nimbuspost"
+                        checked={shipForm.gateway === 'nimbuspost'}
+                        onChange={(e) => setShipForm({ ...shipForm, gateway: e.target.value })}
+                        className="sr-only"
+                      />
+                    </div>
+                    <span className={`text-[10px] mt-1 ${shipForm.gateway === 'nimbuspost' ? 'text-emerald-100' : 'text-neutral-500'}`}>
+                      Fast token-based multi-carrier dispatch
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Gateway-specific or Manual Inputs */}
+              {shipForm.gateway === 'manual' ? (
+                <div className="space-y-3 bg-neutral-50 p-3.5 border border-neutral-200 rounded-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-neutral-600 uppercase mb-1">
+                        Courier Partner Name *
+                      </label>
+                      <select
+                        value={shipForm.courierPartner}
+                        onChange={(e) => setShipForm({ ...shipForm, courierPartner: e.target.value })}
+                        className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs text-neutral-900 font-medium outline-none focus:border-neutral-900"
+                      >
+                        <option value="Delhivery">Delhivery</option>
+                        <option value="Bluedart">Bluedart</option>
+                        <option value="DTDC">DTDC</option>
+                        <option value="Speed Post (India Post)">Speed Post (India Post)</option>
+                        <option value="Shadowfax">Shadowfax</option>
+                        <option value="Xpressbees">Xpressbees</option>
+                        <option value="Ecom Express">Ecom Express</option>
+                        <option value="Shiprocket">Shiprocket</option>
+                        <option value="NimbusPost">NimbusPost</option>
+                        <option value="Self Delivery / Local Rider">Self Delivery / Local Rider</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-neutral-600 uppercase mb-1">
+                        AWB / Tracking Number *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. DEL-884920194 or 140889201"
+                        value={shipForm.trackingNumber}
+                        onChange={(e) => setShipForm({ ...shipForm, trackingNumber: e.target.value })}
+                        className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs font-mono font-semibold text-neutral-900 outline-none focus:border-neutral-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-neutral-600 uppercase mb-1">
+                      Custom Tracking URL (Optional - Auto-generated if left blank)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://track.delhivery.com/..."
+                      value={shipForm.trackingUrl}
+                      onChange={(e) => setShipForm({ ...shipForm, trackingUrl: e.target.value })}
+                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs font-mono text-neutral-800 outline-none focus:border-neutral-900"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xs text-xs space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold text-blue-900">
+                    <Sparkles className="w-4 h-4 text-blue-700" />
+                    <span>Automated Direct API Dispatch</span>
+                  </div>
+                  <p className="text-blue-800 text-[11px] leading-relaxed">
+                    Guidelya server will authenticate with <strong>{shipForm.gateway === 'shiprocket' ? 'Shiprocket' : 'NimbusPost'}</strong>, push customer shipping details, book a pickup, generate an AWB number, and store live tracking links.
+                  </p>
+                  <p className="text-neutral-500 text-[10px]">
+                    Make sure your API credentials and pickup location are configured under <em>Settings &gt; Courier & Logistics</em>.
+                  </p>
+                </div>
+              )}
+
+              {/* Delivery Timeline & Delivery Notes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-600 uppercase mb-1">
+                    Estimated Delivery Timeline
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 3-5 Business Days or By Friday"
+                    value={shipForm.estimatedDelivery}
+                    onChange={(e) => setShipForm({ ...shipForm, estimatedDelivery: e.target.value })}
+                    className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs text-neutral-900 outline-none focus:border-neutral-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-neutral-600 uppercase mb-1">
+                    Internal Dispatch Notes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Box #4 dispatched from Warehouse 1"
+                    value={shipForm.deliveryNotes}
+                    onChange={(e) => setShipForm({ ...shipForm, deliveryNotes: e.target.value })}
+                    className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs text-neutral-900 outline-none focus:border-neutral-900"
+                  />
+                </div>
+              </div>
+
+              {/* Automated Customer Notifications */}
+              <div className="bg-neutral-50 p-3 border border-neutral-200 rounded-xs space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-600 block">
+                  Customer Automated Notifications
+                </span>
+                <div className="flex flex-col sm:flex-row gap-3 text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer text-neutral-800">
+                    <input
+                      type="checkbox"
+                      checked={shipForm.sendWhatsApp}
+                      onChange={(e) => setShipForm({ ...shipForm, sendWhatsApp: e.target.checked })}
+                      className="w-4 h-4 rounded-xs border-neutral-300 text-emerald-600 focus:ring-0"
+                    />
+                    <span>Send Live Tracking link on WhatsApp (+{orderToShip.customerPhone})</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-neutral-800">
+                    <input
+                      type="checkbox"
+                      checked={shipForm.sendEmail}
+                      onChange={(e) => setShipForm({ ...shipForm, sendEmail: e.target.checked })}
+                      className="w-4 h-4 rounded-xs border-neutral-300 text-neutral-900 focus:ring-0"
+                    />
+                    <span>Send Order Dispatched Email ({orderToShip.customerEmail || 'If provided'})</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Footer Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200">
+                <button
+                  type="button"
+                  onClick={() => setIsShipModalOpen(false)}
+                  className="px-3.5 py-1.5 border border-neutral-300 text-neutral-700 hover:bg-neutral-100 rounded-xs transition-colors cursor-pointer text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isShipping}
+                  className="px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xs transition-colors cursor-pointer flex items-center gap-2 text-xs shadow-xs"
+                >
+                  <Truck className="w-3.5 h-3.5 text-emerald-100" />
+                  <span>{isShipping ? 'Dispatching & Notifying...' : 'Confirm Shipment & Dispatch'}</span>
                 </button>
               </div>
             </form>

@@ -6,6 +6,79 @@ import spotlightFront from '../assets/spotlight_front.jpg';
 import heroCompression from '../assets/hero_compression.jpg';
 import catShorts from '../assets/cat_shorts.jpg';
 
+export function createFullUserPayload(apiUser = {}) {
+  const rawName = (apiUser.name || '').trim();
+  let displayName = 'User';
+  let initials = 'U';
+
+  if (rawName) {
+    displayName = rawName;
+    const parts = rawName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      initials = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (parts.length === 1) {
+      initials = parts[0].substring(0, 2).toUpperCase();
+    }
+  } else if (apiUser.email) {
+    displayName = apiUser.email.split('@')[0];
+    initials = (displayName[0] || 'U').toUpperCase();
+  } else if (apiUser.phone) {
+    const cleanPhone = String(apiUser.phone).replace(/[^0-9]/g, '');
+    displayName = `User (${cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone})`;
+    initials = 'U';
+  }
+
+  const customerId =
+    apiUser.customerId ||
+    apiUser.customer_id ||
+    `GDL-${String(apiUser.id || '9842').padStart(5, '0')}`;
+
+  let parsedAddresses = [];
+  if (Array.isArray(apiUser.addresses)) {
+    parsedAddresses = apiUser.addresses;
+  } else if (typeof apiUser.addresses === 'string' && apiUser.addresses.trim()) {
+    try {
+      parsedAddresses = JSON.parse(apiUser.addresses);
+    } catch (_) {
+      parsedAddresses = [];
+    }
+  }
+
+  let parsedOrders = [];
+  if (Array.isArray(apiUser.orders)) {
+    parsedOrders = apiUser.orders;
+  }
+
+  return {
+    id: customerId,
+    customerId,
+    dbId: apiUser.id || apiUser.dbId,
+    name: rawName,
+    displayName,
+    initials,
+    phone: apiUser.phone || '',
+    phoneVerified: Boolean(
+      apiUser.phone_verified !== undefined
+        ? apiUser.phone_verified
+        : apiUser.phoneVerified
+    ),
+    email: apiUser.email || '',
+    emailVerified: Boolean(
+      apiUser.email_verified !== undefined
+        ? apiUser.email_verified
+        : apiUser.emailVerified
+    ),
+    gender: apiUser.gender || 'Male',
+    tier: apiUser.tier || 'VIP Athlete Club',
+    points: apiUser.points || 100,
+    joinedDate: 'October 2026',
+    chestSize: apiUser.chestSize || apiUser.chest_size || 'L (42")',
+    lowerSize: apiUser.lowerSize || apiUser.lower_size || 'M (32")',
+    orders: parsedOrders,
+    addresses: parsedAddresses,
+  };
+}
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -14,7 +87,11 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('xavonic_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        return createFullUserPayload(parsed);
+      }
+      return null;
     } catch {
       return null;
     }
@@ -29,6 +106,27 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
+  // Sync fresh profile from backend on mount if logged in
+  useEffect(() => {
+    const token = localStorage.getItem('xavonic_user_token');
+    if (token) {
+      fetch(`${AUTH_API_BASE}/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.user) {
+            setUser((prev) => createFullUserPayload({ ...prev, ...data.user }));
+          }
+        })
+        .catch((err) => {
+          console.warn('Could not sync user profile from server:', err);
+        });
+    }
+  }, []);
+
   const openAuth = () => setIsAuthOpen(true);
   const closeAuth = () => setIsAuthOpen(false);
 
@@ -41,133 +139,6 @@ export function AuthProvider({ children }) {
     } else {
       setIsAuthOpen(true);
     }
-  };
-
-  const createFullUserPayload = (apiUser = {}) => {
-    const displayName =
-      apiUser.name ||
-      (apiUser.email
-        ? apiUser.email.split('@')[0]
-        : apiUser.phone
-        ? `Athlete ${apiUser.phone.slice(-4)}`
-        : 'Athlete');
-
-    const initials = apiUser.name
-      ? apiUser.name
-          .split(' ')
-          .map((n) => n[0])
-          .join('')
-          .substring(0, 2)
-          .toUpperCase()
-      : 'AT';
-
-    const customerId =
-      apiUser.customerId ||
-      apiUser.customer_id ||
-      `GDL-${String(apiUser.id || '9842').padStart(5, '0')}`;
-
-    let parsedAddresses = [];
-    if (Array.isArray(apiUser.addresses) && apiUser.addresses.length > 0) {
-      parsedAddresses = apiUser.addresses;
-    } else if (typeof apiUser.addresses === 'string') {
-      try {
-        parsedAddresses = JSON.parse(apiUser.addresses);
-      } catch (_) {}
-    }
-
-    if (parsedAddresses.length === 0) {
-      parsedAddresses = [
-        {
-          id: 'addr-1',
-          type: 'Home (Default)',
-          name: apiUser.name || displayName || 'Athlete',
-          addressLine: 'Plot 42, Sector 18, Cyber City',
-          city: 'Gurugram',
-          pincode: '122002',
-          state: 'Haryana',
-          phone: apiUser.phone || '',
-          isDefault: true,
-        },
-      ];
-    }
-
-    return {
-      id: customerId,
-      customerId,
-      dbId: apiUser.id,
-      name: apiUser.name || '',
-      displayName,
-      initials,
-      phone: apiUser.phone || '',
-      phoneVerified: Boolean(
-        apiUser.phone_verified !== undefined
-          ? apiUser.phone_verified
-          : apiUser.phoneVerified
-      ),
-      email: apiUser.email || '',
-      emailVerified: Boolean(
-        apiUser.email_verified !== undefined
-          ? apiUser.email_verified
-          : apiUser.emailVerified
-      ),
-      gender: apiUser.gender || 'Male',
-      tier: apiUser.tier || 'VIP Athlete Club',
-      points: apiUser.points || 100,
-      joinedDate: 'October 2026',
-      chestSize: apiUser.chestSize || 'L (42")',
-      lowerSize: apiUser.lowerSize || 'M (32")',
-      orders: [
-        {
-          id: 'ORD-98214',
-          date: 'Yesterday, 4:20 PM',
-          status: 'In Transit',
-          statusColor: 'text-amber-600 bg-amber-50 border-amber-200',
-          step: 2,
-          estimatedDelivery: 'Tomorrow by 2:00 PM',
-          items: [
-            {
-              title: 'Acid Wash Heavyweight Oversized Tee',
-              size: 'L',
-              color: 'Washed Onyx',
-              quantity: 1,
-              price: '₹1,499',
-              image: spotlightFront,
-            },
-          ],
-          subtotal: '₹1,499',
-          shipping: 'FREE',
-          total: '₹1,499',
-          paymentMethod: 'UPI (Prepaid - Verified)',
-          trackingNumber: 'BLUEDART-882190',
-          shippingAddress: 'Plot 42, Sector 18, Cyber City, Gurugram, Haryana - 122002',
-        },
-        {
-          id: 'ORD-77102',
-          date: '12 Sep 2026',
-          status: 'Delivered',
-          statusColor: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-          step: 4,
-          estimatedDelivery: 'Delivered on 14 Sep 2026',
-          items: [
-            {
-              title: '5" Tactical Inseam Gym Shorts',
-              size: 'M',
-              color: 'Stealth Black',
-              quantity: 2,
-              price: '₹1,099',
-              image: catShorts,
-            },
-          ],
-          subtotal: '₹2,198',
-          shipping: 'FREE',
-          total: '₹2,198',
-          paymentMethod: 'Cash on Delivery (COD)',
-          trackingNumber: 'DELHIVERY-441029',
-          shippingAddress: 'Plot 42, Sector 18, Cyber City, Gurugram, Haryana - 122002',
-        },
-      ],
-      addresses: parsedAddresses,
-    };
   };
 
   // 1. Send OTP to WhatsApp
@@ -482,21 +453,14 @@ export function AuthProvider({ children }) {
       });
       const data = await res.json();
       if (data.success && data.user) {
-        setUser((prev) => ({
-          ...prev,
-          name: data.user.name,
-          displayName: data.user.name || prev.displayName,
-          gender: data.user.gender,
-          chestSize: data.user.chestSize,
-          lowerSize: data.user.lowerSize,
-        }));
+        setUser((prev) => createFullUserPayload({ ...prev, ...data.user }));
         toast.success('Profile details saved successfully in database!');
       } else {
-        setUser((prev) => ({ ...prev, ...updatedData }));
+        setUser((prev) => createFullUserPayload({ ...prev, ...updatedData }));
         toast.success('Profile updated.');
       }
     } catch (err) {
-      setUser((prev) => ({ ...prev, ...updatedData }));
+      setUser((prev) => createFullUserPayload({ ...prev, ...updatedData }));
       toast.success('Profile updated.');
     }
   };

@@ -167,3 +167,103 @@ export async function fetchAdminDashboardStats(range = '7days') {
     return { success: false, message: 'Could not fetch live dashboard stats.' };
   }
 }
+
+/**
+ * Admin: Fetch Logistics & Courier Settings
+ */
+export async function fetchAdminLogisticsConfig() {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/logistics`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching logistics config:', error);
+    return { success: false, message: 'Network error fetching logistics config.' };
+  }
+}
+
+/**
+ * Admin: Save Logistics & Courier Settings
+ */
+export async function saveAdminLogisticsConfig(payload) {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/logistics`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error saving logistics config:', error);
+    return { success: false, message: 'Network error saving logistics config.' };
+  }
+}
+
+/**
+ * Admin: Test Shiprocket Connection
+ */
+export async function testShiprocketGateway(payload) {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/logistics/test-shiprocket`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error testing Shiprocket:', error);
+    return { success: false, message: 'Network error connecting to Shiprocket.' };
+  }
+}
+
+/**
+ * Admin: Test NimbusPost Connection
+ */
+export async function testNimbusPostGateway(payload) {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/logistics/test-nimbuspost`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error testing NimbusPost:', error);
+    return { success: false, message: 'Network error connecting to NimbusPost.' };
+  }
+}
+
+/**
+ * Admin: 1-Click Ship Order (Shiprocket / NimbusPost / Manual)
+ */
+export async function shipAdminOrder(orderId, payload) {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/orders/${orderId}/ship`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error dispatching order:', error);
+    return { success: false, message: 'Network error dispatching order.' };
+  }
+}

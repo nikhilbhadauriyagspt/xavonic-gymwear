@@ -606,5 +606,72 @@ exports.uploadBrandLogo = async (req, res) => {
   }
 };
 
+// 18. Get Courier & Logistics Configuration (Shiprocket, NimbusPost, Manual)
+exports.getLogisticsConfig = async (req, res) => {
+  try {
+    const { getCourierSettings } = require('../services/courierService');
+    const config = await getCourierSettings();
+    return res.status(200).json({ success: true, config });
+  } catch (err) {
+    console.error('Error fetching logistics config:', err);
+    return res.status(500).json({ success: false, message: 'Failed to load logistics config.' });
+  }
+};
+
+// 19. Save Courier & Logistics Configuration
+exports.saveLogisticsConfig = async (req, res) => {
+  try {
+    const { saveCourierSettings } = require('../services/courierService');
+    const result = await saveCourierSettings(req.body);
+    return res.status(result.success ? 200 : 500).json(result);
+  } catch (err) {
+    console.error('Error saving logistics config:', err);
+    return res.status(500).json({ success: false, message: 'Failed to save logistics config.' });
+  }
+};
+
+// 20. Test Shiprocket API Credentials
+exports.testShiprocketGateway = async (req, res) => {
+  try {
+    const { testShiprocketAuth } = require('../services/courierService');
+    const { email, password } = req.body;
+    const result = await testShiprocketAuth(email, password);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error('Error testing Shiprocket gateway:', err);
+    return res.status(500).json({ success: false, message: 'Shiprocket test request failed.' });
+  }
+};
+
+// 21. Test NimbusPost API Credentials
+exports.testNimbusPostGateway = async (req, res) => {
+  try {
+    const { testNimbusPostAuth } = require('../services/courierService');
+    const { email, token } = req.body;
+    const result = await testNimbusPostAuth(email, token);
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error('Error testing NimbusPost gateway:', err);
+    return res.status(500).json({ success: false, message: 'NimbusPost test request failed.' });
+  }
+};
+
+// 22. 1-Click Ship Order via Shiprocket, NimbusPost or Manual Dispatch
+exports.shipAdminOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { processOrderShipment } = require('../services/courierService');
+    const result = await processOrderShipment({
+      orderId,
+      ...req.body,
+    });
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error('Error shipping order:', err);
+    return res.status(500).json({ success: false, message: 'Failed to ship order.' });
+  }
+};
+
+
 
 

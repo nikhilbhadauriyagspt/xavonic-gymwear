@@ -70,14 +70,16 @@ export default function ProfileDrawer() {
           .then((data) => {
             if (data.success && Array.isArray(data.orders)) {
               setCustomerOrders(data.orders);
-            } else if (user.orders?.length) {
-              setCustomerOrders(user.orders);
+            } else {
+              setCustomerOrders([]);
             }
           })
           .catch(() => {
-            if (user.orders?.length) setCustomerOrders(user.orders);
+            setCustomerOrders([]);
           })
           .finally(() => setIsLoadingOrders(false));
+      } else {
+        setCustomerOrders([]);
       }
     }
   }, [user, isProfileOpen, currentView]);
@@ -263,14 +265,14 @@ export default function ProfileDrawer() {
       id: 'orders',
       icon: Package,
       title: 'My Orders & Tracking',
-      subtitle: `${user.orders?.length || 0} active orders`,
-      badge: user.orders?.length ? `${user.orders.length}` : null
+      subtitle: `${customerOrders.length} ${customerOrders.length === 1 ? 'order' : 'orders'}`,
+      badge: customerOrders.length > 0 ? `${customerOrders.length}` : null
     },
     {
       id: 'addresses',
       icon: MapPin,
       title: 'Saved Addresses',
-      subtitle: `${user.addresses?.length || 1} delivery locations`
+      subtitle: `${user?.addresses?.length || 0} delivery locations`
     },
     {
       id: 'profile',
@@ -316,22 +318,22 @@ export default function ProfileDrawer() {
               
               {currentView === 'menu' ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-black text-white font-semibold text-xs flex items-center justify-center tracking-wider shadow-xs">
-                    {user.initials || 'AT'}
+                  <div className="w-10 h-10 rounded-full bg-black text-white font-bold text-xs flex items-center justify-center tracking-wider shadow-xs uppercase">
+                    {user?.initials || 'U'}
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
                       <h3 className="text-sm font-semibold text-zinc-950">
-                        {user.name || user.displayName || 'Athlete'}
+                        {user?.name || user?.displayName || 'User'}
                       </h3>
-                      {user.customerId && (
+                      {user?.customerId && (
                         <span className="text-[10px] font-mono px-1.5 py-0.2 bg-zinc-200/70 text-zinc-700 font-semibold rounded-xs">
                           {user.customerId}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-zinc-500 font-mono">
-                      {user.phone ? `+${user.phone.replace(/[^0-9]/g, '')}` : 'Complete your profile'}
+                      {user?.phone ? `+${user.phone.replace(/[^0-9]/g, '')}` : user?.email || 'Complete your profile'}
                     </p>
                   </div>
                 </div>

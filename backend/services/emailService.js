@@ -253,7 +253,93 @@ async function sendOrderInvoiceEmail(orderData) {
     }
   }
 
-  console.log(`🧪 Simulated Order Invoice email for #${orderData.order_number} to ${toEmail}`);
+  console.log(`🧪 Simulated Invoice email for #${orderData.order_number || orderData.id} to ${toEmail}`);
+  return { success: true, mode: 'test' };
+}
+
+// 4. Send Order Dispatched & Tracking Email
+async function sendOrderDispatchEmail(orderData) {
+  const settings = await getSmtpSettings();
+  const toEmail = orderData.customer_email || orderData.customerEmail;
+  if (!toEmail) return { success: false, message: 'No email provided' };
+
+  const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;
+  const courier = orderData.courier_partner || 'Bluedart Express';
+  const tracking = orderData.tracking_number || 'Generated';
+  const trackingUrl = orderData.tracking_url || `https://shiprocket.co//tracking/${tracking}`;
+  const estDelivery = orderData.estimated_delivery || 'Within 2–4 Business Days';
+
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden;">
+      <div style="background-color: #09090b; padding: 24px; text-align: center; color: #ffffff;">
+        <h1 style="margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">GUIDELYA</h1>
+        <p style="margin: 6px 0 0; font-size: 12px; color: #a1a1aa; text-transform: uppercase;">Shipment Notification</p>
+      </div>
+
+      <div style="padding: 24px;">
+        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 16px; margin-bottom: 20px; text-align: center;">
+          <h2 style="margin: 0 0 6px; font-size: 16px; color: #065f46;">🚀 Your Order Has Been Dispatched!</h2>
+          <p style="margin: 0; font-size: 13px; color: #047857;">Order #${orderNum} is handed over to ${courier} and is on its way to you.</p>
+        </div>
+
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+            <strong style="color: #475569;">Courier Partner:</strong>
+            <span style="color: #0f172a; font-weight: 600;">${courier}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+            <strong style="color: #475569;">Tracking AWB:</strong>
+            <span style="color: #dc2626; font-family: monospace; font-weight: 700;">${tracking}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px;">
+            <strong style="color: #475569;">Expected Delivery:</strong>
+            <span style="color: #0f172a; font-weight: 600;">${estDelivery}</span>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${trackingUrl}" style="background-color: #dc2626; color: #ffffff; padding: 12px 28px; text-decoration: none; font-size: 13px; font-weight: 600; border-radius: 4px; display: inline-block; letter-spacing: 0.5px;">
+            TRACK LIVE SHIPMENT
+          </a>
+        </div>
+
+        <p style="font-size: 12px; color: #64748b; line-height: 1.5; text-align: center; margin-top: 20px;">
+          If you have any questions regarding your delivery, simply reply to this email or reach out on WhatsApp concierge.
+        </p>
+      </div>
+
+      <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8;">
+        Guidelya Athletics • Premium Performance Gymwear
+      </div>
+    </div>
+  `;
+
+  if (settings.mode === 'live' && settings.user && settings.pass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: settings.host,
+        port: Number(settings.port) || 465,
+        secure: settings.port === '465' || settings.secure === 'true',
+        auth: { user: settings.user, pass: settings.pass },
+        tls: { rejectUnauthorized: false },
+      });
+
+      await transporter.sendMail({
+        from: `"${settings.sender_name || 'Guidelya Athletics'}" <${settings.user}>`,
+        to: toEmail,
+        subject: `Your Order #${orderNum} is On Its Way! - Live Tracking Inside`,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Dispatch notification email sent successfully to ${toEmail}`);
+      return { success: true, mode: 'live' };
+    } catch (err) {
+      console.warn('Could not send live dispatch email:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  console.log(`🧪 Simulated Dispatch email for #${orderNum} to ${toEmail}`);
   return { success: true, mode: 'test' };
 }
 
@@ -261,5 +347,6 @@ module.exports = {
   getSmtpSettings,
   sendEmailOtp,
   sendOrderInvoiceEmail,
+  sendOrderDispatchEmail,
 };
 

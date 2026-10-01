@@ -463,19 +463,19 @@ export default function Header() {
                   ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' 
                   : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
               }`}
-              title={isLoggedIn ? `Athlete Portal (${user?.name})` : "Account Login"}
+              title={isLoggedIn ? `Account (${user?.displayName || user?.name || 'User'})` : "Account Login"}
               aria-label="Account"
             >
               {isLoggedIn ? (
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <div className="w-7 h-7 rounded-full bg-red-600 text-white font-bold text-[11px] flex items-center justify-center tracking-tight shadow-xs">
-                      {user?.initials || 'NS'}
+                    <div className="w-7 h-7 rounded-full bg-red-600 text-white font-bold text-[11px] flex items-center justify-center tracking-tight shadow-xs uppercase">
+                      {user?.initials || 'U'}
                     </div>
                     <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-black" />
                   </div>
                   <span className="hidden xl:inline text-xs font-medium">
-                    {user?.name?.split(' ')[0] || 'Athlete'}
+                    {user?.name?.split(' ')[0] || user?.displayName || 'User'}
                   </span>
                 </div>
               ) : (
@@ -698,10 +698,10 @@ export default function Header() {
               >
                 {isLoggedIn ? (
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center">
-                      {user?.initials || 'NS'}
+                    <div className="w-6 h-6 rounded-full bg-red-600 text-white font-bold text-[10px] flex items-center justify-center uppercase">
+                      {user?.initials || 'U'}
                     </div>
-                    <span className="font-medium text-white">{user?.name}</span>
+                    <span className="font-medium text-white">{user?.name || user?.displayName || 'User'}</span>
                   </div>
                 ) : (
                   <>
@@ -763,8 +763,8 @@ export default function Header() {
         >
           <div className="relative">
             {isLoggedIn ? (
-              <div className="w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[9px] flex items-center justify-center">
-                {user?.initials || 'NS'}
+              <div className="w-5 h-5 rounded-full bg-red-600 text-white font-bold text-[9px] flex items-center justify-center uppercase">
+                {user?.initials || 'U'}
               </div>
             ) : (
               <User className="w-5 h-5 stroke-[1.6]" />
