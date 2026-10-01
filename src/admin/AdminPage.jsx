@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AdminLogin from './components/AdminLogin';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebar from './components/AdminSidebar';
@@ -19,6 +20,8 @@ import { toast } from 'sonner';
 import { ADMIN_API_BASE, ORDERS_API_BASE } from '../config/api';
 
 export default function AdminPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // Authentication State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     return localStorage.getItem('xavonic_admin_auth') === 'true';
@@ -33,8 +36,29 @@ export default function AdminPage() {
     }
   });
 
-  // Active Sidebar Tab State
-  const [activeTab, setActiveTab] = useState('overview');
+  // Active Sidebar Tab State (persists across page reloads via URL ?tab=... and localStorage)
+  const initialTab = searchParams.get('tab') || localStorage.getItem('xavonic_admin_active_tab') || 'overview';
+  const [activeTab, setActiveTabState] = useState(initialTab);
+
+  const setActiveTab = (newTab) => {
+    setActiveTabState(newTab);
+    localStorage.setItem('xavonic_admin_active_tab', newTab);
+    setSearchParams({ tab: newTab }, { replace: true });
+  };
+
+  // Sync state if URL query changes
+  useEffect(() => {
+    const tabInUrl = searchParams.get('tab');
+    if (tabInUrl && tabInUrl !== activeTab) {
+      setActiveTabState(tabInUrl);
+      localStorage.setItem('xavonic_admin_active_tab', tabInUrl);
+    } else if (!tabInUrl) {
+      // Ensure current active tab is represented in URL
+      const current = localStorage.getItem('xavonic_admin_active_tab') || 'overview';
+      setSearchParams({ tab: current }, { replace: true });
+    }
+  }, [searchParams]);
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [customersCount, setCustomersCount] = useState(0);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
