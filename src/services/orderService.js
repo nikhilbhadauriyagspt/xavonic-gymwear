@@ -149,3 +149,21 @@ export async function deleteAdminOrder(orderId) {
     return { success: false, message: 'Network error deleting order.' };
   }
 }
+
+/**
+ * Admin: Fetch Live Dynamic Dashboard Stats & Telemetry
+ */
+export async function fetchAdminDashboardStats(range = '7days') {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/dashboard/stats?range=${range}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return { success: false, message: 'Could not fetch live dashboard stats.' };
+  }
+}

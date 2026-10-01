@@ -73,8 +73,13 @@ const {
   deleteBanner,
 } = require('../controllers/bannerController');
 
+const { getDashboardStats } = require('../controllers/adminDashboardController');
+
 // Public: Admin Login
 router.post('/login', loginAdmin);
+
+// Dashboard Overview Telemetry & Stats (Protected)
+router.get('/dashboard/stats', verifyAdminToken, getDashboardStats);
 
 // Banners Management for Admin
 router.get('/banners', verifyAdminToken, getAdminBanners);
