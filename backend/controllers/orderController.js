@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { sendOrderInvoiceEmail } = require('../services/emailService');
 const { sendOrderWhatsAppNotification } = require('../services/whatsappService');
+const { createNotification } = require('./adminNotificationController');
 
 // 1. Create a New Order (Customer Checkout)
 exports.createOrder = async (req, res) => {
@@ -164,12 +165,40 @@ exports.createOrder = async (req, res) => {
               'UPDATE products SET stock = ?, size_stock_json = ?, in_stock = ? WHERE id = ?',
               [newStock, JSON.stringify(sizeStock), inStockStatus, item.id]
             );
+
+            // Trigger Out-of-Stock or Low Stock Notification to Admin
+            if (newStock === 0) {
+              createNotification({
+                type: 'stock_alert',
+                title: `🚨 Out of Stock: ${item.title}`,
+                description: `Product "${item.title}" (Size ${orderSize}) is completely sold out following order ${orderNumber}.`,
+                reference_id: String(item.id),
+                link_url: '/admin',
+              });
+            } else if (newStock <= 3) {
+              createNotification({
+                type: 'inventory',
+                title: `⚠️ Low Stock Alert: ${item.title}`,
+                description: `Only ${newStock} units remaining for "${item.title}". Restock recommended.`,
+                reference_id: String(item.id),
+                link_url: '/admin',
+              });
+            }
           }
         } catch (stockErr) {
           console.warn('Could not reduce variant stock for product:', item.id, stockErr.message);
         }
       }
     }
+
+    // Trigger New Order System Notification to Admin
+    createNotification({
+      type: 'order',
+      title: `🛍️ New Order #${orderNumber}`,
+      description: `${customer_name} placed an order for ₹${calculatedTotal.toLocaleString('en-IN')} (${itemsCount} items via ${payment_method}).`,
+      reference_id: orderNumber,
+      link_url: '/admin',
+    });
 
     const createdOrderData = {
       id: orderNumber,

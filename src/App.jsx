@@ -26,6 +26,16 @@ import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AdminPage from './admin/AdminPage';
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname, search]);
+
+  return null;
+}
+
 function HomePage() {
   return (
     <main className="w-full">
@@ -77,6 +87,9 @@ function MainLayout() {
 
   return (
     <div className="min-h-screen w-full bg-black text-zinc-100 antialiased selection:bg-red-600 selection:text-white font-sans flex flex-col">
+      {/* Auto Scroll To Top on Page Switch */}
+      <ScrollToTop />
+
       {/* Slide-Over Modern Cart Drawer */}
       <CartDrawer />
 

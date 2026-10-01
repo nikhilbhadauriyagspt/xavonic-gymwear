@@ -89,8 +89,8 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-neutral-900 flex flex-col font-sans selection:bg-red-600 selection:text-white">
-      {/* Admin Top Header */}
+    <div className="h-screen w-full bg-[#fafafa] text-neutral-900 flex flex-col font-sans selection:bg-red-600 selection:text-white overflow-hidden">
+      {/* Admin Top Header (Fixed at top) */}
       <AdminHeader
         isMobileSidebarOpen={isMobileSidebarOpen}
         setIsMobileSidebarOpen={setIsMobileSidebarOpen}
@@ -98,9 +98,9 @@ export default function AdminPage() {
         adminUser={adminUser}
       />
 
-      {/* Main Admin Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Admin Left Sidebar */}
+      {/* Main Admin Workspace Layout (Fixed height, independent scrolling) */}
+      <div className="flex-1 flex overflow-hidden w-full">
+        {/* Admin Left Sidebar (Fixed & scrollable inside if needed, won't stretch with main content) */}
         <AdminSidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -110,9 +110,9 @@ export default function AdminPage() {
           pendingOrdersCount={pendingOrdersCount}
         />
 
-        {/* Dynamic Content Area (100% Full Width, Clean Sharp Minimal UI) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 w-full min-w-0">
-          <div className="w-full">
+        {/* Dynamic Content Area (Independent scrollable viewport) */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 w-full min-w-0 h-full">
+          <div className="w-full max-w-7xl mx-auto">
             {activeTab === 'overview' && (
               <DashboardOverview onNavigateTab={setActiveTab} />
             )}

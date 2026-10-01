@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { createNotification } = require('./adminNotificationController');
 
 // 1. Get Approved Reviews for a Specific Product (Public Endpoint)
 exports.getProductReviews = async (req, res) => {
@@ -219,6 +220,15 @@ exports.submitProductReview = async (req, res) => {
 
     // Recalculate and update product table
     await updateProductReviewStats(resolvedProductId);
+
+    // Trigger Admin Notification for New Product Review
+    createNotification({
+      type: 'review',
+      title: `⭐ New ${validatedRating}★ Review: ${productTitle || 'Product'}`,
+      description: `${author_name || 'Customer'} posted: "${comment.slice(0, 75)}${comment.length > 75 ? '...' : ''}"`,
+      reference_id: String(result.insertId),
+      link_url: '/admin',
+    });
 
     const newReview = {
       id: result.insertId,

@@ -279,6 +279,22 @@ function initDatabaseTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `;
 
+  // Create Admin System Notifications Table (For live Order, Out-of-Stock, New Customer, Low Inventory alerts)
+  const createAdminNotificationsTable = `
+    CREATE TABLE IF NOT EXISTS admin_notifications (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      type ENUM('order', 'inventory', 'customer', 'stock_alert', 'review', 'system') DEFAULT 'order',
+      title VARCHAR(255) NOT NULL,
+      description TEXT NOT NULL,
+      reference_id VARCHAR(100) NULL,
+      link_url VARCHAR(255) NULL,
+      is_read TINYINT(1) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_read (is_read),
+      INDEX idx_type (type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `;
+
   Promise.all([
     promisePool.query(createAdminsTable),
     promisePool.query(createUsersTable),
@@ -290,9 +306,10 @@ function initDatabaseTables() {
     promisePool.query(createReviewsTable),
     promisePool.query(createBannersTable),
     promisePool.query(createStockNotificationsTable),
+    promisePool.query(createAdminNotificationsTable),
   ])
     .then(async () => {
-      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews, banners, stock_notifications)');
+      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews, banners, stock_notifications, admin_notifications)');
       
       // Auto-migrate users table columns if missing
       try {

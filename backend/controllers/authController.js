@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { sendWhatsAppOtp } = require('../services/whatsappService');
 const { sendEmailOtp } = require('../services/emailService');
+const { createNotification } = require('./adminNotificationController');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'xavonic_athletics_admin_super_secret_key_2026';
 
@@ -139,6 +140,15 @@ exports.verifyOtp = async (req, res) => {
 
       const [newCreated] = await db.query('SELECT * FROM users WHERE id = ?', [insertResult.insertId]);
       user = newCreated[0];
+
+      // Send New Customer Notification to Admin
+      createNotification({
+        type: 'customer',
+        title: `👤 New Customer Joined`,
+        description: `Customer with phone +${formattedPhone} (ID: ${generatedCid}) registered on Guidelya.`,
+        reference_id: String(user.id),
+        link_url: '/admin',
+      });
     }
 
     const token = jwt.sign(
@@ -801,6 +811,15 @@ exports.createStockNotification = async (req, res) => {
         userId,
       ]
     );
+
+    // Trigger Admin Notification for Restock Demand
+    createNotification({
+      type: 'stock_alert',
+      title: `🔔 Restock Request: ${productTitle || 'Product'}`,
+      description: `Customer (+${phone || email}) requested restock alert for Size ${variantSize || 'All'} • ${variantColor || 'Standard'}.`,
+      reference_id: String(productId),
+      link_url: '/admin',
+    });
 
     return res.status(200).json({
       success: true,

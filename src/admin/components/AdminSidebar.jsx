@@ -35,21 +35,22 @@ export default function AdminSidebar({
   return (
     <>
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-56 bg-white border-r border-neutral-200 flex flex-col justify-between transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-56 h-full shrink-0 bg-white border-r border-neutral-200 flex flex-col justify-between transition-transform duration-200 lg:translate-x-0 ${
           isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } font-sans select-none`}
+        } font-sans select-none overflow-hidden`}
       >
-        {/* Top: Brand and Nav Links */}
-        <div>
-          {/* Logo Header */}
-          <div className="h-14 px-4 border-b border-neutral-200 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img
-                src={logoBlack}
-                alt="Brand Logo"
-                className="h-7 w-auto object-contain max-w-[130px]"
-              />
-            </div>
+        {/* Top: Brand and Nav Links (Scrollable if viewport is short) */}
+        <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col justify-between">
+          <div>
+            {/* Logo Header (Only shown on mobile drawer) */}
+            <div className="h-14 px-4 border-b border-neutral-200 flex items-center justify-between lg:hidden">
+              <div className="flex items-center gap-2">
+                <img
+                  src={logoBlack}
+                  alt="Brand Logo"
+                  className="h-7 w-auto object-contain max-w-[130px]"
+                />
+              </div>
 
             {/* Mobile close button */}
             <button
@@ -309,7 +310,7 @@ export default function AdminSidebar({
         </div>
 
         {/* Bottom System Status Widget */}
-        <div className="p-3 border-t border-neutral-200 bg-neutral-50 m-2 rounded-sm border">
+        <div className="p-3 border-t border-neutral-200 bg-neutral-50 m-2 rounded-sm border shrink-0">
           <div className="flex items-center justify-between text-xs font-medium text-neutral-700">
             <div className="flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-neutral-700" />
@@ -322,6 +323,7 @@ export default function AdminSidebar({
           <p className="text-[10px] text-neutral-500 mt-1">
             Store telemetry active
           </p>
+        </div>
         </div>
       </aside>
 

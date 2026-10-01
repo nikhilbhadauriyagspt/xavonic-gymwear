@@ -14,9 +14,14 @@ import {
   ExternalLink,
   ChevronDown,
   User,
+  Users,
+  AlertCircle,
+  RefreshCw,
+  Trash2
 } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 import { toast } from 'sonner';
+import { ADMIN_API_BASE } from '../../config/api';
 
 export default function AdminHeader({
   isMobileSidebarOpen,
@@ -27,49 +32,37 @@ export default function AdminHeader({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Sample real-time notifications for active e-commerce store
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'order',
-      title: 'New Order #ORD-98421',
-      description: 'Vikram Mehta placed an order for ₹2,598',
-      time: '2m ago',
-      read: false,
-      icon: Package,
-    },
-    {
-      id: 2,
-      type: 'inventory',
-      title: 'Low Stock Alert',
-      description: 'Tactical Shorts (M) - 2 units left',
-      time: '18m ago',
-      read: false,
-      icon: AlertTriangle,
-    },
-    {
-      id: 3,
-      type: 'payment',
-      title: 'Instant UPI Verified',
-      description: '₹1,299 received via PhonePe for #ORD-98420',
-      time: '45m ago',
-      read: false,
-      icon: CreditCard,
-    },
-    {
-      id: 4,
-      type: 'review',
-      title: '5★ Product Review',
-      description: 'Aman S. reviewed Compression Tee',
-      time: '2h ago',
-      read: true,
-      icon: Star,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoadingNotifs, setIsLoadingNotifs] = useState(false);
 
   const notifRef = useRef(null);
   const profileRef = useRef(null);
+
+  // Fetch Live Notifications from Backend
+  const fetchLiveNotifications = async () => {
+    try {
+      const token = localStorage.getItem('xavonic_admin_token');
+      if (!token) return;
+      const res = await fetch(`${ADMIN_API_BASE}/notifications?limit=25`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (err) {
+      console.warn('Could not fetch notifications:', err.message);
+    }
+  };
+
+  // Poll notifications every 8 seconds
+  useEffect(() => {
+    fetchLiveNotifications();
+    const interval = setInterval(fetchLiveNotifications, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -85,17 +78,65 @@ export default function AdminHeader({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    toast.success('All notifications marked as read');
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('xavonic_admin_token');
+      await fetch(`${ADMIN_API_BASE}/notifications/mark-all-read`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
+      setUnreadCount(0);
+      toast.success('All notifications marked as read');
+    } catch (err) {
+      toast.error('Failed to mark notifications read');
+    }
   };
 
-  const markAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem('xavonic_admin_token');
+      await fetch(`${ADMIN_API_BASE}/notifications/${id}/read`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      console.warn('Could not mark read:', err.message);
+    }
+  };
+
+  const deleteNotif = async (e, id) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('xavonic_admin_token');
+      await fetch(`${ADMIN_API_BASE}/notifications/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      fetchLiveNotifications();
+    } catch (_) {}
+  };
+
+  const getNotifIcon = (type) => {
+    switch (type) {
+      case 'order':
+        return Package;
+      case 'stock_alert':
+        return AlertTriangle;
+      case 'inventory':
+        return AlertCircle;
+      case 'customer':
+        return Users;
+      case 'review':
+        return Star;
+      default:
+        return Bell;
+    }
   };
 
   return (
@@ -199,41 +240,71 @@ export default function AdminHeader({
               </div>
 
               {/* Notification List */}
-              <div className="max-h-72 overflow-y-auto divide-y divide-neutral-100">
+              <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
                 {notifications.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-neutral-400">
-                    No new notifications
+                  <div className="p-6 text-center text-xs text-neutral-400 space-y-1">
+                    <Bell className="w-6 h-6 mx-auto text-neutral-300 stroke-1 mb-2" />
+                    <p className="font-medium text-neutral-600">All caught up!</p>
+                    <p className="text-[11px] text-neutral-400">No new orders, out-of-stock or customer alerts.</p>
                   </div>
                 ) : (
                   notifications.map((item) => {
-                    const Icon = item.icon;
+                    const Icon = getNotifIcon(item.type);
+                    const isUnread = !item.is_read || item.is_read === 0;
+                    
+                    // Format time
+                    let timeDisplay = 'Just now';
+                    if (item.created_at) {
+                      const diffMs = Date.now() - new Date(item.created_at).getTime();
+                      const diffMins = Math.floor(diffMs / 60000);
+                      const diffHours = Math.floor(diffMins / 60);
+                      const diffDays = Math.floor(diffHours / 24);
+                      if (diffMins < 1) timeDisplay = 'Just now';
+                      else if (diffMins < 60) timeDisplay = `${diffMins}m ago`;
+                      else if (diffHours < 24) timeDisplay = `${diffHours}h ago`;
+                      else timeDisplay = `${diffDays}d ago`;
+                    }
+
                     return (
                       <div
                         key={item.id}
                         onClick={() => markAsRead(item.id)}
-                        className={`p-3 flex items-start gap-2.5 hover:bg-neutral-50 transition-colors cursor-pointer ${
-                          !item.read ? 'bg-neutral-50/60' : ''
+                        className={`p-3 flex items-start gap-2.5 hover:bg-neutral-50 transition-colors cursor-pointer group relative ${
+                          isUnread ? 'bg-neutral-50/80 font-medium' : 'opacity-85'
                         }`}
                       >
-                        <div className="p-1.5 rounded-sm bg-neutral-100 text-neutral-700 shrink-0 mt-0.5">
-                          <Icon className="h-3 w-3" />
+                        <div className={`p-1.5 rounded-sm shrink-0 mt-0.5 ${
+                          item.type === 'order' ? 'bg-red-50 text-red-600' :
+                          item.type === 'stock_alert' ? 'bg-amber-50 text-amber-600' :
+                          item.type === 'customer' ? 'bg-blue-50 text-blue-600' :
+                          item.type === 'review' ? 'bg-emerald-50 text-emerald-600' :
+                          'bg-neutral-100 text-neutral-700'
+                        }`}>
+                          <Icon className="h-3.5 w-3.5" />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-4">
                           <div className="flex items-center justify-between gap-1">
-                            <p className="text-xs font-medium text-neutral-900 truncate">
+                            <p className="text-xs font-semibold text-neutral-900 truncate">
                               {item.title}
                             </p>
-                            <span className="text-[10px] text-neutral-400 shrink-0">
-                              {item.time}
+                            <span className="text-[10px] text-neutral-400 shrink-0 font-mono">
+                              {timeDisplay}
                             </span>
                           </div>
-                          <p className="text-[11px] text-neutral-500 leading-tight mt-0.5">
+                          <p className="text-[11px] text-neutral-600 leading-tight mt-0.5">
                             {item.description}
                           </p>
                         </div>
-                        {!item.read && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-600 shrink-0 mt-1" />
-                        )}
+                        
+                        {/* Delete button on hover */}
+                        <button
+                          type="button"
+                          onClick={(e) => deleteNotif(e, item.id)}
+                          className="opacity-0 group-hover:opacity-100 absolute right-2 top-3 p-1 text-neutral-400 hover:text-red-600 transition-opacity"
+                          title="Dismiss notification"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                       </div>
                     );
                   })

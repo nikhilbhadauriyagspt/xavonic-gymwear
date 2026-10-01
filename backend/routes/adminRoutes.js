@@ -134,5 +134,18 @@ router.post('/settings/maps', verifyAdminToken, saveGoogleMapsConfig);
 router.get('/settings/shipping', getShippingConfig);
 router.post('/settings/shipping', verifyAdminToken, saveShippingConfig);
 
+// Protected: Admin Live System Notifications
+const {
+  getAdminNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+} = require('../controllers/adminNotificationController');
+
+router.get('/notifications', verifyAdminToken, getAdminNotifications);
+router.patch('/notifications/:id/read', verifyAdminToken, markAsRead);
+router.post('/notifications/mark-all-read', verifyAdminToken, markAllAsRead);
+router.delete('/notifications/:id', verifyAdminToken, deleteNotification);
+
 module.exports = router;
 
