@@ -24,6 +24,8 @@ import CollectionsPage from './pages/CollectionsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
+import About from './pages/About';
+import PolicyPage from './pages/PolicyPage';
 import AdminPage from './admin/AdminPage';
 
 function ScrollToTop() {
@@ -122,6 +124,15 @@ function MainLayout() {
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/product/:productId" element={<ProductDetailPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<PolicyPage policyType="privacy" />} />
+          <Route path="/terms" element={<PolicyPage policyType="terms" />} />
+          <Route path="/returns" element={<PolicyPage policyType="returns" />} />
+          <Route path="/shipping" element={<PolicyPage policyType="shipping" />} />
+          <Route path="/contact" element={<About />} />
+          <Route path="/size-guide" element={<PolicyPage policyType="returns" />} />
+          <Route path="/fabric-guide" element={<About />} />
+          <Route path="/track" element={<CheckoutPage />} />
         </Routes>
       </div>
 

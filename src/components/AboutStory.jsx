@@ -1,29 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ADMIN_API_BASE } from '../config/api';
 
 export default function AboutStory() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [brandContent, setBrandContent] = useState(null);
 
-  const faqs = [
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBrand() {
+      try {
+        const res = await fetch(`${ADMIN_API_BASE}/settings/brand-content`);
+        const resData = await res.json();
+        if (isMounted && resData.success && resData.content) {
+          setBrandContent(resData.content);
+        }
+      } catch (_) {}
+    }
+    loadBrand();
+    return () => { isMounted = false; };
+  }, []);
+
+  const heading = brandContent?.about_heading || brandContent?.content_about_heading || 'Gym Wear for Men & Women';
+  const badge = brandContent?.about_badge || brandContent?.content_about_badge || 'Brand Story & Training Guide';
+  const tagline = brandContent?.about_tagline || brandContent?.content_about_tagline || 'Xavonic — The Indian Gym Wear Brand Built for Real Training';
+  
+  const faqs = brandContent?.about_faqs || [
     {
-      q: 'What makes Coitonic an affordable gym wear brand in India?',
-      a: 'Coitonic cuts out unnecessary markups by focusing on direct, performance-first design. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at a price built for regular training, not occasional wear.'
+      q: 'What makes Xavonic an affordable gym wear brand in India?',
+      a: 'Xavonic cuts out unnecessary markups by focusing on direct, performance-first design. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at a price built for regular training, not occasional wear.'
     },
     {
-      q: 'Does Coitonic make gym wear for both men and women?',
-      a: 'Yes. Coitonic offers dedicated gym wear for men and gym wear for women, including compression fits, tops, bottoms, and outerwear designed around each training style.'
+      q: 'Does Xavonic make gym wear for both men and women?',
+      a: 'Yes. Xavonic offers dedicated gym wear for men and gym wear for women, including compression fits, tops, bottoms, and outerwear designed around each training style.'
     },
     {
       q: "What's the difference between activewear and performance gym wear?",
       a: 'Active wear is a broader term covering comfortable, athletic-style clothing for daily life and light activity. Performance gym wear is built specifically for training — with features like compression support, moisture-wicking fabric, and stretch built for lifting, running, or HIIT.'
     },
     {
-      q: 'Is Coitonic gym wear suitable for daily use, not just workouts?',
+      q: 'Is Xavonic gym wear suitable for daily use, not just workouts?',
       a: 'Yes. Most of our sports clothing — from T-shirts and joggers to tanks and shorts — is designed to move easily from a gym session into everyday wear, without feeling like training gear.'
     },
     {
-      q: 'What fabric technology does Coitonic use in its gym clothing?',
+      q: 'What fabric technology does Xavonic use in its gym clothing?',
       a: 'Our gym wear uses breathable cotton-polyester blends, stretch fabrics for compression pieces, and moisture-wicking finishes depending on the product, all selected to hold up through repeated training and washing.'
     },
     {
@@ -32,7 +53,7 @@ export default function AboutStory() {
     }
   ];
 
-  const popularSearches = [
+  const popularSearches = brandContent?.popular_searches || [
     'Gym Wear for Men',
     'Gym Wear for Women',
     'Compression Fit',
@@ -45,6 +66,8 @@ export default function AboutStory() {
     'Athletic Activewear'
   ];
 
+  const storyHtml = brandContent?.about_story_html || brandContent?.content_about_story_html;
+
   return (
     <section className="w-full bg-white text-zinc-900 py-14 sm:py-20 px-4 sm:px-8 lg:px-12 border-b border-zinc-200 select-none font-sans">
       <div className="w-full text-left">
@@ -52,13 +75,13 @@ export default function AboutStory() {
         {/* Main Header */}
         <div className="space-y-1.5 pb-6 border-b border-zinc-200">
           <span className="text-[11px] font-semibold text-red-600 uppercase tracking-[0.2em] block">
-            Brand Story & Training Guide
+            {badge}
           </span>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-zinc-950 tracking-tight">
-            Gym Wear for Men & Women
+            {heading}
           </h2>
           <p className="text-xs sm:text-sm font-medium text-zinc-600">
-            Coitonic — The Indian Gym Wear Brand Built for Real Training
+            {tagline}
           </p>
         </div>
 
@@ -66,33 +89,42 @@ export default function AboutStory() {
         <div className="relative mt-6">
           <div
             className={`transition-all duration-700 ease-in-out overflow-hidden text-xs sm:text-sm text-zinc-600 leading-relaxed space-y-6 ${
-              isExpanded ? 'max-h-[3000px] opacity-100' : 'max-h-[200px] opacity-90'
+              isExpanded ? 'max-h-[3500px] opacity-100' : 'max-h-[220px] opacity-90'
             }`}
           >
-            {/* Paragraph 1 */}
-            <p>
-              Coitonic is an Indian gym wear brand making performance apparel for people who actually train — not just people who want to look like they do. From compression fits to everyday active wear, every piece is designed to move with you through lifting, running, HIIT, or a regular gym session, without cutting corners on comfort or price. We believe good gym wear shouldn't cost a compromise. That's why Coitonic exists: affordable gym wear in India that performs like premium sports clothing, without the premium markup.
-            </p>
+            {storyHtml ? (
+              <div
+                className="prose max-w-none text-xs sm:text-sm text-zinc-600 space-y-4
+                  prose-headings:text-zinc-950 prose-headings:font-semibold
+                  prose-h3:text-sm sm:prose-h3:text-base prose-h3:mt-4
+                  prose-p:leading-relaxed prose-strong:text-zinc-900"
+                dangerouslySetInnerHTML={{ __html: storyHtml }}
+              />
+            ) : (
+              <>
+                <p>
+                  Xavonic is an Indian gym wear brand making performance apparel for people who actually train — not just people who want to look like they do. From compression fits to everyday active wear, every piece is designed to move with you through lifting, running, HIIT, or a regular gym session, without cutting corners on comfort or price. We believe good gym wear shouldn't cost a compromise. That's why Xavonic exists: affordable gym wear in India that performs like premium sports clothing, without the premium markup.
+                </p>
 
-            {/* Subsection 1 */}
-            <div className="space-y-2">
-              <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
-                Shop Smarter with an Affordable Gym Wear Brand from India
-              </h3>
-              <p>
-                Finding the right gym wear shouldn't mean choosing between quality and price. As an Indian gym wear brand, Coitonic is built around that exact problem — sourcing performance fabrics, testing real fits, and pricing them for the everyday athlete, not just the top 1%. Whether you're stepping into the gym for the first time or you've been training for years, our sports clothing is made to keep up.
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
+                    Shop Smarter with an Affordable Gym Wear Brand from India
+                  </h3>
+                  <p>
+                    Finding the right gym wear shouldn't mean choosing between quality and price. As an Indian gym wear brand, Xavonic is built around that exact problem — sourcing performance fabrics, testing real fits, and pricing them for the everyday athlete, not just the top 1%. Whether you're stepping into the gym for the first time or you've been training for years, our sports clothing is made to keep up.
+                  </p>
+                </div>
 
-            {/* Subsection 2 */}
-            <div className="space-y-2">
-              <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
-                Why Choose Coitonic Over Other Gym Clothing Brands
-              </h3>
-              <p>
-                We're not trying to be everything. As a gym clothing brand, Coitonic focuses on one thing: apparel that survives real training. That means: Fabric that's actually tested in the gym, not just on a lookbook — breathable blends, stretch-ready construction, and moisture-wicking finishes across our active wear range. Fits built for movement, from compression to relaxed, so your training style decides the cut, not the other way around. Pricing that respects your budget, because performance gym wear shouldn't be a luxury purchase. A full wardrobe, not just a T-shirt — tops, bottoms, outerwear, and accessories designed to work together.
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
+                    Why Choose Xavonic Over Other Gym Clothing Brands
+                  </h3>
+                  <p>
+                    We're not trying to be everything. As a gym clothing brand, Xavonic focuses on one thing: apparel that survives real training. That means: Fabric that's actually tested in the gym, not just on a lookbook — breathable blends, stretch-ready construction, and moisture-wicking finishes across our active wear range. Fits built for movement, from compression to relaxed, so your training style decides the cut, not the other way around. Pricing that respects your budget, because performance gym wear shouldn't be a luxury purchase.
+                  </p>
+                </div>
+              </>
+            )}
 
             {/* Category Breakdown */}
             <div className="space-y-3 pt-2">
@@ -142,44 +174,38 @@ export default function AboutStory() {
               </div>
             </div>
 
-            {/* Subsection 3 */}
-            <div className="space-y-2 pt-2">
-              <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
-                Built for More Than Just the Gym
-              </h3>
-              <p>
-                Good active wear should work beyond the workout. Coitonic's sports clothes are designed to transition from your training session to the rest of your day — breathable enough for the gym floor, comfortable enough for the commute home. Whether you call it activewear, sportswear, or just your everyday gym kit, the goal is the same: clothing that keeps up with an active life, not just an hour of it.
-              </p>
-            </div>
-
             {/* FAQ Section */}
-            <div className="space-y-3 pt-4 border-t border-zinc-200">
-              <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
-                Frequently Asked Questions
-              </h3>
-              <div className="space-y-3">
-                {faqs.map((faq, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <p className="text-xs sm:text-sm font-semibold text-zinc-900">
-                      {idx + 1}. {faq.q}
-                    </p>
-                    <p className="text-xs text-zinc-600 leading-relaxed">
-                      {faq.a}
-                    </p>
-                  </div>
-                ))}
+            {faqs && faqs.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-zinc-200">
+                <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
+                  Frequently Asked Questions
+                </h3>
+                <div className="space-y-3">
+                  {faqs.map((faq, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <p className="text-xs sm:text-sm font-semibold text-zinc-900">
+                        {idx + 1}. {faq.q}
+                      </p>
+                      <p className="text-xs text-zinc-600 leading-relaxed">
+                        {faq.a}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Popular Searches */}
-            <div className="space-y-2 pt-4 border-t border-zinc-200">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-950">
-                Popular Searches
-              </h4>
-              <p className="text-xs text-zinc-500 leading-relaxed">
-                {popularSearches.join(' | ')}
-              </p>
-            </div>
+            {popularSearches && popularSearches.length > 0 && (
+              <div className="space-y-2 pt-4 border-t border-zinc-200">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-950">
+                  Popular Searches
+                </h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  {popularSearches.join(' | ')}
+                </p>
+              </div>
+            )}
 
           </div>
 

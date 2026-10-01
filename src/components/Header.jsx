@@ -121,6 +121,27 @@ export default function Header() {
     return () => { isMounted = false; };
   }, []);
 
+  // Fetch live custom brand logos & identity
+  const [customLogos, setCustomLogos] = useState({ white: '', black: '', name: 'Xavonic Athletics' });
+  useEffect(() => {
+    let isMounted = true;
+    async function loadBrandIdentity() {
+      try {
+        const res = await fetch(`${ADMIN_API_BASE}/settings/brand-content`);
+        const resData = await res.json();
+        if (isMounted && resData.success && resData.content) {
+          setCustomLogos({
+            white: resData.content.logo_white || '',
+            black: resData.content.logo_black || '',
+            name: resData.content.brand_name || 'Xavonic Athletics',
+          });
+        }
+      } catch (_) {}
+    }
+    loadBrandIdentity();
+    return () => { isMounted = false; };
+  }, []);
+
   const handleCopyCoupon = (code) => {
     if (!code) return;
     navigator.clipboard.writeText(code);
@@ -377,11 +398,11 @@ export default function Header() {
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-            {/* Brand Logo (Switches smoothly between white and black logo) */}
+            {/* Brand Logo (Switches smoothly between white and black logo, supporting custom admin uploads) */}
             <Link to="/" className="flex items-center shrink-0 py-1">
               <img 
-                src={isScrolled ? logoBlack : logoWhite} 
-                alt="Xavonic Athletics" 
+                src={isScrolled ? (customLogos.black || logoBlack) : (customLogos.white || logoWhite)} 
+                alt={customLogos.name || "Xavonic Athletics"} 
                 className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-all duration-300"
               />
             </Link>

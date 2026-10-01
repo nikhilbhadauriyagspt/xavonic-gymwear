@@ -16,6 +16,7 @@ import {
   Star,
   Image as ImageIcon,
   Truck,
+  Globe,
 } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 
@@ -289,7 +290,25 @@ export default function AdminSidebar({
               </div>
             </button>
 
-            {/* 9. Settings */}
+            {/* 9. Brand Identity & Policy CMS */}
+            <button
+              onClick={() => {
+                setActiveTab('brand-content');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-sm transition-colors cursor-pointer ${
+                activeTab === 'brand-content'
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Globe className={`h-3.5 w-3.5 ${activeTab === 'brand-content' ? 'text-white' : 'text-pink-600'}`} />
+                <span>Brand & Content CMS</span>
+              </div>
+            </button>
+
+            {/* 10. System Gateways Settings */}
             <button
               onClick={() => {
                 setActiveTab('settings');
@@ -303,7 +322,7 @@ export default function AdminSidebar({
             >
               <div className="flex items-center gap-2.5">
                 <Settings className={`h-3.5 w-3.5 ${activeTab === 'settings' ? 'text-white' : 'text-neutral-500'}`} />
-                <span>Settings</span>
+                <span>System Gateways</span>
               </div>
             </button>
           </div>

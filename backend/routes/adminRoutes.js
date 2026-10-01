@@ -19,6 +19,8 @@ const {
   saveGoogleMapsConfig,
   getShippingConfig,
   saveShippingConfig,
+  getBrandContent,
+  saveBrandContent,
 } = require('../controllers/adminSettingsController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
 
@@ -133,6 +135,10 @@ router.post('/settings/maps', verifyAdminToken, saveGoogleMapsConfig);
 // Public/Protected: Shipping & COD Delivery Rules
 router.get('/settings/shipping', getShippingConfig);
 router.post('/settings/shipping', verifyAdminToken, saveShippingConfig);
+
+// Public/Protected: Brand Identity, About Story, Social Links & Policy CMS
+router.get('/settings/brand-content', getBrandContent);
+router.post('/settings/brand-content', verifyAdminToken, saveBrandContent);
 
 // Protected: Admin Live System Notifications
 const {
