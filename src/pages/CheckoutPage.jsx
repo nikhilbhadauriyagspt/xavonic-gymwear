@@ -20,12 +20,17 @@ import {
   Loader2,
   Search,
   ExternalLink,
+  FileText,
+  Printer,
+  Download,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { placeCustomerOrder } from '../services/orderService';
 import { ADMIN_API_BASE } from '../config/api';
+import OrderInvoiceModal from '../components/OrderInvoiceModal';
+import { printOrderInvoice } from '../utils/invoiceGenerator';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -35,6 +40,7 @@ export default function CheckoutPage() {
   // Stepper state: 'details' (Shipping & Payment) | 'confirmed' (Order Success)
   const [step, setStep] = useState('details');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   // Address Selection
   const defaultSavedAddresses = useMemo(() => {
@@ -593,15 +599,41 @@ export default function CheckoutPage() {
               Need help with this order? Email us at <span className="text-neutral-800 font-medium">support@guidelya.com</span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsInvoiceModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 border border-neutral-300 bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-neutral-900 hover:bg-neutral-50 transition-colors cursor-pointer rounded-xs shadow-2xs"
+              >
+                <FileText className="h-4 w-4 text-amber-500" />
+                <span>Download Tax Invoice</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => printOrderInvoice(confirmedOrder)}
+                className="inline-flex items-center justify-center gap-1.5 border border-neutral-300 bg-neutral-100 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-wider text-neutral-800 hover:bg-neutral-200 transition-colors cursor-pointer rounded-xs"
+                title="Print Invoice / Save PDF"
+              >
+                <Printer className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Print</span>
+              </button>
+
               <Link
                 to="/collections"
-                className="inline-flex items-center justify-center gap-2 bg-neutral-900 px-6 py-2.5 text-xs font-medium uppercase tracking-wider text-white hover:bg-red-600 transition-colors cursor-pointer rounded-xs"
+                className="inline-flex items-center justify-center gap-2 bg-neutral-900 px-6 py-2.5 text-xs font-medium uppercase tracking-wider text-white hover:bg-black transition-colors cursor-pointer rounded-xs shadow-2xs"
               >
                 Continue Shopping
               </Link>
             </div>
           </div>
+
+          {/* Tax Invoice Modal */}
+          <OrderInvoiceModal
+            order={confirmedOrder}
+            isOpen={isInvoiceModalOpen}
+            onClose={() => setIsInvoiceModalOpen(false)}
+          />
 
         </div>
       </div>

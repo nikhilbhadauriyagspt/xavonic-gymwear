@@ -9,14 +9,19 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Copy,
+  ExternalLink,
   Heart,
   Image as ImageIcon,
+  Layers,
   MapPin,
   Maximize2,
+  MessageCircle,
   Minus,
   Plus,
   RotateCcw,
   Ruler,
+  Send,
   Share2,
   ShieldCheck,
   ShoppingBag,
@@ -88,6 +93,50 @@ export default function ProductDetailPage() {
   const [bundleQty, setBundleQty] = useState(1);
   const [pincode, setPincode] = useState('');
   const [pincodeStatus, setPincodeStatus] = useState(null);
+
+  // Dynamic Estimated Delivery Date Calculation
+  const defaultEstimatedDelivery = useMemo(() => {
+    const today = new Date();
+    const dMin = new Date(today);
+    dMin.setDate(today.getDate() + 3);
+    const dMax = new Date(today);
+    dMax.setDate(today.getDate() + 5);
+    const opt = { weekday: 'short', day: 'numeric', month: 'short' };
+    return `${dMin.toLocaleDateString('en-IN', opt)} – ${dMax.toLocaleDateString('en-IN', opt)}`;
+  }, []);
+
+  // Frequently Bought Together States
+  const bundleProduct = useMemo(() => {
+    return allLiveProducts.find((p) => String(p.id) !== String(product?.id) && p.category !== product?.category) || allLiveProducts[1] || allLiveProducts[0];
+  }, [allLiveProducts, product?.id, product?.category]);
+
+  const [isMainSelected, setIsMainSelected] = useState(true);
+  const [isBundleSelected, setIsBundleSelected] = useState(true);
+  const [bundleSize, setBundleSize] = useState(bundleProduct?.sizes?.[0] || 'M');
+
+  // Recently Viewed Products Tracking
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    try {
+      const storageKey = 'xavonic_recently_viewed';
+      const stored = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const updated = [String(product.id), ...stored.filter((id) => String(id) !== String(product.id))].slice(0, 10);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+
+      const viewedItems = updated
+        .filter((id) => String(id) !== String(product.id))
+        .map((id) => allLiveProducts.find((p) => String(p.id) === String(id) || p.slug === id))
+        .filter(Boolean)
+        .slice(0, 4);
+
+      setRecentlyViewed(viewedItems);
+    } catch (_) {}
+  }, [product?.id, allLiveProducts]);
+
+  // Share Modal State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Zoom States
   const [isZooming, setIsZooming] = useState(false);
@@ -263,17 +312,21 @@ export default function ProductDetailPage() {
   };
 
   const handleShare = () => {
+    setIsShareModalOpen(true);
+  };
+
+  const handleNativeShare = () => {
     if (navigator.share) {
       navigator
         .share({
           title: product.title,
-          text: `Check out ${product.title}`,
+          text: `Check out ${product.title} on Xavonic Gymwear:`,
           url: window.location.href,
         })
-        .catch(() => { });
+        .catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Product link copied');
+      toast.success('Product link copied to clipboard!');
     }
   };
 
@@ -283,8 +336,56 @@ export default function ProductDetailPage() {
       toast.error('Please enter a valid 6-digit PIN code');
       return;
     }
-    setPincodeStatus('Delivery within 2–4 business days.');
-    toast.success(`Delivery available for PIN ${pincode}`);
+    const isMetro = ['11', '12', '20', '40', '56', '50', '70', '60', '38', '30'].some((pre) => pincode.startsWith(pre));
+    const offsetMin = isMetro ? 2 : 3;
+    const offsetMax = isMetro ? 3 : 5;
+
+    const dMin = new Date();
+    dMin.setDate(dMin.getDate() + offsetMin);
+    const dMax = new Date();
+    dMax.setDate(dMax.getDate() + offsetMax);
+    const opt = { weekday: 'short', day: 'numeric', month: 'short' };
+    const dateText = `${dMin.toLocaleDateString('en-IN', opt)} – ${dMax.toLocaleDateString('en-IN', opt)}`;
+
+    setPincodeStatus({
+      pincode,
+      title: `Get it by ${dateText}`,
+      sub: isMetro ? '⚡ Express 48h Delivery available for your area' : 'Standard Insured Delivery',
+      isExpress: isMetro,
+    });
+    toast.success(`Delivery available for PIN ${pincode}: Get it by ${dMin.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`);
+  };
+
+  const handleAddBundleToCart = () => {
+    let count = 0;
+    if (isMainSelected) {
+      if (isSelectedSizeOutOfStock) {
+        toast.error(`Size ${selectedSize} of ${product.title} is out of stock`);
+        return;
+      }
+      addToCart(
+        { ...product, imageFront: currentImages[0] },
+        selectedSize,
+        1,
+        activeColor.name
+      );
+      count++;
+    }
+    if (isBundleSelected && bundleProduct) {
+      addToCart(
+        { ...bundleProduct, imageFront: bundleProduct.imageFront || bundleProduct.gallery?.[0] },
+        bundleSize || bundleProduct.sizes?.[0] || 'M',
+        1,
+        bundleProduct.colors?.[0]?.name || 'Standard'
+      );
+      count++;
+    }
+    if (count > 0) {
+      openCart();
+      toast.success(`${count} items added to bag with combo savings!`);
+    } else {
+      toast.error('Please select at least one item from the bundle');
+    }
   };
 
   const goPrevImage = () => {
@@ -916,6 +1017,21 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
+              {/* Dynamic Estimated Delivery Banner */}
+              <div className="flex items-center gap-2.5 p-3 bg-[#f8f8f7] border border-neutral-200 text-xs">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white">
+                  <Truck className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-neutral-900">
+                    {pincodeStatus ? pincodeStatus.title : `Get it by ${defaultEstimatedDelivery}`}
+                  </div>
+                  <div className="text-[10px] text-neutral-500 font-normal">
+                    {pincodeStatus ? pincodeStatus.sub : 'Fast dispatch within 24h • Insured delivery'}
+                  </div>
+                </div>
+              </div>
+
               {/* Trust Features Bar */}
               <div className="grid grid-cols-3 border-y border-neutral-200 py-3 text-center">
                 <div className="px-2">
@@ -932,32 +1048,22 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Live Deals Card */}
-              <div>
-                <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-neutral-700">Live Deals</div>
-                <div className="flex items-center justify-between border border-neutral-200 bg-neutral-950 p-3 text-white">
-                  <div>
-                    <div className="text-[10px] text-neutral-400 font-normal">Special Deal</div>
-                    <div className="text-xs font-medium">Extra prepaid savings</div>
-                    <div className="mt-0.5 text-[10px] text-neutral-400 font-normal">Applied automatically at checkout</div>
-                  </div>
-                  <div className="grid h-8 w-8 place-items-center rounded-full bg-white text-neutral-900">
-                    <ChevronRight className="h-4 w-4" />
-                  </div>
-                </div>
-              </div>
-
               {/* Delivery Checker */}
               <form onSubmit={handleCheckPincode} className="border-t border-neutral-200 pt-3">
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-neutral-800">
-                  <MapPin className="h-3.5 w-3.5 text-neutral-700" /> Check Delivery
+                <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wider text-neutral-800">
+                  <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-neutral-700" /> Check PIN Delivery</span>
+                  {pincodeStatus && (
+                    <span className="text-[10px] font-semibold text-emerald-700 normal-case bg-emerald-50 px-1.5 py-0.2 border border-emerald-200">
+                      PIN: {pincodeStatus.pincode}
+                    </span>
+                  )}
                 </div>
                 <div className="flex">
                   <input
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
                     maxLength={6}
-                    placeholder="Enter 6-digit PIN"
+                    placeholder="Enter 6-digit PIN code"
                     className="h-9 flex-1 border border-neutral-300 px-3 text-xs font-normal outline-none focus:border-neutral-900"
                   />
                   <button type="submit" className="h-9 bg-neutral-900 px-4 text-[11px] font-medium uppercase tracking-wider text-white hover:bg-black transition-colors">
@@ -965,21 +1071,37 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
                 {pincodeStatus && (
-                  <div className="mt-2 flex items-center gap-1.5 text-xs font-normal text-emerald-700">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> {pincodeStatus}
+                  <div className="mt-2 flex items-start gap-1.5 text-xs font-normal text-emerald-700 bg-emerald-50/70 p-2 border border-emerald-200 rounded-xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold block">{pincodeStatus.title}</span>
+                      <span className="text-[10px] text-emerald-800">{pincodeStatus.sub}</span>
+                    </div>
                   </div>
                 )}
               </form>
 
-              {/* SKU & Category Details */}
-              <div className="border-t border-neutral-200 pt-3 text-[11px] leading-5 text-neutral-500 font-normal">
+              {/* SKU, Category & Share Strip */}
+              <div className="border-t border-neutral-200 pt-3 text-[11px] leading-5 text-neutral-500 font-normal space-y-1">
                 <div><span className="font-medium text-neutral-800">SKU:</span> {product.id}</div>
                 <div><span className="font-medium text-neutral-800">Category:</span> {categoryInfo.title}</div>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="pt-1 flex items-center gap-2">
                   <span className="font-medium text-neutral-800">Share:</span>
-                  <button onClick={handleShare} className="inline-flex items-center gap-1 text-neutral-600 hover:text-black transition-colors">
-                    <Share2 className="h-3 w-3" /> Product Link
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[11px] font-medium transition-colors cursor-pointer border border-neutral-200"
+                  >
+                    <Share2 className="h-3 w-3" /> Share Options
                   </button>
+                  <a
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product.title} on Xavonic: ${window.location.href}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-medium transition-colors cursor-pointer border border-emerald-200"
+                  >
+                    <MessageCircle className="h-3 w-3 text-emerald-600" /> WhatsApp
+                  </a>
                 </div>
               </div>
             </div>
@@ -1091,6 +1213,136 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
+        {/* FREQUENTLY BOUGHT TOGETHER SECTION */}
+        {bundleProduct && (
+          <section className="mt-14 border-t border-neutral-200 pt-8 sm:mt-16">
+            <div className="mx-auto max-w-[1020px] border border-neutral-200 bg-[#fafaf9] p-5 sm:p-7">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200 mb-1">
+                    Combo Deal • Save Extra 10%
+                  </span>
+                  <h2 className="text-sm sm:text-base font-semibold uppercase tracking-wide text-neutral-900">
+                    Frequently Bought Together
+                  </h2>
+                  <p className="text-xs text-neutral-500 font-normal">Pair this piece with matching athletic gear for a complete training outfit.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr_auto_280px] items-center gap-4 sm:gap-6">
+                {/* Main Item */}
+                <div className="flex items-center gap-3.5 bg-white p-3.5 border border-neutral-200 shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={isMainSelected}
+                    onChange={(e) => setIsMainSelected(e.target.checked)}
+                    className="w-4 h-4 rounded accent-neutral-900 cursor-pointer shrink-0"
+                  />
+                  <img
+                    src={currentImages[0]}
+                    alt={product.title}
+                    className="h-16 w-12 object-cover bg-neutral-100 shrink-0 border border-neutral-200"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] uppercase font-bold text-neutral-400">Main Product</div>
+                    <div className="text-xs font-semibold text-neutral-900 truncate uppercase">{product.title}</div>
+                    <div className="text-xs font-bold text-neutral-950 font-mono mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</div>
+                    <div className="text-[10px] text-neutral-500 mt-0.5">Size: <strong className="text-neutral-800">{selectedSize}</strong></div>
+                  </div>
+                </div>
+
+                {/* Plus Icon */}
+                <div className="hidden lg:grid place-items-center h-8 w-8 rounded-full bg-neutral-200 text-neutral-800 font-bold text-sm">
+                  +
+                </div>
+
+                {/* Bundle Item */}
+                <div className="flex items-center gap-3.5 bg-white p-3.5 border border-neutral-200 shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={isBundleSelected}
+                    onChange={(e) => setIsBundleSelected(e.target.checked)}
+                    className="w-4 h-4 rounded accent-neutral-900 cursor-pointer shrink-0"
+                  />
+                  <img
+                    src={bundleProduct.imageFront || bundleProduct.gallery?.[0]}
+                    alt={bundleProduct.title}
+                    className="h-16 w-12 object-cover bg-neutral-100 shrink-0 border border-neutral-200"
+                  />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="text-[10px] uppercase font-bold text-neutral-400">Complementary Fit</div>
+                    <div className="text-xs font-semibold text-neutral-900 truncate uppercase">{bundleProduct.title}</div>
+                    <div className="text-xs font-bold text-neutral-950 font-mono">₹{Number(bundleProduct.price || 0).toLocaleString('en-IN')}.00</div>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="text-neutral-500 font-medium">Size:</span>
+                      <select
+                        value={bundleSize}
+                        onChange={(e) => setBundleSize(e.target.value)}
+                        className="bg-neutral-50 border border-neutral-300 text-neutral-900 font-medium px-2 py-0.5 text-[10px] outline-none cursor-pointer"
+                      >
+                        {(bundleProduct.sizes || ['S', 'M', 'L', 'XL']).map((sz) => (
+                          <option key={sz} value={sz}>{sz}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equals Icon */}
+                <div className="hidden lg:grid place-items-center h-8 w-8 rounded-full bg-neutral-200 text-neutral-800 font-bold text-sm">
+                  =
+                </div>
+
+                {/* Combo Purchase CTA Box */}
+                <div className="bg-white p-4 border border-neutral-200 flex flex-col justify-between space-y-3 shadow-2xs">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
+                      Combo Total Price
+                    </div>
+                    {(() => {
+                      const p1 = isMainSelected ? unitPrice : 0;
+                      const p2 = isBundleSelected ? Number(bundleProduct.price || 0) : 0;
+                      const raw = p1 + p2;
+                      const discounted = isMainSelected && isBundleSelected ? Math.round(raw * 0.9) : raw;
+                      const savings = raw - discounted;
+
+                      return (
+                        <div className="mt-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-base font-bold text-neutral-950 font-mono">
+                              ₹{discounted.toLocaleString('en-IN')}.00
+                            </span>
+                            {savings > 0 && (
+                              <span className="text-[11px] text-neutral-400 line-through font-mono">
+                                ₹{raw.toLocaleString('en-IN')}.00
+                              </span>
+                            )}
+                          </div>
+                          {savings > 0 && (
+                            <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+                              ⚡ Save ₹{savings.toLocaleString('en-IN')} (10% OFF Combo)
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddBundleToCart}
+                    className="w-full h-10 bg-neutral-950 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.99]"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Add Both to Cart</span>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* RELATED PRODUCTS */}
         <section className="mt-14 border-t border-neutral-200 pt-8 sm:mt-18">
           <div className="mb-6 flex items-end justify-between">
@@ -1123,6 +1375,40 @@ export default function ProductDetailPage() {
             ))}
           </div>
         </section>
+
+        {/* RECENTLY VIEWED PRODUCTS */}
+        {recentlyViewed.length > 0 && (
+          <section className="mt-14 border-t border-neutral-200 pt-8 sm:mt-18">
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <h2 className="text-sm sm:text-base font-medium uppercase tracking-wide text-neutral-900">
+                  Recently Viewed
+                </h2>
+                <p className="mt-0.5 text-xs text-neutral-500 font-normal">Pick up where you left off in your session.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-4 sm:gap-x-6">
+              {recentlyViewed.map((p) => (
+                <Link key={p.id} to={`/product/${p.id}`} className="group min-w-0">
+                  <div className="aspect-[3/4] overflow-hidden bg-neutral-100 border border-neutral-200">
+                    <img
+                      src={p.gallery?.[0] || p.colors?.[0]?.image || p.imageFront}
+                      alt={p.title}
+                      className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.04]"
+                    />
+                  </div>
+                  <div className="pt-2.5">
+                    <h3 className="truncate text-xs font-normal text-neutral-800 group-hover:text-black transition-colors">
+                      {p.title}
+                    </h3>
+                    <p className="mt-1 text-xs font-semibold text-neutral-900">₹{Number(p.price || 0).toLocaleString('en-IN')}.00</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* COMPLETE CUSTOMER REVIEWS BLOCK */}
         <section id="reviews-section" className="mx-auto mt-14 max-w-[920px] border border-neutral-200 bg-white p-5 sm:p-8 sm:mt-18">
@@ -1815,6 +2101,140 @@ export default function ProductDetailPage() {
                 We'll only notify you once when this item is restocked. No spam.
               </p>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* STICKY MOBILE BUY BAR (Appears on Mobile Screens) */}
+      <aside className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-neutral-200 px-3.5 py-2.5 sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.08)] flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img
+            src={currentImages[0]}
+            alt=""
+            className="h-10 w-8 object-cover bg-neutral-100 border border-neutral-200 shrink-0"
+          />
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold text-neutral-900 truncate uppercase leading-tight">
+              {product.title}
+            </div>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs font-bold text-neutral-950 font-mono">
+                ₹{unitPrice.toLocaleString('en-IN')}
+              </span>
+              <span className="text-[10px] text-neutral-500 font-medium">
+                • Size: <strong className="text-neutral-900">{selectedSize}</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {isSelectedSizeOutOfStock ? (
+            <button
+              type="button"
+              onClick={() => setIsNotifyModalOpen(true)}
+              className="h-9 px-3 bg-neutral-950 text-white text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all shadow-xs"
+            >
+              <Bell className="h-3 w-3 text-amber-400" />
+              <span>Notify Me</span>
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => handleAddToCart(true)}
+                className="h-9 px-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-[10px] font-bold uppercase tracking-wider border border-neutral-300 active:scale-95 transition-all"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                className="h-9 px-3 bg-neutral-900 hover:bg-black text-white text-[10px] font-bold uppercase tracking-wider active:scale-95 transition-all shadow-xs"
+              >
+                Buy Now
+              </button>
+            </>
+          )}
+        </div>
+      </aside>
+
+      {/* SOCIAL & DIRECT SHARE MODAL */}
+      {isShareModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+          onClick={() => setIsShareModalOpen(false)}
+        >
+          <div 
+            className="relative w-full max-w-sm bg-white p-5 sm:p-6 border border-neutral-200 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-neutral-900" />
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-900">
+                  Share Product
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-950 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Product Snapshot */}
+            <div className="flex items-center gap-3 bg-neutral-50 p-2.5 border border-neutral-200">
+              <img src={currentImages[0]} alt="" className="h-12 w-9 object-cover bg-neutral-200 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-neutral-900 truncate uppercase">{product.title}</div>
+                <div className="text-xs font-bold text-neutral-950 font-mono mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</div>
+              </div>
+            </div>
+
+            {/* Social Share Grid */}
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              <a
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product.title} on Xavonic Gymwear: ${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-xs transition-colors"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={handleNativeShare}
+                className="flex items-center justify-center gap-2 p-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-300 text-xs font-semibold rounded-xs transition-colors cursor-pointer"
+              >
+                <Copy className="w-4 h-4 text-neutral-700" />
+                <span>Copy Link</span>
+              </button>
+
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 p-2.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-semibold rounded-xs transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 text-blue-600" />
+                <span>Facebook</span>
+              </a>
+
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${product.title} on Xavonic: ${window.location.href}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 p-2.5 bg-neutral-900 hover:bg-black text-white text-xs font-semibold rounded-xs transition-colors"
+              >
+                <Send className="w-4 h-4 text-white" />
+                <span>Twitter / X</span>
+              </a>
+            </div>
           </div>
         </div>
       )}

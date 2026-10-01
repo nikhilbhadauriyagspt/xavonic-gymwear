@@ -26,10 +26,16 @@ import {
   Home,
   Check,
   Loader2,
+  FileText,
+  Printer,
+  Download,
+  Edit2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { ORDERS_API_BASE } from '../config/api';
+import OrderInvoiceModal from './OrderInvoiceModal';
+import { printOrderInvoice } from '../utils/invoiceGenerator';
 
 export default function ProfileDrawer() {
   const { 
@@ -115,6 +121,9 @@ export default function ProfileDrawer() {
   const [customerReturnReason, setCustomerReturnReason] = useState('Size / Fit issue');
   const [customerReturnComment, setCustomerReturnComment] = useState('');
   const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+
+  // Invoice Modal State
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   const handleCustomerCancelSubmit = async (e) => {
     e.preventDefault();
@@ -741,8 +750,29 @@ export default function ProfileDrawer() {
                     </div>
                   )}
 
-                  {/* CUSTOMER ACTIONS (Cancel Order / Request Return) */}
+                  {/* CUSTOMER ACTIONS (Invoice Download / Cancel Order / Request Return) */}
                   <div className="pt-2 space-y-2">
+                    {/* Tax Invoice Download / View Button */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsInvoiceModalOpen(true)}
+                        className="flex-1 py-2.5 bg-zinc-900 hover:bg-black text-white text-xs font-semibold rounded-[8px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-amber-400" />
+                        <span>View / Download Tax Invoice</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => printOrderInvoice(selectedOrder)}
+                        className="px-3.5 py-2.5 border border-zinc-300 hover:bg-zinc-100 text-zinc-800 text-xs font-semibold rounded-[8px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                        title="Print / Save PDF"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Print</span>
+                      </button>
+                    </div>
+
                     {/* Active Order -> Cancel Order */}
                     {selectedOrder.orderStatus !== 'Cancelled' && selectedOrder.orderStatus !== 'Delivered' && (
                       <button
@@ -1418,6 +1448,13 @@ export default function ProfileDrawer() {
               </div>
             </div>
           )}
+
+          {/* CUSTOMER ORDER TAX INVOICE MODAL */}
+          <OrderInvoiceModal
+            order={selectedOrder}
+            isOpen={isInvoiceModalOpen}
+            onClose={() => setIsInvoiceModalOpen(false)}
+          />
 
         </div>
       )}

@@ -24,6 +24,8 @@ import {
   RotateCcw,
   AlertTriangle,
   FileText,
+  Printer,
+  Download,
   Check,
   ArrowRight,
   Send,
@@ -37,6 +39,8 @@ import {
   cancelOrder,
   deleteAdminOrder,
 } from '../../services/orderService';
+import OrderInvoiceModal from '../../components/OrderInvoiceModal';
+import { printOrderInvoice, downloadInvoiceDocument } from '../../utils/invoiceGenerator';
 
 export default function OrdersTab() {
   const [orders, setOrders] = useState([]);
@@ -69,6 +73,10 @@ export default function OrdersTab() {
     refund_notes: '',
   });
   const [isSavingRefund, setIsSavingRefund] = useState(false);
+
+  // Invoice Modal State
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoiceOrder, setInvoiceOrder] = useState(null);
 
   const loadOrders = async (status = statusFilter, query = search) => {
     setLoading(true);
@@ -601,6 +609,17 @@ export default function OrdersTab() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
+                            onClick={() => {
+                              setInvoiceOrder(ord);
+                              setIsInvoiceModalOpen(true);
+                            }}
+                            className="p-1.5 text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100 rounded-sm transition-colors cursor-pointer"
+                            title="View / Print Tax Invoice"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-amber-600" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => setSelectedOrder(ord)}
                             className="p-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-sm transition-colors cursor-pointer"
                             title="Manage Order, Return & Refund"
@@ -662,12 +681,35 @@ export default function OrdersTab() {
                 </p>
               </div>
 
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="grid h-8 w-8 place-items-center rounded-full text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInvoiceOrder(selectedOrder);
+                    setIsInvoiceModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-black text-white text-xs font-semibold rounded-xs transition-colors cursor-pointer"
+                  title="View Tax Invoice"
+                >
+                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Tax Invoice</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => printOrderInvoice(selectedOrder)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold rounded-xs transition-colors cursor-pointer"
+                  title="Print Invoice / Save as PDF"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Print</span>
+                </button>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="grid h-8 w-8 place-items-center rounded-full text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors ml-1"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {/* 🔴 CANCELLATION BANNER (If Cancelled) */}
@@ -1071,6 +1113,16 @@ export default function OrdersTab() {
           </div>
         </div>
       )}
+
+      {/* ADMIN TAX INVOICE PREVIEW & PRINT MODAL */}
+      <OrderInvoiceModal
+        order={invoiceOrder || selectedOrder}
+        isOpen={isInvoiceModalOpen}
+        onClose={() => {
+          setIsInvoiceModalOpen(false);
+          setInvoiceOrder(null);
+        }}
+      />
 
     </div>
   );

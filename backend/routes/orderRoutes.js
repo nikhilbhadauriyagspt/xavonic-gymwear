@@ -12,6 +12,9 @@ router.get('/track/:orderNumber', orderController.getOrderDetails);
 // GET /api/orders/user/:userIdOrPhone (Customer order history)
 router.get('/user/:userIdOrPhone', orderController.getCustomerOrders);
 
+// GET /api/orders/:orderNumber/invoice (Get Order Tax Invoice / Download)
+router.get('/:orderNumber/invoice', orderController.getOrderInvoice);
+
 // POST /api/orders/:orderId/cancel (Cancel order)
 router.post('/:orderId/cancel', orderController.cancelOrder);
 

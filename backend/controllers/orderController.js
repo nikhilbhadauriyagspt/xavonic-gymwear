@@ -623,6 +623,250 @@ exports.deleteOrder = async (req, res) => {
   }
 };
 
+// 10. Get Order Tax Invoice (JSON + HTML Print View)
+exports.getOrderInvoice = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+    const { format } = req.query;
+
+    const [rows] = await db.query(
+      'SELECT * FROM orders WHERE order_number = ? OR id = ? LIMIT 1',
+      [orderNumber, orderNumber]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found for invoice generation.' });
+    }
+
+    const order = formatOrderRow(rows[0]);
+    const invoiceNumber = `INV-${order.orderNumber}`;
+    const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const taxableAmount = Math.round((order.subtotal - order.discountAmount) / 1.05);
+    const gstAmount = (order.subtotal - order.discountAmount) - taxableAmount;
+    const cgst = Math.round(gstAmount / 2);
+    const sgst = gstAmount - cgst;
+
+    const invoiceData = {
+      invoiceNumber,
+      invoiceDate,
+      orderNumber: order.orderNumber,
+      orderDate: invoiceDate,
+      seller: {
+        companyName: 'XAVONIC ATHLETICS (GUIDELYA SPORTS PVT LTD)',
+        gstin: '06AAECX9821L1Z4',
+        pan: 'AAECX9821L',
+        state: 'Haryana',
+        stateCode: '06',
+        address: 'Plot 42, DLF Phase 4, Gurugram, Haryana - 122002',
+        email: 'billing@guidelya.com',
+        phone: '+91 98765 43210',
+        cin: 'U17120HR2023PTC109842',
+      },
+      customer: {
+        name: order.customerName,
+        phone: order.customerPhone,
+        email: order.customerEmail || 'N/A',
+        customerId: order.customerId,
+        shippingAddress: order.shippingAddress,
+      },
+      items: order.items.map((item, index) => {
+        const lineTotal = Number(item.price || 0) * Number(item.quantity || 1);
+        const itemTaxable = Math.round(lineTotal / 1.05);
+        const itemTax = lineTotal - itemTaxable;
+        return {
+          srNo: index + 1,
+          title: item.title,
+          size: item.size || item.selectedSize || 'M',
+          color: item.color || item.selectedColor || 'Standard',
+          hsnCode: '61091000',
+          quantity: item.quantity || 1,
+          unitPrice: Number(item.price || 0),
+          taxableValue: itemTaxable,
+          gstRate: '5%',
+          gstAmount: itemTax,
+          lineTotal,
+        };
+      }),
+      financials: {
+        subtotal: order.subtotal,
+        discount: order.discountAmount,
+        couponCode: order.couponCode,
+        taxableAmount,
+        cgst,
+        sgst,
+        totalGst: gstAmount,
+        shippingFee: order.shippingFee,
+        grandTotal: order.totalAmount,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+      },
+      shipping: {
+        trackingNumber: order.trackingNumber,
+        courierPartner: order.courierPartner,
+      },
+    };
+
+    if (format === 'html') {
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(generateInvoiceHtml(invoiceData));
+    }
+
+    return res.json({
+      success: true,
+      invoice: invoiceData,
+      order,
+    });
+  } catch (error) {
+    console.error('❌ Error generating order invoice:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate tax invoice.' });
+  }
+};
+
+// HTML Template Helper for Standalone Server-Side Invoice
+function generateInvoiceHtml(inv) {
+  const { seller, customer, items, financials, shipping } = inv;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tax Invoice - ${inv.invoiceNumber}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #111; margin: 0; padding: 24px; background: #fff; font-size: 12px; line-height: 1.4; }
+    .invoice-box { max-width: 800px; margin: auto; border: 1px solid #e5e5e5; padding: 24px; }
+    .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 16px; margin-bottom: 20px; }
+    .brand { font-size: 20px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+    .badge { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #666; margin-top: 4px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .card { background: #f9f9f9; padding: 12px; border: 1px solid #eee; border-radius: 4px; }
+    .card-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #777; margin-bottom: 6px; letter-spacing: 0.5px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { background: #111; color: #fff; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 11px; }
+    .text-right { text-align: right; }
+    .totals { margin-left: auto; width: 300px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; }
+    .totals-row.grand { font-size: 14px; font-weight: 800; border-top: 2px solid #111; padding-top: 8px; margin-top: 6px; }
+    .footer { margin-top: 30px; border-top: 1px solid #eee; padding-top: 12px; font-size: 10px; color: #777; text-align: center; }
+    @media print {
+      body { padding: 0; }
+      .invoice-box { border: none; padding: 0; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-box">
+    <div class="no-print" style="margin-bottom: 16px; text-align: right;">
+      <button onclick="window.print()" style="background: #000; color: #fff; border: none; padding: 8px 16px; font-weight: 600; cursor: pointer; border-radius: 4px;">🖨️ Print / Save as PDF</button>
+    </div>
+    <div class="header">
+      <div>
+        <div class="brand">XAVONIC GYMWEAR</div>
+        <div class="badge">Original Tax Invoice / Bill of Supply</div>
+        <div style="font-size: 10px; color: #666; margin-top: 4px;">GSTIN: ${seller.gstin} | PAN: ${seller.pan}</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 14px; font-weight: 700; font-family: monospace;">${inv.invoiceNumber}</div>
+        <div style="color: #666; font-size: 11px;">Date: ${inv.invoiceDate}</div>
+        <div style="color: #666; font-size: 11px;">Order: #${inv.orderNumber}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Sold By (Seller)</div>
+        <strong>${seller.companyName}</strong><br>
+        ${seller.address}<br>
+        State: ${seller.state} (Code: ${seller.stateCode})<br>
+        Email: ${seller.email} | Phone: ${seller.phone}
+      </div>
+      <div class="card">
+        <div class="card-title">Billed & Shipped To (Customer)</div>
+        <strong>${customer.name}</strong> (Cust ID: ${customer.customerId})<br>
+        Phone: +${customer.phone}<br>
+        ${customer.email !== 'N/A' ? `Email: ${customer.email}<br>` : ''}
+        Address: ${typeof customer.shippingAddress === 'object' ? [customer.shippingAddress.apartment, customer.shippingAddress.addressLine, customer.shippingAddress.city, customer.shippingAddress.state, customer.shippingAddress.pincode].filter(Boolean).join(', ') : customer.shippingAddress}
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 30px;">#</th>
+          <th>Item Description</th>
+          <th>HSN</th>
+          <th class="text-right">Rate</th>
+          <th class="text-right">Qty</th>
+          <th class="text-right">Taxable</th>
+          <th class="text-right">GST</th>
+          <th class="text-right">Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items.map((it) => `
+          <tr>
+            <td>${it.srNo}</td>
+            <td>
+              <strong>${it.title}</strong><br>
+              <span style="font-size: 10px; color: #666;">Size: ${it.size} | Color: ${it.color}</span>
+            </td>
+            <td>${it.hsnCode}</td>
+            <td class="text-right">₹${it.unitPrice.toLocaleString('en-IN')}</td>
+            <td class="text-right">${it.quantity}</td>
+            <td class="text-right">₹${it.taxableValue.toLocaleString('en-IN')}</td>
+            <td class="text-right">5%</td>
+            <td class="text-right"><strong>₹${it.lineTotal.toLocaleString('en-IN')}.00</strong></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-row">
+        <span>Items Subtotal:</span>
+        <span>₹${financials.subtotal.toLocaleString('en-IN')}.00</span>
+      </div>
+      ${financials.discount > 0 ? `
+      <div class="totals-row" style="color: #047857;">
+        <span>Discount (${financials.couponCode || 'PROMO'}):</span>
+        <span>-₹${financials.discount.toLocaleString('en-IN')}.00</span>
+      </div>` : ''}
+      <div class="totals-row">
+        <span>CGST (2.5%):</span>
+        <span>₹${financials.cgst.toLocaleString('en-IN')}.00</span>
+      </div>
+      <div class="totals-row">
+        <span>SGST (2.5%):</span>
+        <span>₹${financials.sgst.toLocaleString('en-IN')}.00</span>
+      </div>
+      <div class="totals-row">
+        <span>Shipping / Delivery:</span>
+        <span>${financials.shippingFee === 0 ? 'FREE' : `₹${financials.shippingFee}.00`}</span>
+      </div>
+      <div class="totals-row grand">
+        <span>Grand Total:</span>
+        <span>₹${financials.grandTotal.toLocaleString('en-IN')}.00</span>
+      </div>
+      <div style="font-size: 10px; color: #666; margin-top: 4px; text-align: right;">
+        Payment: <strong>${financials.paymentMethod} (${financials.paymentStatus})</strong>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Tax invoice issued under Section 31 of CGST Act 2017. All athletic wear certified 4-way performance blend.</div>
+      <div style="margin-top: 4px;">Thank you for training with Xavonic Athletics • www.guidelya.com</div>
+      <div style="margin-top: 2px; font-style: italic;">This is a computer-generated tax invoice and requires no physical signature.</div>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 // Helper: Format Order DB Row
 function formatOrderRow(row) {
   let items = [];
