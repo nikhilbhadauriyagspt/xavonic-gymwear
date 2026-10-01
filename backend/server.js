@@ -29,7 +29,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
+// Health check & Root Welcome
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    name: 'Guidelya Activewear API Server',
+    status: 'online',
+    message: 'Backend server is running smoothly.',
+    healthCheck: '/api/health',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',

@@ -1,44 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowRight, Mail, ShieldCheck, Truck, RotateCcw, Lock, Phone } from 'lucide-react';
 import logoWhite from '../assets/logo_white.png';
-import { ADMIN_API_BASE } from '../config/api';
+import { useBrand } from '../context/BrandContext';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
-  const [brandContent, setBrandContent] = useState({
-    logo_white: '',
-    brand_name: 'Xavonic Aesthetics',
-    brand_tagline: 'Engineering high-performance gymwear & streetwear fits designed to accentuate the athletic taper.',
-    instagram_url: 'https://instagram.com',
-    facebook_url: 'https://facebook.com',
-    youtube_url: 'https://youtube.com',
-    twitter_url: 'https://twitter.com',
-    support_email: 'support@xavonic.com',
-    support_phone: '+91 98765 43210',
-    copyright_text: `© ${new Date().getFullYear()} Xavonic Aesthetics Inc. All rights reserved. Designed for active lifestyles.`,
-  });
-
-  useEffect(() => {
-    let isMounted = true;
-    async function loadBrand() {
-      try {
-        const res = await fetch(`${ADMIN_API_BASE}/settings/brand-content`);
-        const resData = await res.json();
-        if (isMounted && resData.success && resData.content) {
-          setBrandContent((prev) => ({ ...prev, ...resData.content }));
-        }
-      } catch (_) {}
-    }
-    loadBrand();
-    return () => { isMounted = false; };
-  }, []);
+  const { brand: brandContent, brandName } = useBrand();
 
   const handleSubscribe = (e) => {
     e.preventDefault();
     if (!email) return;
-    toast.success('Welcome to the Xavonic VIP Club!', {
+    toast.success(`Welcome to the ${brandName} VIP Club!`, {
       description: 'Use code WELCOME10 for 10% off your first drop.',
     });
     setEmail('');

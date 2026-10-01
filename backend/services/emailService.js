@@ -38,6 +38,10 @@ async function getSmtpSettings() {
 // Send OTP via Nodemailer Live SMTP or Test Simulator
 async function sendEmailOtp(toEmail, otp) {
   const settings = await getSmtpSettings();
+  const { getBrandSettings } = require('./brandService');
+  const brand = await getBrandSettings();
+  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandTagline = brand.brand_tagline || 'Engineered for Performance. Cut for Aesthetics.';
 
   console.log(`\n======================================================`);
   console.log(`📧 [Nodemailer Email Gateway] Triggering OTP for: ${toEmail}`);
@@ -66,16 +70,16 @@ async function sendEmailOtp(toEmail, otp) {
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 520px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden;">
           <div style="background-color: #0d0d0f; padding: 24px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
-              GUIDELYA <span style="color: #dc2626;">ATHLETICS</span>
+              ${brandName.toUpperCase()}
             </h1>
             <p style="color: #a3a3a3; font-size: 11px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px;">
-              Verification & Security Telemetry
+              ${brandTagline}
             </p>
           </div>
           <div style="padding: 30px 24px; text-align: center; color: #171717;">
             <h2 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Your Authentication Code</h2>
             <p style="font-size: 13px; color: #737373; margin-bottom: 24px;">
-              Use the single-use one-time password below to access your athlete portal.
+              Use the single-use one-time password below to access your ${brandName} account.
             </p>
             <div style="background-color: #f8f9fa; border: 1px solid #e5e5e5; display: inline-block; padding: 12px 32px; border-radius: 4px; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: #0d0d0f; font-family: monospace;">
               ${otp}
@@ -85,16 +89,16 @@ async function sendEmailOtp(toEmail, otp) {
             </p>
           </div>
           <div style="background-color: #fafafa; border-top: 1px solid #f0f0f0; padding: 16px; text-align: center; font-size: 10px; color: #a3a3a3;">
-            Guidelya Aesthetics HQ • Engineered Activewear
+            ${brandName} • ${brand.support_email || 'support@guidelya.com'}
           </div>
         </div>
       `;
 
       const mailOptions = {
-        from: `"${settings.sender_name || 'Guidelya Athletics'}" <${settings.user}>`,
+        from: `"${settings.sender_name || brandName}" <${settings.user}>`,
         to: toEmail,
-        subject: `${otp} is your Guidelya Athletics login code`,
-        text: `Your Guidelya Athletics login code is ${otp}. Valid for 5 minutes.`,
+        subject: `${otp} is your ${brandName} login code`,
+        text: `Your ${brandName} login code is ${otp}. Valid for 5 minutes.`,
         html: htmlContent,
       };
 
@@ -136,6 +140,11 @@ async function sendEmailOtp(toEmail, otp) {
 // 3. Send Order Invoice & Confirmation Email
 async function sendOrderInvoiceEmail(orderData) {
   const settings = await getSmtpSettings();
+  const { getBrandSettings } = require('./brandService');
+  const brand = await getBrandSettings();
+  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandTagline = brand.brand_tagline || 'Official Order Confirmation & Tax Invoice';
+
   const toEmail = orderData.customer_email || orderData.customerEmail;
   if (!toEmail) return { success: false, message: 'No customer email provided' };
 
@@ -156,7 +165,7 @@ async function sendOrderInvoiceEmail(orderData) {
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden;">
       <div style="background-color: #0d0d0f; padding: 24px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
-          XAVONIC <span style="color: #dc2626;">ATHLETICS</span>
+          ${brandName.toUpperCase()}
         </h1>
         <p style="color: #a3a3a3; font-size: 11px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px;">
           Official Order Confirmation & Tax Invoice
@@ -167,7 +176,7 @@ async function sendOrderInvoiceEmail(orderData) {
         <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 12px 16px; margin-bottom: 20px;">
           <h2 style="color: #15803d; font-size: 15px; margin: 0 0 4px 0;">🎉 Order Confirmed!</h2>
           <p style="color: #166534; font-size: 12px; margin: 0;">
-            Thank you for shopping with us, <strong>${orderData.customer_name || 'Athlete'}</strong>. Your athlete performance gear is being packed.
+            Thank you for shopping with us, <strong>${orderData.customer_name || 'Customer'}</strong>. Your order is being packed.
           </p>
         </div>
 
@@ -223,7 +232,7 @@ async function sendOrderInvoiceEmail(orderData) {
       </div>
 
       <div style="background-color: #fafafa; border-top: 1px solid #f0f0f0; padding: 16px; text-align: center; font-size: 11px; color: #a3a3a3;">
-        Guidelya Athletics • High Performance Activewear • support@guidelya.com
+        ${brandName} • High Performance Activewear • ${brand.support_email || 'support@guidelya.com'}
       </div>
     </div>
   `;
@@ -239,9 +248,9 @@ async function sendOrderInvoiceEmail(orderData) {
       });
 
       await transporter.sendMail({
-        from: `"${settings.sender_name || 'Guidelya Athletics'}" <${settings.user}>`,
+        from: `"${settings.sender_name || brandName}" <${settings.user}>`,
         to: toEmail,
-        subject: `Order #${orderData.order_number || orderData.id} Confirmed - XAVONIC Athletics Invoice`,
+        subject: `Order #${orderData.order_number || orderData.id} Confirmed - ${brandName} Invoice`,
         html: htmlContent,
       });
 
@@ -260,6 +269,10 @@ async function sendOrderInvoiceEmail(orderData) {
 // 4. Send Order Dispatched & Tracking Email
 async function sendOrderDispatchEmail(orderData) {
   const settings = await getSmtpSettings();
+  const { getBrandSettings } = require('./brandService');
+  const brand = await getBrandSettings();
+  const brandName = brand.brand_name || 'Guidelya Activewear';
+
   const toEmail = orderData.customer_email || orderData.customerEmail;
   if (!toEmail) return { success: false, message: 'No email provided' };
 
@@ -272,7 +285,7 @@ async function sendOrderDispatchEmail(orderData) {
   const htmlContent = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden;">
       <div style="background-color: #09090b; padding: 24px; text-align: center; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">GUIDELYA</h1>
+        <h1 style="margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">${brandName.toUpperCase()}</h1>
         <p style="margin: 6px 0 0; font-size: 12px; color: #a1a1aa; text-transform: uppercase;">Shipment Notification</p>
       </div>
 
@@ -309,7 +322,7 @@ async function sendOrderDispatchEmail(orderData) {
       </div>
 
       <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8;">
-        Guidelya Athletics • Premium Performance Gymwear
+        ${brandName} • ${brand.support_email || 'support@guidelya.com'}
       </div>
     </div>
   `;
@@ -325,9 +338,9 @@ async function sendOrderDispatchEmail(orderData) {
       });
 
       await transporter.sendMail({
-        from: `"${settings.sender_name || 'Guidelya Athletics'}" <${settings.user}>`,
+        from: `"${settings.sender_name || brandName}" <${settings.user}>`,
         to: toEmail,
-        subject: `Your Order #${orderNum} is On Its Way! - Live Tracking Inside`,
+        subject: `Your Order #${orderNum} is On Its Way! - ${brandName} Tracking`,
         html: htmlContent,
       });
 

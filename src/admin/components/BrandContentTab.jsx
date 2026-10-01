@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
+import { useBrand } from '../../context/BrandContext';
 
 // Simple Visual WYSIWYG / HTML Toolbar component for Policy and About Text
 function RichTextEditor({ value, onChange, placeholder = 'Write rich content here...' }) {
@@ -208,6 +209,8 @@ export default function BrandContentTab() {
   const [newSearchTag, setNewSearchTag] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(null); // 'logo_white' | 'logo_black' | null
 
+  const { refreshBrand } = useBrand();
+
   const handleLogoUpload = async (file, logoType) => {
     if (!file) return;
     setUploadingLogo(logoType);
@@ -228,6 +231,7 @@ export default function BrandContentTab() {
       if (resData.success && resData.url) {
         setData((prev) => ({ ...prev, [logoType]: resData.url }));
         toast.success(`${logoType === 'logo_white' ? 'White Logo' : 'Black Logo'} uploaded and updated!`);
+        refreshBrand();
       } else {
         toast.error(resData.message || 'Failed to upload logo');
       }
@@ -274,6 +278,7 @@ export default function BrandContentTab() {
       const resData = await res.json();
       if (resData.success) {
         toast.success('Brand identity, About Story & Policy pages saved to database!');
+        refreshBrand();
       } else {
         toast.error(resData.message || 'Failed to save');
       }

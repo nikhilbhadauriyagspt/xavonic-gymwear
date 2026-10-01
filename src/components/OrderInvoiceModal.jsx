@@ -10,9 +10,12 @@ import {
   CheckCircle2 
 } from 'lucide-react';
 import { printOrderInvoice, downloadInvoiceDocument } from '../utils/invoiceGenerator';
+import { useBrand } from '../context/BrandContext';
 
 export default function OrderInvoiceModal({ order, isOpen, onClose }) {
   if (!isOpen || !order) return null;
+
+  const { brand, brandName } = useBrand();
 
   const orderNumber = order.orderNumber || order.id || 'ORD-9842';
   const invoiceNumber = `INV-${orderNumber}`;
@@ -100,10 +103,10 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b-2 border-neutral-900 pb-5">
             <div>
               <h1 className="text-xl font-bold uppercase tracking-widest text-neutral-950 font-sans">
-                XAVONIC GYMWEAR
+                {brandName}
               </h1>
               <p className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider mt-0.5">
-                Engineered Performance & Aesthetic Apparel
+                {brand.brand_tagline || 'Engineered Performance & Aesthetic Apparel'}
               </p>
               <div className="mt-2 text-[10px] font-mono text-neutral-600 bg-neutral-100 px-2 py-0.5 inline-block border border-neutral-200">
                 GSTIN: 06AAECX9821L1Z4 • PAN: AAECX9821L
@@ -129,12 +132,12 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
                 <span className="text-emerald-700 font-medium">● Verified Supplier</span>
               </div>
               <div className="font-bold text-neutral-900 text-xs pt-1">
-                Xavonic Athletics (Guidelya Sports Pvt Ltd)
+                {brandName}
               </div>
               <p className="text-neutral-600 text-[11px] leading-relaxed">
-                Plot 42, DLF Phase 4, Gurugram, Haryana - 122002<br />
+                {brand.office_address || 'Plot 42, DLF Phase 4, Gurugram, Haryana - 122002'}<br />
                 State: Haryana (Code 06) • CIN: U17120HR2023PTC109842<br />
-                Support: support@guidelya.com
+                Support: {brand.support_email || 'support@guidelya.com'}
               </p>
             </div>
 

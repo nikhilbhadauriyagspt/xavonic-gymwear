@@ -1,8 +1,20 @@
 // High-Precision GST Compliant Order Tax Invoice Generator
 // For Xavonic Athletics / Guidelya Sports
 
-export function generateInvoiceHTML(order) {
+export function generateInvoiceHTML(order, customBrand = null) {
   if (!order) return '';
+
+  let brandInfo = customBrand;
+  if (!brandInfo) {
+    try {
+      const cached = localStorage.getItem('guidelya_cached_brand');
+      if (cached) brandInfo = JSON.parse(cached);
+    } catch (_) {}
+  }
+  const brandName = brandInfo?.brand_name || 'Guidelya Activewear';
+  const brandTagline = brandInfo?.brand_tagline || 'Performance Athletic Apparel & Streetwear';
+  const supportEmail = brandInfo?.support_email || 'support@guidelya.com';
+  const officeAddress = brandInfo?.office_address || 'Plot 42, DLF Phase 4, Gurugram, Haryana - 122002';
 
   const orderNumber = order.orderNumber || order.id || 'ORD-9842';
   const invoiceNumber = `INV-${orderNumber}`;
@@ -352,8 +364,8 @@ export function generateInvoiceHTML(order) {
     <!-- Header -->
     <div class="header-bar">
       <div>
-        <div class="brand-title">XAVONIC GYMWEAR</div>
-        <div class="brand-sub">Performance Athletic Apparel & Streetwear</div>
+        <div class="brand-title">${brandName.toUpperCase()}</div>
+        <div class="brand-sub">${brandTagline}</div>
         <div class="gst-tag">GSTIN: 06AAECX9821L1Z4 • PAN: AAECX9821L</div>
       </div>
       <div class="inv-meta">
@@ -372,11 +384,11 @@ export function generateInvoiceHTML(order) {
           <span>Sold By (Seller)</span>
           <span style="color: #059669; font-weight: 600;">Verified Seller</span>
         </div>
-        <div class="party-name">Xavonic Athletics (Guidelya Sports Pvt Ltd)</div>
+        <div class="party-name">${brandName}</div>
         <div class="party-text">
-          Plot 42, DLF Phase 4, Gurugram, Haryana - 122002<br>
+          ${officeAddress}<br>
           State: Haryana (Code 06) • CIN: U17120HR2023PTC109842<br>
-          Email: support@guidelya.com • Web: www.guidelya.com
+          Email: ${supportEmail}
         </div>
       </div>
 

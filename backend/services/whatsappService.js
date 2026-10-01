@@ -43,6 +43,10 @@ async function sendWhatsAppOtp(phone, otp) {
   // 1. LIVE MODE: Use Meta WhatsApp Cloud API if credentials are provided
   if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
     try {
+      const { getBrandSettings } = require('./brandService');
+      const brand = await getBrandSettings();
+      const brandName = brand.brand_name || 'Guidelya Activewear';
+
       console.log(`🚀 Dispatching real WhatsApp message via Meta Cloud API...`);
       const metaUrl = `https://graph.facebook.com/v19.0/${settings.phone_number_id}/messages`;
       
@@ -53,7 +57,7 @@ async function sendWhatsAppOtp(phone, otp) {
         type: 'text',
         text: {
           preview_url: false,
-          body: `Your Guidelya Activewear login OTP is: *${otp}*\n\nValid for 5 minutes. Do not share this code with anyone.`,
+          body: `Your ${brandName} login OTP is: *${otp}*\n\nValid for 5 minutes. Do not share this code with anyone.`,
         },
       };
 
@@ -117,12 +121,16 @@ async function sendOrderWhatsAppNotification(orderData) {
   const phone = orderData.customer_phone || orderData.customerPhone;
   if (!phone) return { success: false, message: 'No phone number provided' };
 
+  const { getBrandSettings } = require('./brandService');
+  const brand = await getBrandSettings();
+  const brandName = brand.brand_name || 'Guidelya Activewear';
+
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;
   const total = Number(orderData.total_amount || 0).toLocaleString('en-IN');
   const tracking = orderData.tracking_number || 'Generated';
 
-  const messageText = `🎉 *Order Confirmed! #${orderNum}*\n\nHey ${orderData.customer_name || 'Athlete'},\nThank you for ordering with *XAVONIC Athletics*!\n\n📦 *Order Total:* ₹${total}\n🚚 *Courier:* ${orderData.courier_partner || 'Bluedart Express'}\n📍 *Tracking Code:* ${tracking}\n\nYour performance gear is being dispatched shortly!`;
+  const messageText = `🎉 *Order Confirmed! #${orderNum}*\n\nHey ${orderData.customer_name || 'Customer'},\nThank you for ordering with *${brandName}*!\n\n📦 *Order Total:* ₹${total}\n🚚 *Courier:* ${orderData.courier_partner || 'Bluedart Express'}\n📍 *Tracking Code:* ${tracking}\n\nYour order is being dispatched shortly!`;
 
   if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
     try {
@@ -162,6 +170,10 @@ async function sendOrderDispatchNotification(orderData) {
   const phone = orderData.customer_phone || orderData.customerPhone;
   if (!phone) return { success: false, message: 'No phone number provided' };
 
+  const { getBrandSettings } = require('./brandService');
+  const brand = await getBrandSettings();
+  const brandName = brand.brand_name || 'Guidelya Activewear';
+
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;
   const courier = orderData.courier_partner || 'Bluedart Express';
@@ -169,7 +181,7 @@ async function sendOrderDispatchNotification(orderData) {
   const trackingUrl = orderData.tracking_url || `https://shiprocket.co//tracking/${tracking}`;
   const estDelivery = orderData.estimated_delivery || 'Within 2–4 Business Days';
 
-  const messageText = `🚀 *Your Order is On Its Way! #${orderNum}*\n\nHey ${orderData.customer_name || 'Customer'},\nYour order from *Guidelya Activewear* has been dispatched via *${courier}*!\n\n📦 *Tracking AWB:* ${tracking}\n🚚 *Courier Partner:* ${courier}\n📅 *Expected Delivery:* ${estDelivery}\n\n🔗 *Track Live Order Status:*\n${trackingUrl}\n\nNeed help? Reply directly to this message. Thank you for shopping with Guidelya!`;
+  const messageText = `🚀 *Your Order is On Its Way! #${orderNum}*\n\nHey ${orderData.customer_name || 'Customer'},\nYour order from *${brandName}* has been dispatched via *${courier}*!\n\n📦 *Tracking AWB:* ${tracking}\n🚚 *Courier Partner:* ${courier}\n📅 *Expected Delivery:* ${estDelivery}\n\n🔗 *Track Live Order Status:*\n${trackingUrl}\n\nNeed help? Reply directly to this message. Thank you for shopping with ${brandName}!`;
 
   if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
     try {

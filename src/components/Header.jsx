@@ -26,6 +26,7 @@ import logoBlack from '../assets/logo_balck.png';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useBrand } from '../context/BrandContext';
 import SearchModal from './SearchModal';
 import { ADMIN_API_BASE } from '../config/api';
 import { getPublicBanners } from '../services/bannerService';
@@ -121,26 +122,13 @@ export default function Header() {
     return () => { isMounted = false; };
   }, []);
 
-  // Fetch live custom brand logos & identity
-  const [customLogos, setCustomLogos] = useState({ white: '', black: '', name: 'Xavonic Athletics' });
-  useEffect(() => {
-    let isMounted = true;
-    async function loadBrandIdentity() {
-      try {
-        const res = await fetch(`${ADMIN_API_BASE}/settings/brand-content`);
-        const resData = await res.json();
-        if (isMounted && resData.success && resData.content) {
-          setCustomLogos({
-            white: resData.content.logo_white || '',
-            black: resData.content.logo_black || '',
-            name: resData.content.brand_name || 'Xavonic Athletics',
-          });
-        }
-      } catch (_) {}
-    }
-    loadBrandIdentity();
-    return () => { isMounted = false; };
-  }, []);
+  // Live Dynamic Brand Identity from global BrandContext
+  const { brand, brandName } = useBrand();
+  const customLogos = {
+    white: brand.logo_white || '',
+    black: brand.logo_black || '',
+    name: brandName,
+  };
 
   const handleCopyCoupon = (code) => {
     if (!code) return;

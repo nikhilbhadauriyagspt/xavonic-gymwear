@@ -1,34 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Shield, FileText, RotateCcw, Truck, Mail, Phone, MapPin, ChevronRight } from 'lucide-react';
-import { ADMIN_API_BASE } from '../config/api';
+import { useBrand } from '../context/BrandContext';
 
 export default function PolicyPage({ policyType }) {
   const location = useLocation();
-  const [content, setContent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { brand: content, loading } = useBrand();
 
   // Determine active tab if not passed via props
   const currentPath = location.pathname.replace('/', '') || policyType || 'privacy';
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchBrandContent() {
-      try {
-        const res = await fetch(`${ADMIN_API_BASE}/settings/brand-content`);
-        const data = await res.json();
-        if (isMounted && data.success && data.content) {
-          setContent(data.content);
-        }
-      } catch (err) {
-        console.error('Failed to load policy content:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-    fetchBrandContent();
-    return () => { isMounted = false; };
-  }, []);
 
   const tabs = [
     { key: 'privacy', label: 'Privacy Policy', path: '/privacy', icon: Shield },

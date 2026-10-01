@@ -456,78 +456,10 @@ exports.saveShippingConfig = async (req, res) => {
 // 15. Get Brand Assets, About Us Story, Social Media & Policy Pages (Public & Admin)
 exports.getBrandContent = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT setting_key, setting_value FROM store_settings WHERE setting_key LIKE 'brand_%' OR setting_key LIKE 'content_%' OR setting_key LIKE 'policy_%'"
-    );
+    const { getBrandSettings } = require('../services/brandService');
+    const content = await getBrandSettings();
 
-    const data = {
-      // Logos & Brand Visuals
-      logo_white: '',
-      logo_black: '',
-      brand_name: 'Xavonic Aesthetics',
-      brand_tagline: 'Engineered for Aesthetics & Relentless Performance',
-
-      // Social Links & Contacts
-      instagram_url: 'https://instagram.com',
-      facebook_url: 'https://facebook.com',
-      youtube_url: 'https://youtube.com',
-      twitter_url: 'https://twitter.com',
-      whatsapp_number: '919876543210',
-      support_email: 'support@xavonic.com',
-      support_phone: '+91 98765 43210',
-      office_address: 'Xavonic Performance Apparel Pvt Ltd, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002',
-      copyright_text: `© ${new Date().getFullYear()} Xavonic Aesthetics Inc. All rights reserved. Designed for active lifestyles.`,
-
-      // About Us Story
-      about_heading: 'Gym Wear for Men & Women',
-      about_badge: 'Brand Story & Training Guide',
-      about_tagline: 'Engineered for Performance. Cut for Aesthetics.',
-      about_story_html: `<h3>THE XAVONIC STANDARD</h3>
-<p>Born from the raw intensity of bodybuilding culture, Xavonic was created to eliminate the compromise between elite aesthetic fit and high-durability athletic performance.</p>
-<p>Every compression garment, drop-cut tank, and tactical jogger is constructed with four-way stretch memory fabrics, moisture-wicking capillary yarn, and reinforced stress-point stitching.</p>`,
-      about_faqs: [
-        {
-          q: 'What makes Xavonic an affordable gym wear brand in India?',
-          a: 'Xavonic cuts out unnecessary retail markups by focusing on direct, performance-first manufacturing. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at an honest price.'
-        },
-        {
-          q: 'Does Xavonic make gym wear for both men and women?',
-          a: 'Yes. Xavonic offers dedicated athletic wear for both men and women, including compression fits, oversized drops, stringers, and seamless leggings.'
-        },
-        {
-          q: "What's the difference between activewear and performance gym wear?",
-          a: 'Performance gym wear is built specifically for heavy training — with high-tensile compression support, sweat-wicking capillary knit, and squat-proof flexibility.'
-        },
-        {
-          q: 'Is Xavonic gym wear suitable for daily streetwear use?',
-          a: 'Yes. Our drop-cut tops, heavyweight oversized tees, and tactical joggers transition seamlessly into everyday streetwear.'
-        }
-      ],
-      popular_searches: [
-        'Gym Wear for Men', 'Gym Wear for Women', 'Compression Fit', 'Oversized T-Shirts', 'Tank Tops & Stringers', '5" Gym Shorts', 'Tactical Joggers'
-      ],
-
-      // Policy & CMS Pages
-      privacy_policy_html: `<h2>Privacy Policy</h2><p>Last updated: October 2026</p><p>At Xavonic Athletics, we respect your privacy and are committed to protecting your personal data. We collect order information, shipping address, and contact details solely for processing orders, OTP authentication, and delivery tracking.</p>`,
-      terms_of_service_html: `<h2>Terms of Service</h2><p>By accessing or placing an order on Xavonic, you agree to our standard terms, payment processing rules, and fair usage policies.</p>`,
-      returns_refunds_html: `<h2>7-Day Easy Returns & Exchanges</h2><p>We offer a hassle-free 7-day return and exchange policy on all unworn items with original tags intact.</p>`,
-      shipping_policy_html: `<h2>Shipping & Delivery Information</h2><p>Orders are dispatched within 24 hours. Standard delivery takes 2–4 business days across India.</p>`,
-    };
-
-    rows.forEach((r) => {
-      const key = r.setting_key.replace(/^brand_|^content_|^policy_/, '');
-      try {
-        if (r.setting_value.startsWith('{') || r.setting_value.startsWith('[')) {
-          data[key] = JSON.parse(r.setting_value);
-        } else {
-          data[key] = r.setting_value;
-        }
-      } catch (_) {
-        data[key] = r.setting_value;
-      }
-    });
-
-    return res.status(200).json({ success: true, content: data });
+    return res.status(200).json({ success: true, content });
   } catch (err) {
     console.error('Error fetching brand content:', err);
     return res.status(500).json({ success: false, message: 'Failed to retrieve brand content.' });
@@ -537,6 +469,7 @@ exports.getBrandContent = async (req, res) => {
 // 16. Save Brand Assets, About Us, Social Media & Policy Pages (Admin Protected)
 exports.saveBrandContent = async (req, res) => {
   try {
+    const { clearBrandCache } = require('../services/brandService');
     const payload = req.body;
     
     // Process each field and insert/update in store_settings
@@ -558,7 +491,21 @@ exports.saveBrandContent = async (req, res) => {
         'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
         [settingKey, stringValue, stringValue]
       );
+
+      // If updating brand name, also sync direct key
+      if (rawKey === 'brand_name' || settingKey === 'brand_brand_name') {
+        await db.query(
+          'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+          ['brand_name', stringValue, stringValue]
+        );
+        await db.query(
+          'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+          ['brand_brand_name', stringValue, stringValue]
+        );
+      }
     }
+
+    clearBrandCache();
 
     return res.status(200).json({
       success: true,

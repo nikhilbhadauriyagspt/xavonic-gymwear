@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { WishlistProvider } from './context/WishlistContext';
+import { BrandProvider } from './context/BrandContext';
 
 import Header from './components/Header';
 import CartDrawer from './components/CartDrawer';
@@ -144,36 +145,38 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <Router>
-            {/* Minimalist Light Clean Toast Notifications */}
-            <Toaster
-              position="top-right"
-              theme="light"
-              closeButton
-              richColors={false}
-              duration={3500}
-              offset={18}
-              toastOptions={{
-                style: {
-                  background: '#ffffff',
-                  color: '#18181b',
-                  border: '1px solid #e4e4e7',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
-                  fontSize: '12.5px',
-                  fontWeight: 500,
-                  padding: '12px 14px',
-                },
-                className: 'font-sans shadow-lg',
-              }}
-            />
-            <MainLayout />
-          </Router>
-        </CartProvider>
-      </WishlistProvider>
-    </AuthProvider>
+    <BrandProvider>
+      <AuthProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <Router>
+              {/* Minimalist Light Clean Toast Notifications */}
+              <Toaster
+                position="top-right"
+                theme="light"
+                closeButton
+                richColors={false}
+                duration={3500}
+                offset={18}
+                toastOptions={{
+                  style: {
+                    background: '#ffffff',
+                    color: '#18181b',
+                    border: '1px solid #e4e4e7',
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
+                    fontSize: '12.5px',
+                    fontWeight: 500,
+                    padding: '12px 14px',
+                  },
+                  className: 'font-sans shadow-lg',
+                }}
+              />
+              <MainLayout />
+            </Router>
+          </CartProvider>
+        </WishlistProvider>
+      </AuthProvider>
+    </BrandProvider>
   );
 }

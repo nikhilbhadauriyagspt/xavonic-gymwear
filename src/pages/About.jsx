@@ -1,31 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, ShieldCheck, Zap, Sparkles, ChevronRight, Mail, Phone } from 'lucide-react';
-import { ADMIN_API_BASE } from '../config/api';
+import { useBrand } from '../context/BrandContext';
 
 export default function About() {
-  const [content, setContent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { brand: content, loading, brandName } = useBrand();
   const [openFaqIdx, setOpenFaqIdx] = useState(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchAbout() {
-      try {
-        const res = await fetch(`${ADMIN_API_BASE}/settings/brand-content`);
-        const data = await res.json();
-        if (isMounted && data.success && data.content) {
-          setContent(data.content);
-        }
-      } catch (err) {
-        console.error('Failed to load about data:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-    fetchAbout();
-    return () => { isMounted = false; };
-  }, []);
 
   const faqs = content?.about_faqs || [
     {
