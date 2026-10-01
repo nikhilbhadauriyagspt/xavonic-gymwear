@@ -133,7 +133,133 @@ async function sendEmailOtp(toEmail, otp) {
   };
 }
 
+// 3. Send Order Invoice & Confirmation Email
+async function sendOrderInvoiceEmail(orderData) {
+  const settings = await getSmtpSettings();
+  const toEmail = orderData.customer_email || orderData.customerEmail;
+  if (!toEmail) return { success: false, message: 'No customer email provided' };
+
+  const items = Array.isArray(orderData.items) ? orderData.items : [];
+  const itemsHtml = items.map((it) => `
+    <tr style="border-bottom: 1px solid #f0f0f0;">
+      <td style="padding: 12px 8px; font-size: 13px; color: #171717;">
+        <strong>${it.title || 'Product'}</strong><br/>
+        <span style="font-size: 11px; color: #737373;">Size: ${it.selectedSize || it.size || 'M'} | Qty: ${it.quantity || 1}</span>
+      </td>
+      <td style="padding: 12px 8px; font-size: 13px; text-align: right; color: #171717; font-weight: 600;">
+        ₹${((it.price || 0) * (it.quantity || 1)).toLocaleString('en-IN')}
+      </td>
+    </tr>
+  `).join('');
+
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 6px; overflow: hidden;">
+      <div style="background-color: #0d0d0f; padding: 24px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 20px; letter-spacing: 2px; text-transform: uppercase;">
+          XAVONIC <span style="color: #dc2626;">ATHLETICS</span>
+        </h1>
+        <p style="color: #a3a3a3; font-size: 11px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px;">
+          Official Order Confirmation & Tax Invoice
+        </p>
+      </div>
+
+      <div style="padding: 24px;">
+        <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 12px 16px; margin-bottom: 20px;">
+          <h2 style="color: #15803d; font-size: 15px; margin: 0 0 4px 0;">🎉 Order Confirmed!</h2>
+          <p style="color: #166534; font-size: 12px; margin: 0;">
+            Thank you for shopping with us, <strong>${orderData.customer_name || 'Athlete'}</strong>. Your athlete performance gear is being packed.
+          </p>
+        </div>
+
+        <table style="width: 100%; font-size: 12px; color: #525252; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 4px 0;"><strong>Order Number:</strong> #${orderData.order_number || orderData.orderNumber || orderData.id}</td>
+            <td style="padding: 4px 0; text-align: right;"><strong>Payment Method:</strong> ${orderData.payment_method || 'Prepaid'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 0;"><strong>Courier Partner:</strong> ${orderData.courier_partner || 'Bluedart Express'}</td>
+            <td style="padding: 4px 0; text-align: right;"><strong>Tracking Code:</strong> ${orderData.tracking_number || 'Generated'}</td>
+          </tr>
+        </table>
+
+        <div style="border: 1px solid #e5e5e5; border-radius: 4px; overflow: hidden; margin-bottom: 20px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #fafafa; border-bottom: 1px solid #e5e5e5;">
+                <th style="padding: 10px 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: #737373;">Item Description</th>
+                <th style="padding: 10px 8px; text-align: right; font-size: 11px; text-transform: uppercase; color: #737373;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="background-color: #fafafa; padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #525252; margin-bottom: 6px;">
+            <span>Subtotal:</span>
+            <span>₹${Number(orderData.subtotal || 0).toLocaleString('en-IN')}</span>
+          </div>
+          ${Number(orderData.discount_amount || 0) > 0 ? `
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #dc2626; margin-bottom: 6px;">
+            <span>Discount:</span>
+            <span>- ₹${Number(orderData.discount_amount).toLocaleString('en-IN')}</span>
+          </div>` : ''}
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #525252; margin-bottom: 6px;">
+            <span>Shipping Fee:</span>
+            <span>${Number(orderData.shipping_fee || 0) === 0 ? 'FREE' : `₹${orderData.shipping_fee}`}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 700; color: #0d0d0f; border-top: 1px solid #e5e5e5; padding-top: 8px;">
+            <span>Total Paid:</span>
+            <span>₹${Number(orderData.total_amount || 0).toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+
+        <div style="font-size: 11px; color: #737373; line-height: 1.6;">
+          <strong>Delivering To:</strong><br />
+          ${typeof orderData.shipping_address === 'string' ? orderData.shipping_address : `${orderData.shipping_address?.name || orderData.customer_name}, ${orderData.shipping_address?.addressLine || ''}, ${orderData.shipping_address?.city || ''}, ${orderData.shipping_address?.state || ''} - ${orderData.shipping_address?.pincode || ''}`}
+        </div>
+      </div>
+
+      <div style="background-color: #fafafa; border-top: 1px solid #f0f0f0; padding: 16px; text-align: center; font-size: 11px; color: #a3a3a3;">
+        Guidelya Athletics • High Performance Activewear • support@guidelya.com
+      </div>
+    </div>
+  `;
+
+  if (settings.mode === 'live' && settings.user && settings.pass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: settings.host,
+        port: Number(settings.port) || 465,
+        secure: settings.port === '465' || settings.secure === 'true',
+        auth: { user: settings.user, pass: settings.pass },
+        tls: { rejectUnauthorized: false },
+      });
+
+      await transporter.sendMail({
+        from: `"${settings.sender_name || 'Guidelya Athletics'}" <${settings.user}>`,
+        to: toEmail,
+        subject: `Order #${orderData.order_number || orderData.id} Confirmed - XAVONIC Athletics Invoice`,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Order invoice email sent successfully to ${toEmail}`);
+      return { success: true, mode: 'live' };
+    } catch (err) {
+      console.warn('Could not send live invoice email:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  console.log(`🧪 Simulated Order Invoice email for #${orderData.order_number} to ${toEmail}`);
+  return { success: true, mode: 'test' };
+}
+
 module.exports = {
   getSmtpSettings,
   sendEmailOtp,
+  sendOrderInvoiceEmail,
 };
+

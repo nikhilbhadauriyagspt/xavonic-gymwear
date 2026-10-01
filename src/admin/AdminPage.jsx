@@ -10,8 +10,10 @@ import AddCategoryTab from './components/AddCategoryTab';
 import AllProductsTab from './components/AllProductsTab';
 import AddProductTab from './components/AddProductTab';
 import OffersDiscountsTab from './components/OffersDiscountsTab';
+import ReviewsTab from './components/ReviewsTab';
+import OrdersTab from './components/OrdersTab';
 import { toast } from 'sonner';
-import { ADMIN_API_BASE } from '../config/api';
+import { ADMIN_API_BASE, ORDERS_API_BASE } from '../config/api';
 
 export default function AdminPage() {
   // Authentication State
@@ -32,17 +34,32 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [customersCount, setCustomersCount] = useState(0);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   // Fetch live count
   useEffect(() => {
     if (isAdminLoggedIn) {
       const token = localStorage.getItem('xavonic_admin_token');
+      // Customers count
       fetch(`${ADMIN_API_BASE}/customers?limit=1`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
         .then(data => {
           if (data.success) setCustomersCount(data.total);
+        })
+        .catch(() => {});
+
+      // Pending / Processing Orders count
+      fetch(`${ADMIN_API_BASE}/orders?limit=50`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.orders) {
+            const pending = data.orders.filter(o => o.orderStatus === 'Processing' || o.orderStatus === 'Confirmed').length;
+            setPendingOrdersCount(pending);
+          }
         })
         .catch(() => {});
     }
@@ -88,6 +105,7 @@ export default function AdminPage() {
           isMobileSidebarOpen={isMobileSidebarOpen}
           setIsMobileSidebarOpen={setIsMobileSidebarOpen}
           customersCount={customersCount}
+          pendingOrdersCount={pendingOrdersCount}
         />
 
         {/* Dynamic Content Area (100% Full Width, Clean Sharp Minimal UI) */}
@@ -95,6 +113,10 @@ export default function AdminPage() {
           <div className="w-full">
             {activeTab === 'overview' && (
               <DashboardOverview onNavigateTab={setActiveTab} />
+            )}
+
+            {activeTab === 'orders' && (
+              <OrdersTab />
             )}
 
             {activeTab === 'categories' && (
@@ -123,6 +145,10 @@ export default function AdminPage() {
               <CustomersTab />
             )}
 
+            {activeTab === 'reviews' && (
+              <ReviewsTab />
+            )}
+
             {activeTab === 'offers' && (
               <OffersDiscountsTab />
             )}
@@ -131,7 +157,7 @@ export default function AdminPage() {
               <WhatsAppSettingsTab />
             )}
 
-            {activeTab !== 'overview' && activeTab !== 'customers' && activeTab !== 'categories' && activeTab !== 'add-category' && activeTab !== 'settings' && (
+            {activeTab !== 'overview' && activeTab !== 'orders' && activeTab !== 'customers' && activeTab !== 'reviews' && activeTab !== 'offers' && activeTab !== 'products' && activeTab !== 'add-product' && activeTab !== 'categories' && activeTab !== 'add-category' && activeTab !== 'settings' && (
               <div className="w-full bg-white border border-neutral-200 rounded-sm p-8 sm:p-12 text-center space-y-3">
                 <div className="h-10 w-10 rounded-sm bg-neutral-100 text-neutral-800 flex items-center justify-center mx-auto text-sm font-semibold uppercase">
                   {activeTab.slice(0, 2)}

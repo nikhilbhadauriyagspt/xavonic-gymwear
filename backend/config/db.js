@@ -182,15 +182,59 @@ function initDatabaseTables() {
     CREATE TABLE IF NOT EXISTS orders (
       id INT AUTO_INCREMENT PRIMARY KEY,
       order_number VARCHAR(50) UNIQUE NOT NULL,
+      user_id INT NULL,
+      customer_id VARCHAR(50) NULL,
       customer_name VARCHAR(150) NOT NULL,
-      customer_email VARCHAR(150) NOT NULL,
-      customer_phone VARCHAR(20) NULL,
-      total_amount DECIMAL(10, 2) NOT NULL,
-      payment_method VARCHAR(50) DEFAULT 'UPI',
+      customer_email VARCHAR(150) NULL,
+      customer_phone VARCHAR(20) NOT NULL,
+      items_json JSON NOT NULL,
+      items_count INT DEFAULT 1,
+      subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+      discount_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+      coupon_code VARCHAR(50) NULL,
+      shipping_fee DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+      total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+      payment_method VARCHAR(50) DEFAULT 'COD',
       payment_status ENUM('Pending', 'Paid', 'Failed', 'Refunded') DEFAULT 'Pending',
-      order_status ENUM('Processing', 'In Transit', 'Delivered', 'Cancelled') DEFAULT 'Processing',
-      shipping_address TEXT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      order_status ENUM('Pending', 'Processing', 'Confirmed', 'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled') DEFAULT 'Processing',
+      shipping_address JSON NULL,
+      tracking_number VARCHAR(100) NULL,
+      courier_partner VARCHAR(100) DEFAULT 'Bluedart Express',
+      delivery_notes TEXT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_order_num (order_number),
+      INDEX idx_cust_phone (customer_phone),
+      INDEX idx_status (order_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `;
+
+  // Create Product Reviews & Ratings Table
+  const createReviewsTable = `
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      product_id INT NOT NULL,
+      product_title VARCHAR(255) DEFAULT '',
+      user_id INT NULL,
+      customer_id VARCHAR(50) NULL,
+      author_name VARCHAR(150) NOT NULL,
+      author_email VARCHAR(150) DEFAULT '',
+      author_phone VARCHAR(50) NULL,
+      rating INT NOT NULL DEFAULT 5,
+      title VARCHAR(255) DEFAULT '',
+      comment TEXT NOT NULL,
+      size_purchased VARCHAR(50) DEFAULT 'M',
+      fit_feedback VARCHAR(50) DEFAULT 'True to Size',
+      images_json JSON NULL,
+      is_verified_buyer TINYINT(1) DEFAULT 1,
+      order_number VARCHAR(50) NULL,
+      order_date VARCHAR(50) NULL,
+      order_amount DECIMAL(10,2) NULL,
+      status ENUM('approved', 'pending', 'rejected') DEFAULT 'approved',
+      helpful_votes INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_prod (product_id),
+      INDEX idx_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `;
 
@@ -202,9 +246,10 @@ function initDatabaseTables() {
     promisePool.query(createCategoriesTable),
     promisePool.query(createProductsTable),
     promisePool.query(createOrdersTable),
+    promisePool.query(createReviewsTable),
   ])
     .then(async () => {
-      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders)');
+      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews)');
       
       // Auto-migrate users table columns if missing
       try {
@@ -221,6 +266,130 @@ function initDatabaseTables() {
 
       try {
         await promisePool.query('ALTER TABLE users ADD COLUMN password VARCHAR(255) NULL AFTER email_verified');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE users ADD COLUMN addresses_json JSON NULL AFTER lower_size');
+      } catch (_) {}
+
+      // Auto-migrate orders table columns for rich tracking and items
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN user_id INT NULL AFTER order_number');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN customer_id VARCHAR(50) NULL AFTER user_id');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN items_json JSON NULL AFTER customer_phone');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN items_count INT DEFAULT 1 AFTER items_json');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN subtotal DECIMAL(10, 2) DEFAULT 0.00 AFTER items_count');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0.00 AFTER subtotal');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN coupon_code VARCHAR(50) NULL AFTER discount_amount');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN shipping_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER coupon_code');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) NULL AFTER shipping_address');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN courier_partner VARCHAR(100) DEFAULT "Bluedart Express" AFTER tracking_number');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN delivery_notes TEXT NULL AFTER courier_partner');
+      } catch (_) {}
+
+      // Auto-migrate orders table for Cancel, Return & Refund workflow
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN cancellation_reason VARCHAR(255) NULL AFTER delivery_notes');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN cancelled_at TIMESTAMP NULL AFTER cancellation_reason');
+      } catch (_) {}
+
+      try {
+        await promisePool.query("ALTER TABLE orders ADD COLUMN return_status ENUM('None', 'Requested', 'Approved', 'Rejected', 'Item Picked Up', 'Item Received', 'Completed') DEFAULT 'None' AFTER cancelled_at");
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN return_reason VARCHAR(255) NULL AFTER return_status');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN return_comment TEXT NULL AFTER return_reason');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN return_requested_at TIMESTAMP NULL AFTER return_comment');
+      } catch (_) {}
+
+      try {
+        await promisePool.query("ALTER TABLE orders ADD COLUMN refund_status ENUM('None', 'Initiated', 'Processing', 'Refunded', 'Failed') DEFAULT 'None' AFTER return_requested_at");
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN refund_amount DECIMAL(10, 2) DEFAULT 0.00 AFTER refund_status');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN refund_method VARCHAR(50) NULL AFTER refund_amount');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN refund_transaction_id VARCHAR(100) NULL AFTER refund_method');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN refund_notes TEXT NULL AFTER refund_transaction_id');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE orders ADD COLUMN refunded_at TIMESTAMP NULL AFTER refund_notes');
+      } catch (_) {}
+
+      // Auto-migrate reviews table columns for customer & order linkage
+      try {
+        await promisePool.query('ALTER TABLE reviews ADD COLUMN customer_id VARCHAR(50) NULL AFTER user_id');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE reviews ADD COLUMN author_phone VARCHAR(50) NULL AFTER author_name');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE reviews ADD COLUMN order_number VARCHAR(50) NULL AFTER is_verified_buyer');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE reviews ADD COLUMN order_date VARCHAR(50) NULL AFTER order_number');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE reviews ADD COLUMN order_amount DECIMAL(10,2) NULL AFTER order_date');
+      } catch (_) {}
+
+      // Auto-migrate products table for size-wise and color-wise variant inventory
+      try {
+        await promisePool.query('ALTER TABLE products ADD COLUMN size_stock_json JSON NULL AFTER stock');
       } catch (_) {}
 
       seedDefaultAdmin(promisePool);
@@ -355,3 +524,5 @@ async function seedDefaultCategories(promisePool) {
 }
 
 module.exports = pool.promise();
+
+

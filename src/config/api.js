@@ -5,3 +5,7 @@ export const API_ROOT = import.meta.env.VITE_API_BASE_URL || (isProduction ? 'ht
 export const API_BASE = `${API_ROOT}/api`;
 export const ADMIN_API_BASE = `${API_BASE}/admin`;
 export const AUTH_API_BASE = `${API_BASE}/auth`;
+export const REVIEWS_API_BASE = `${API_BASE}/reviews`;
+export const ORDERS_API_BASE = `${API_BASE}/orders`;
+
+

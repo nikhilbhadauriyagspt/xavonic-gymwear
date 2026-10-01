@@ -9,31 +9,31 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 'cart-1',
-      title: 'Acid Wash Heavyweight Oversized Tee',
-      price: 1499,
-      originalPrice: 2299,
-      size: 'L',
-      color: 'Washed Onyx',
-      quantity: 1,
-      image: spotlightFront,
-    },
-    {
-      id: 'cart-2',
-      title: 'Pro Muscle-Lock Compression Shirt',
-      price: 1299,
-      originalPrice: 1899,
-      size: 'M',
-      color: 'Stealth Black',
-      quantity: 1,
-      image: heroCompression,
-    },
-  ]);
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('xavonic_cart_items');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Persist cart to localStorage whenever it changes
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('xavonic_cart_items', JSON.stringify(cartItems));
+    } catch (_) {}
+  }, [cartItems]);
 
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
+
+  const clearCart = () => {
+    setCartItems([]);
+    try {
+      localStorage.removeItem('xavonic_cart_items');
+    } catch (_) {}
+  };
 
   const addToCart = (product, size = 'L', qty = 1, color = '') => {
     const numericPrice = typeof product.price === 'number' 
@@ -208,6 +208,7 @@ export function CartProvider({ children }) {
         isCartOpen,
         openCart,
         closeCart,
+        clearCart,
         cartItems,
         addToCart,
         updateQuantity,

@@ -19,7 +19,7 @@ async function directMigrate() {
     ssl: { rejectUnauthorized: false },
   });
 
-  const tables = ['admins', 'store_settings', 'categories', 'products', 'users', 'orders', 'otp_verifications'];
+  const tables = ['admins', 'store_settings', 'categories', 'products', 'users', 'orders', 'otp_verifications', 'reviews'];
 
   await cloudConn.query('SET FOREIGN_KEY_CHECKS = 0');
 

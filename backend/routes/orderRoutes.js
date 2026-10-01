@@ -1,0 +1,21 @@
+const express = require('express');
+const router = express.Router();
+const orderController = require('../controllers/orderController');
+
+// Public endpoints
+// POST /api/orders (Place an order)
+router.post('/', orderController.createOrder);
+
+// GET /api/orders/track/:orderNumber (Track order)
+router.get('/track/:orderNumber', orderController.getOrderDetails);
+
+// GET /api/orders/user/:userIdOrPhone (Customer order history)
+router.get('/user/:userIdOrPhone', orderController.getCustomerOrders);
+
+// POST /api/orders/:orderId/cancel (Cancel order)
+router.post('/:orderId/cancel', orderController.cancelOrder);
+
+// POST /api/orders/:orderId/return (Request return)
+router.post('/:orderId/return', orderController.requestReturn);
+
+module.exports = router;

@@ -319,3 +319,58 @@ exports.saveOffersConfig = async (req, res) => {
   }
 };
 
+// 11. Get Google Maps & Geocoding Configuration
+exports.getGoogleMapsConfig = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT setting_key, setting_value FROM store_settings WHERE setting_key LIKE 'google_maps_%'"
+    );
+
+    const config = {
+      api_key: 'AIzaSyAWnFjD1hsIsyYB7nQs_fAUd2BVuziu0xE',
+      enable_places_autocomplete: true,
+      enable_gps_geocoding: true,
+    };
+
+    rows.forEach((r) => {
+      if (r.setting_key === 'google_maps_api_key' && r.setting_value) config.api_key = r.setting_value;
+      if (r.setting_key === 'google_maps_places_enabled') config.enable_places_autocomplete = r.setting_value === 'true';
+      if (r.setting_key === 'google_maps_gps_enabled') config.enable_gps_geocoding = r.setting_value === 'true';
+    });
+
+    return res.status(200).json({ success: true, config });
+  } catch (err) {
+    console.error('Error in getGoogleMapsConfig:', err);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve Google Maps configuration.' });
+  }
+};
+
+// 12. Save Google Maps Configuration
+exports.saveGoogleMapsConfig = async (req, res) => {
+  try {
+    const { api_key, enable_places_autocomplete, enable_gps_geocoding } = req.body;
+
+    const updates = [
+      { key: 'google_maps_api_key', value: (api_key || '').trim() },
+      { key: 'google_maps_places_enabled', value: enable_places_autocomplete !== false ? 'true' : 'false' },
+      { key: 'google_maps_gps_enabled', value: enable_gps_geocoding !== false ? 'true' : 'false' },
+    ];
+
+    for (const item of updates) {
+      await db.query(
+        'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+        [item.key, item.value, item.value]
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Google Maps settings saved successfully in database!',
+    });
+  } catch (err) {
+    console.error('Error saving Google Maps config:', err);
+    return res.status(500).json({ success: false, message: 'Failed to save Google Maps configuration.' });
+  }
+};
+
+

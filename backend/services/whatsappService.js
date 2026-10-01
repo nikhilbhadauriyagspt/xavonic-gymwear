@@ -111,7 +111,54 @@ async function sendWhatsAppOtp(phone, otp) {
   };
 }
 
+// 3. Send Order Confirmation WhatsApp Message
+async function sendOrderWhatsAppNotification(orderData) {
+  const settings = await getWhatsAppSettings();
+  const phone = orderData.customer_phone || orderData.customerPhone;
+  if (!phone) return { success: false, message: 'No phone number provided' };
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;
+  const total = Number(orderData.total_amount || 0).toLocaleString('en-IN');
+  const tracking = orderData.tracking_number || 'Generated';
+
+  const messageText = `🎉 *Order Confirmed! #${orderNum}*\n\nHey ${orderData.customer_name || 'Athlete'},\nThank you for ordering with *XAVONIC Athletics*!\n\n📦 *Order Total:* ₹${total}\n🚚 *Courier:* ${orderData.courier_partner || 'Bluedart Express'}\n📍 *Tracking Code:* ${tracking}\n\nYour performance gear is being dispatched shortly!`;
+
+  if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
+    try {
+      const metaUrl = `https://graph.facebook.com/v19.0/${settings.phone_number_id}/messages`;
+      const payload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'text',
+        text: { preview_url: false, body: messageText },
+      };
+
+      await fetch(metaUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.meta_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log(`✅ Order notification sent via WhatsApp to +${cleanPhone}`);
+      return { success: true, mode: 'live' };
+    } catch (err) {
+      console.warn('Could not send live WhatsApp message:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  console.log(`🧪 Simulated WhatsApp Order message for #${orderNum} to +${cleanPhone}`);
+  return { success: true, mode: 'test' };
+}
+
 module.exports = {
   getWhatsAppSettings,
   sendWhatsAppOtp,
+  sendOrderWhatsAppNotification,
 };
+

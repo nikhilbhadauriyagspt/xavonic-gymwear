@@ -9,20 +9,25 @@ import {
   Mail, 
   Trash2, 
   Calendar, 
-  Sparkles,
-  ShieldCheck,
-  ChevronRight,
-  Filter
+  Sparkles, 
+  ShieldCheck, 
+  ChevronRight, 
+  Filter,
+  Eye,
+  ShoppingBag,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
+import CustomerProfileModal from './CustomerProfileModal';
 
 export default function CustomersTab() {
   const [customers, setCustomers] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const fetchCustomers = async (searchQuery = '') => {
     setLoading(true);
@@ -58,6 +63,11 @@ export default function CustomersTab() {
     fetchCustomers(search);
   };
 
+  const handleOpenProfile = (id) => {
+    setSelectedCustomerId(id);
+    setIsProfileModalOpen(true);
+  };
+
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete customer #${id}?`)) return;
 
@@ -74,7 +84,7 @@ export default function CustomersTab() {
         toast.success('Customer removed successfully');
         setCustomers((prev) => prev.filter((c) => c.id !== id));
         setTotal((prev) => Math.max(0, prev - 1));
-        if (selectedCustomer?.id === id) setSelectedCustomer(null);
+        if (selectedCustomerId === id) setIsProfileModalOpen(false);
       } else {
         toast.error(data.message || 'Failed to delete customer');
       }
@@ -91,14 +101,14 @@ export default function CustomersTab() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base sm:text-lg font-semibold text-neutral-900">
-              Registered Customers
+              Customer Management & Profiles
             </h2>
             <span className="px-2 py-0.5 text-xs font-semibold bg-neutral-100 text-neutral-800 rounded-xs border border-neutral-200">
-              {total} Total
+              {total} Total Customers
             </span>
           </div>
           <p className="text-xs text-neutral-500 mt-0.5">
-            Real-time MySQL database records with WhatsApp & Email verification logs
+            View customer profiles, lifetime spending, order history and saved delivery addresses
           </p>
         </div>
 
@@ -110,7 +120,7 @@ export default function CustomersTab() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search name, phone, email..."
+              placeholder="Search name, phone, email, ID..."
               className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm pl-8 pr-3 py-1.5 text-xs text-neutral-900 outline-none"
             />
           </form>
@@ -148,9 +158,9 @@ export default function CustomersTab() {
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50/70 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
                   <th className="py-2.5 px-3.5">ID</th>
-                  <th className="py-2.5 px-3.5">Customer / Name</th>
-                  <th className="py-2.5 px-3.5">WhatsApp Mobile</th>
-                  <th className="py-2.5 px-3.5">Email Address</th>
+                  <th className="py-2.5 px-3.5">Customer Profile</th>
+                  <th className="py-2.5 px-3.5">Contact (WhatsApp / Email)</th>
+                  <th className="py-2.5 px-3.5">Orders & Total Spending</th>
                   <th className="py-2.5 px-3.5">Club Tier</th>
                   <th className="py-2.5 px-3.5">Sizing</th>
                   <th className="py-2.5 px-3.5">Joined Date</th>
@@ -158,130 +168,151 @@ export default function CustomersTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 font-normal">
-                {customers.map((c) => (
-                  <tr
-                    key={c.id}
-                    className="hover:bg-neutral-50/80 transition-colors group cursor-pointer"
-                    onClick={() => setSelectedCustomer(c)}
-                  >
-                    {/* ID */}
-                    <td className="py-3 px-3.5 font-mono text-[11px]">
-                      <span className="font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded-xs border border-neutral-200">
-                        {c.customer_id || `GDL-${String(c.id).padStart(5, '0')}`}
-                      </span>
-                    </td>
+                {customers.map((c) => {
+                  const spent = Number(c.total_spent || 0);
+                  const orderCount = Number(c.total_orders || 0);
 
-                    {/* Name */}
-                    <td className="py-3 px-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-neutral-900 text-white font-semibold text-[10px] flex items-center justify-center shrink-0 uppercase tracking-wider">
-                          {c.name ? c.name.slice(0, 2) : 'AT'}
-                        </div>
-                        <div>
-                          <div className="font-medium text-neutral-900">
-                            {c.name ? c.name : <span className="text-neutral-400 italic font-light">Not provided yet</span>}
-                          </div>
-                          <div className="text-[10px] text-neutral-400">
-                            {c.gender || 'Male'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* WhatsApp Mobile */}
-                    <td className="py-3 px-3.5">
-                      {c.phone ? (
-                        <div className="space-y-0.5">
-                          <div className="font-mono text-neutral-900 flex items-center gap-1">
-                            <span>+{c.phone.replace(/[^0-9]/g, '')}</span>
-                          </div>
-                          {Boolean(c.phone_verified) ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-xs border border-emerald-200">
-                              <CheckCircle2 className="w-2.5 h-2.5" />
-                              WhatsApp Verified
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded-xs border border-amber-200">
-                              Unverified
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-neutral-400 italic text-[11px]">-</span>
-                      )}
-                    </td>
-
-                    {/* Email */}
-                    <td className="py-3 px-3.5">
-                      {c.email ? (
-                        <div className="space-y-0.5">
-                          <div className="text-neutral-800 max-w-[170px] truncate">
-                            {c.email}
-                          </div>
-                          {Boolean(c.email_verified) ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded-xs border border-emerald-200">
-                              <CheckCircle2 className="w-2.5 h-2.5" />
-                              Email Verified
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded-xs border border-amber-200">
-                              Unverified
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-neutral-400 italic text-[11px] font-light">Not Linked</span>
-                      )}
-                    </td>
-
-                    {/* Tier & Points */}
-                    <td className="py-3 px-3.5">
-                      <div className="space-y-0.5">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-xs">
-                          <Sparkles className="w-2.5 h-2.5" />
-                          {c.tier || 'VIP Club'}
+                  return (
+                    <tr
+                      key={c.id}
+                      className="hover:bg-neutral-50/80 transition-colors group cursor-pointer"
+                      onClick={() => handleOpenProfile(c.id)}
+                    >
+                      {/* ID */}
+                      <td className="py-3 px-3.5 font-mono text-[11px]">
+                        <span className="font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded-xs border border-neutral-200">
+                          {c.customer_id || `GDL-${String(c.id).padStart(5, '0')}`}
                         </span>
-                        <div className="text-[10px] text-neutral-500 font-mono">
-                          {c.points || 100} Reward Pts
+                      </td>
+
+                      {/* Customer Name & Avatar */}
+                      <td className="py-3 px-3.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-neutral-900 text-white font-semibold text-[10px] flex items-center justify-center shrink-0 uppercase tracking-wider">
+                            {c.name ? c.name.slice(0, 2) : 'CU'}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-neutral-900 group-hover:text-red-600 transition-colors">
+                              {c.name ? c.name : <span className="text-neutral-400 italic font-light">Not provided yet</span>}
+                            </div>
+                            <div className="text-[10px] text-neutral-400">
+                              {c.gender || 'Male'}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Sizing */}
-                    <td className="py-3 px-3.5">
-                      <div className="text-[11px] text-neutral-600 space-y-0.5 font-mono">
-                        <div>Top: <span className="font-semibold text-neutral-900">{c.chest_size || 'L'}</span></div>
-                        <div>Lower: <span className="font-semibold text-neutral-900">{c.lower_size || 'M'}</span></div>
-                      </div>
-                    </td>
+                      {/* Contact Info (Phone & Email) */}
+                      <td className="py-3 px-3.5">
+                        <div className="space-y-1">
+                          {c.phone ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-neutral-900 font-medium">
+                                +{c.phone.replace(/[^0-9]/g, '')}
+                              </span>
+                              {Boolean(c.phone_verified) ? (
+                                <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-xs border border-emerald-200">
+                                  Verified
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-neutral-400 italic text-[10px]">No phone</span>
+                          )}
 
-                    {/* Joined Date */}
-                    <td className="py-3 px-3.5 text-neutral-500 text-[11px]">
-                      {c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      }) : 'Recent'}
-                    </td>
+                          {c.email && (
+                            <div className="text-neutral-500 text-[10px] max-w-[150px] truncate">
+                              {c.email}
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="py-3 px-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleDelete(c.id, c.name)}
-                        className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors cursor-pointer"
-                        title="Delete User"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      {/* Orders & Spending */}
+                      <td className="py-3 px-3.5">
+                        <div className="space-y-0.5">
+                          <div className="font-bold font-mono text-xs text-neutral-900">
+                            ₹{spent.toLocaleString('en-IN')}.00
+                          </div>
+                          <div className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
+                            <ShoppingBag className="w-2.5 h-2.5" />
+                            <span>{orderCount} {orderCount === 1 ? 'Order' : 'Orders'}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Tier & Points */}
+                      <td className="py-3 px-3.5">
+                        <div className="space-y-0.5">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-xs">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            {c.tier || 'VIP Club'}
+                          </span>
+                          <div className="text-[10px] text-neutral-500 font-mono">
+                            {c.points || 100} Reward Pts
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Sizing */}
+                      <td className="py-3 px-3.5">
+                        <div className="text-[11px] text-neutral-600 space-y-0.5 font-mono">
+                          <div>Top: <span className="font-semibold text-neutral-900">{c.chest_size || 'L'}</span></div>
+                          <div>Lower: <span className="font-semibold text-neutral-900">{c.lower_size || 'M'}</span></div>
+                        </div>
+                      </td>
+
+                      {/* Joined Date */}
+                      <td className="py-3 px-3.5 text-neutral-500 text-[11px]">
+                        {c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }) : 'Recent'}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3 px-3.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenProfile(c.id)}
+                            className="p-1.5 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-sm transition-colors cursor-pointer"
+                            title="View Full Customer Profile & Orders"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(c.id, c.name)}
+                            className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-sm transition-colors cursor-pointer"
+                            title="Delete User"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
+      {/* Customer Full Profile Modal */}
+      {isProfileModalOpen && (
+        <CustomerProfileModal
+          customerId={selectedCustomerId}
+          isOpen={isProfileModalOpen}
+          onClose={() => {
+            setIsProfileModalOpen(false);
+            setSelectedCustomerId(null);
+          }}
+        />
+      )}
+
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -15,10 +15,17 @@ import {
   Truck,
   Wallet,
   CheckCircle2,
+  MapPin,
+  Navigation,
+  Loader2,
+  Search,
+  ExternalLink,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { placeCustomerOrder } from '../services/orderService';
+import { ADMIN_API_BASE } from '../config/api';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -43,17 +50,8 @@ export default function CheckoutPage() {
         state: 'Haryana',
         phone: user?.phone || '+91 98765 43210',
         isDefault: true,
-      },
-      {
-        id: 'addr-default-2',
-        type: 'Gym Locker Address',
-        name: user?.name || 'Nikhil Sharma (Cult Fitness)',
-        addressLine: 'Club House, Sector 54, Golf Course Rd',
-        city: 'Gurugram',
-        pincode: '122011',
-        state: 'Haryana',
-        phone: user?.phone || '+91 98765 43210',
-        isDefault: false,
+        latitude: 28.4908,
+        longitude: 77.0856,
       },
     ];
   }, [user]);
@@ -63,7 +61,7 @@ export default function CheckoutPage() {
   );
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
 
-  // New Address Form
+  // New Address Form with Lat/Lng
   const [newAddressForm, setNewAddressForm] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -73,8 +71,213 @@ export default function CheckoutPage() {
     state: 'Haryana',
     pincode: '122002',
     type: 'Home',
+    latitude: null,
+    longitude: null,
     saveForFuture: true,
   });
+
+  // GPS / Autocomplete state
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [mapsApiKey, setMapsApiKey] = useState('AIzaSyAWnFjD1hsIsyYB7nQs_fAUd2BVuziu0xE');
+  const autocompleteInputRef = useRef(null);
+  const googleAutocompleteRef = useRef(null);
+
+  // Fetch Google Maps API Key from backend settings
+  useEffect(() => {
+    fetch(`${ADMIN_API_BASE}/settings/maps`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.config?.api_key) {
+          setMapsApiKey(data.config.api_key);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Dynamically load Google Places Script
+  useEffect(() => {
+    if (!mapsApiKey || typeof window === 'undefined') return;
+
+    if (window.google && window.google.maps && window.google.maps.places) {
+      initPlacesAutocomplete();
+      return;
+    }
+
+    const existingScript = document.getElementById('google-maps-sdk');
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.id = 'google-maps-sdk';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        initPlacesAutocomplete();
+      };
+      document.head.appendChild(script);
+    } else {
+      existingScript.onload = () => {
+        initPlacesAutocomplete();
+      };
+    }
+  }, [mapsApiKey, isAddingNewAddress]);
+
+  const initPlacesAutocomplete = () => {
+    if (!autocompleteInputRef.current || !window.google?.maps?.places) return;
+
+    try {
+      if (googleAutocompleteRef.current) return;
+      const autocomplete = new window.google.maps.places.Autocomplete(autocompleteInputRef.current, {
+        componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place || !place.address_components) return;
+
+        let postalCode = '';
+        let locality = '';
+        let sublocality = '';
+        let administrativeArea = '';
+        let streetNumber = '';
+        let route = '';
+
+        place.address_components.forEach((component) => {
+          const types = component.types;
+          if (types.includes('postal_code')) postalCode = component.long_name;
+          if (types.includes('sublocality_level_1') || types.includes('sublocality')) sublocality = component.long_name;
+          if (types.includes('locality')) locality = component.long_name;
+          if (types.includes('administrative_area_level_1')) administrativeArea = component.long_name;
+          if (types.includes('street_number')) streetNumber = component.long_name;
+          if (types.includes('route')) route = component.long_name;
+        });
+
+        const lat = place.geometry?.location ? place.geometry.location.lat() : null;
+        const lng = place.geometry?.location ? place.geometry.location.lng() : null;
+
+        const streetLine = [streetNumber, route, sublocality, place.name]
+          .filter((v, i, a) => v && a.indexOf(v) === i)
+          .join(', ');
+
+        setNewAddressForm((prev) => ({
+          ...prev,
+          addressLine: streetLine || place.formatted_address || prev.addressLine,
+          city: locality || prev.city,
+          state: administrativeArea || prev.state,
+          pincode: postalCode || prev.pincode,
+          latitude: lat,
+          longitude: lng,
+        }));
+
+        toast.success(`Location selected: ${locality || 'Address'} (${postalCode || ''})`);
+      });
+
+      googleAutocompleteRef.current = autocomplete;
+    } catch (err) {
+      console.warn('Google Places Autocomplete setup notice:', err);
+    }
+  };
+
+  // High-Accuracy GPS Auto-Detection (HTML5 Geolocation + Reverse Geocode)
+  const handleDetectLiveLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    toast.info('Fetching high-accuracy GPS coordinates...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        setNewAddressForm((prev) => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+        }));
+
+        try {
+          // 1. First try Google Geocoding if API available
+          if (window.google?.maps?.Geocoder) {
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+              if (status === 'OK' && results && results[0]) {
+                const res = results[0];
+                let postalCode = '';
+                let locality = '';
+                let state = '';
+                let sublocality = '';
+
+                res.address_components.forEach((c) => {
+                  if (c.types.includes('postal_code')) postalCode = c.long_name;
+                  if (c.types.includes('locality')) locality = c.long_name;
+                  if (c.types.includes('administrative_area_level_1')) state = c.long_name;
+                  if (c.types.includes('sublocality_level_1')) sublocality = c.long_name;
+                });
+
+                setNewAddressForm((prev) => ({
+                  ...prev,
+                  addressLine: sublocality ? `${sublocality}, ${res.formatted_address.split(',')[0]}` : res.formatted_address.split(',').slice(0, 2).join(','),
+                  city: locality || prev.city,
+                  state: state || prev.state,
+                  pincode: postalCode || prev.pincode,
+                  latitude: lat,
+                  longitude: lng,
+                }));
+
+                toast.success(`📍 GPS Location verified! (${locality}, ${postalCode})`);
+                setIsDetectingLocation(false);
+                return;
+              }
+            });
+          }
+
+          // 2. OpenStreetMap Free High-Precision Reverse Geocoding
+          const osmRes = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const osmData = await osmRes.json();
+
+          if (osmData && osmData.address) {
+            const addr = osmData.address;
+            const pincode = addr.postcode || '';
+            const city = addr.city || addr.town || addr.village || addr.suburb || addr.state_district || 'City';
+            const state = addr.state || 'State';
+            const street = [addr.road, addr.neighbourhood, addr.suburb].filter(Boolean).join(', ');
+
+            setNewAddressForm((prev) => ({
+              ...prev,
+              addressLine: street || prev.addressLine || `${city}, Near Landmark`,
+              city: city,
+              state: state,
+              pincode: pincode || prev.pincode,
+              latitude: lat,
+              longitude: lng,
+            }));
+
+            toast.success(`📍 Exact Live GPS captured! (${city} - ${pincode})`);
+          }
+        } catch (err) {
+          toast.error('Location detected, please confirm city & pincode.');
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        setIsDetectingLocation(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          toast.error('Location permission was denied. Please allow location access in your browser.');
+        } else {
+          toast.error('Could not detect GPS location. Please type manually.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+  };
 
   // Contact Info (for guest/unregistered)
   const [contactEmail, setContactEmail] = useState(user?.email || '');
@@ -178,6 +381,8 @@ export default function CheckoutPage() {
       state: newAddressForm.state,
       pincode: newAddressForm.pincode,
       phone: newAddressForm.phone || user?.phone || '+91 98765 43210',
+      latitude: newAddressForm.latitude || null,
+      longitude: newAddressForm.longitude || null,
       isDefault: false,
     };
 
@@ -190,7 +395,7 @@ export default function CheckoutPage() {
     toast.success('Delivery address saved successfully');
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       toast.error('Your bag is empty.');
       navigate('/collections');
@@ -200,40 +405,82 @@ export default function CheckoutPage() {
     const selectedAddr =
       defaultSavedAddresses.find((a) => a.id === selectedAddressId) || defaultSavedAddresses[0];
 
+    if (!selectedAddr || !selectedAddr.name || !selectedAddr.addressLine || !selectedAddr.pincode) {
+      toast.error('Please enter complete delivery address details.');
+      return;
+    }
+
     setIsProcessing(true);
 
-    setTimeout(() => {
-      const newOrder = {
-        id: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
-        date: 'Just now',
-        status: 'Order Confirmed',
-        statusColor: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-        step: 1,
-        estimatedDelivery: shippingMethod === 'priority' ? 'Tomorrow, by 8:00 PM' : 'Within 2–4 Business Days',
-        items: [...cartItems],
-        subtotal: `₹${rawSubtotal.toLocaleString('en-IN')}`,
-        discount: `₹${totalDiscount.toLocaleString('en-IN')}`,
-        shipping: shippingFee === 0 ? 'FREE' : `₹${shippingFee}`,
-        total: `₹${grandTotal.toLocaleString('en-IN')}`,
-        paymentMethod:
+    try {
+      const payload = {
+        user_id: user?.dbId || (typeof user?.id === 'number' ? user.id : null),
+        customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `GDL-${user?.dbId || '9842'}`),
+        customer_name: selectedAddr.name || user?.name || 'Customer',
+        customer_email: contactEmail || user?.email || '',
+        customer_phone: selectedAddr.phone || contactPhone || user?.phone || '',
+        items: cartItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          slug: item.slug || '',
+          price: Number(item.price || 0),
+          originalPrice: Number(item.originalPrice || item.price || 0),
+          selectedSize: item.selectedSize || item.size || 'M',
+          selectedColor: item.selectedColor || item.color || 'Standard',
+          quantity: Number(item.quantity || 1),
+          image: item.image || item.imageFront || item.gallery?.[0] || '',
+        })),
+        subtotal: rawSubtotal,
+        discount_amount: totalDiscount,
+        coupon_code: appliedCoupon?.code || '',
+        shipping_fee: shippingFee,
+        total_amount: grandTotal,
+        payment_method:
           paymentMethod === 'upi'
-            ? `UPI (${selectedUpiApp.toUpperCase()} - Auto Verified)`
+            ? `UPI (${selectedUpiApp.toUpperCase()})`
             : paymentMethod === 'card'
-            ? 'Credit / Debit Card (3D Secure)'
+            ? 'Credit/Debit Card'
             : paymentMethod === 'netbanking'
-            ? 'NetBanking (Verified)'
+            ? 'NetBanking'
             : 'Cash on Delivery (COD)',
-        trackingNumber: `XAV-${Math.floor(10000000 + Math.random() * 90000000)}`,
-        shippingAddress: `${selectedAddr.name}, ${selectedAddr.addressLine}, ${selectedAddr.city}, ${selectedAddr.state} - ${selectedAddr.pincode} (Ph: ${selectedAddr.phone})`,
+        shipping_address: selectedAddr,
+        save_address: true,
       };
 
-      setConfirmedOrder(newOrder);
-      setStep('confirmed');
+      const res = await placeCustomerOrder(payload);
+
+      if (res.success && res.order) {
+        const fullConfirmedOrder = {
+          id: res.order.orderNumber || res.order.id,
+          date: 'Just now',
+          status: 'Order Confirmed',
+          statusColor: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+          step: 1,
+          estimatedDelivery: res.order.estimatedDelivery || (shippingMethod === 'priority' ? 'Tomorrow, by 8:00 PM' : 'Within 2–4 Business Days'),
+          items: [...cartItems],
+          subtotal: `₹${rawSubtotal.toLocaleString('en-IN')}`,
+          discount: `₹${totalDiscount.toLocaleString('en-IN')}`,
+          shipping: shippingFee === 0 ? 'FREE' : `₹${shippingFee}`,
+          total: `₹${grandTotal.toLocaleString('en-IN')}`,
+          paymentMethod: res.order.paymentMethod,
+          trackingNumber: res.order.trackingNumber || `XAV-${Math.floor(10000000 + Math.random() * 90000000)}`,
+          courierPartner: res.order.courierPartner || 'Bluedart Express',
+          shippingAddress: `${selectedAddr.name}, ${selectedAddr.addressLine}, ${selectedAddr.city}, ${selectedAddr.state} - ${selectedAddr.pincode} (Ph: ${selectedAddr.phone})`,
+        };
+
+        setConfirmedOrder(fullConfirmedOrder);
+        setStep('confirmed');
+        clearCart();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        toast.success('Order Placed Successfully! Your athlete kit is being prepared.');
+      } else {
+        toast.error(res.message || 'Failed to place order. Please check details.');
+      }
+    } catch (err) {
+      toast.error('Network error placing order. Please try again.');
+    } finally {
       setIsProcessing(false);
-      clearCart();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.success('Order Placed Successfully! Your athlete kit is being prepared.');
-    }, 1200);
+    }
   };
 
   // If order is confirmed, render the celebration screen
@@ -256,55 +503,88 @@ export default function CheckoutPage() {
             </p>
           </div>
 
-          {/* Delivery Timeline Card */}
-          <div className="my-6 p-4 sm:p-5 bg-neutral-50 border border-neutral-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-neutral-200 pb-3 mb-3">
+          {/* Delivery & Shipping Info Card */}
+          <div className="my-6 p-4 sm:p-5 bg-neutral-50 border border-neutral-200 rounded-xs space-y-3 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-neutral-200 pb-3">
               <div className="flex items-center gap-2">
                 <Truck className="h-4 w-4 text-neutral-800" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-neutral-900">Estimated Delivery</span>
+                <span className="font-semibold uppercase tracking-wider text-neutral-900">Estimated Delivery</span>
               </div>
-              <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200 rounded-xs">
+              <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200 rounded-xs">
                 {confirmedOrder.estimatedDelivery}
               </span>
             </div>
-            <p className="text-xs text-neutral-600 font-normal">
-              <strong>Tracking Code:</strong> <span className="font-mono text-neutral-900">{confirmedOrder.trackingNumber}</span> (Bluedart Express)
-            </p>
-            <p className="text-xs text-neutral-600 font-normal mt-1">
-              <strong>Delivering To:</strong> {confirmedOrder.shippingAddress}
-            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">Courier Partner</span>
+                <span className="font-semibold text-neutral-900">{confirmedOrder.courierPartner}</span>
+                <div className="text-[11px] font-mono text-neutral-600 mt-0.5">AWB: <b>{confirmedOrder.trackingNumber}</b></div>
+              </div>
+
+              <div>
+                <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">Delivery Destination</span>
+                <p className="text-neutral-700 leading-relaxed">{confirmedOrder.shippingAddress}</p>
+              </div>
+            </div>
           </div>
 
           {/* Ordered Items Summary */}
-          <div className="space-y-3 border-b border-neutral-200 pb-6">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-neutral-700">Order Summary</h3>
-            <div className="divide-y divide-neutral-100">
+          <div className="space-y-3 border-b border-neutral-200 pb-6 text-xs">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800">Order Items ({confirmedOrder.items.length})</h3>
+              <span className="text-[11px] text-neutral-400 font-mono">Invoice #{confirmedOrder.id}</span>
+            </div>
+
+            <div className="divide-y divide-neutral-100 border border-neutral-200 rounded-xs overflow-hidden">
               {confirmedOrder.items.map((it, idx) => (
-                <div key={idx} className="py-3 flex items-center justify-between gap-4">
+                <div key={idx} className="p-3.5 flex items-center justify-between gap-4 hover:bg-neutral-50/50">
                   <div className="flex items-center gap-3">
-                    <img src={it.image || it.imageFront} alt="" className="h-14 w-11 object-cover bg-neutral-100" />
+                    <img src={it.image || it.imageFront || 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=120'} alt="" className="h-14 w-11 object-cover bg-neutral-100 rounded-xs border border-neutral-200 shrink-0" />
                     <div>
-                      <h4 className="text-xs font-medium text-neutral-900">{it.title}</h4>
-                      <p className="text-[11px] text-neutral-500">Size: {it.size} • Qty: {it.quantity}</p>
+                      <h4 className="text-xs font-semibold text-neutral-900 line-clamp-1">{it.title}</h4>
+                      <p className="text-[11px] text-neutral-500 font-mono">Size: {it.selectedSize || it.size || 'M'} • Qty: {it.quantity}</p>
+                      <p className="text-[11px] text-neutral-400">Unit Price: ₹{Number(it.price).toLocaleString('en-IN')}</p>
                     </div>
                   </div>
-                  <span className="text-xs font-semibold text-neutral-900">₹{(it.price * it.quantity).toLocaleString('en-IN')}</span>
+                  <span className="text-xs font-bold text-neutral-900 font-mono">₹{(it.price * it.quantity).toLocaleString('en-IN')}.00</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Total & Action Buttons */}
-          <div className="pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <span className="text-xs text-neutral-500">Total Paid ({confirmedOrder.paymentMethod}):</span>
-              <div className="text-xl font-semibold text-neutral-900">{confirmedOrder.total}</div>
+          {/* Price Breakdown & Totals */}
+          <div className="py-4 border-b border-neutral-200 space-y-2 text-xs">
+            <div className="flex justify-between text-neutral-600">
+              <span>Bag Subtotal:</span>
+              <span className="font-mono">{confirmedOrder.subtotal}</span>
+            </div>
+            {confirmedOrder.discount && confirmedOrder.discount !== '₹0' && (
+              <div className="flex justify-between text-emerald-700">
+                <span>Total Savings / Discount:</span>
+                <span className="font-mono">- {confirmedOrder.discount}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-neutral-600">
+              <span>Shipping Fee:</span>
+              <span className="font-mono">{confirmedOrder.shipping}</span>
+            </div>
+            <div className="pt-2 border-t border-neutral-200 flex justify-between items-center text-neutral-950 font-bold text-sm">
+              <span>Total Payable ({confirmedOrder.paymentMethod}):</span>
+              <span className="text-base text-neutral-900 font-mono">{confirmedOrder.total}</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="text-[11px] text-neutral-400">
+              Need help with this order? Email us at <span className="text-neutral-800 font-medium">support@guidelya.com</span>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3">
               <Link
                 to="/collections"
-                className="inline-flex items-center justify-center gap-2 bg-neutral-900 px-6 py-3 text-xs font-medium uppercase tracking-widest text-white hover:bg-black transition-colors"
+                className="inline-flex items-center justify-center gap-2 bg-neutral-900 px-6 py-2.5 text-xs font-medium uppercase tracking-wider text-white hover:bg-red-600 transition-colors cursor-pointer rounded-xs"
               >
                 Continue Shopping
               </Link>
@@ -517,6 +797,45 @@ export default function CheckoutPage() {
               ) : (
                 /* Add New Address Form */
                 <form onSubmit={handleSaveNewAddress} className="space-y-3.5 pt-1 text-xs">
+                  {/* Quick GPS Auto-Detect Banner */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 bg-neutral-900 text-white rounded-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-7 w-7 rounded-full bg-red-600/30 text-red-400 flex items-center justify-center shrink-0">
+                        <Navigation className="h-3.5 w-3.5 animate-pulse" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold">Fast Delivery Auto-Detect</div>
+                        <div className="text-[10px] text-neutral-400">Fetch exact live location, pin code, and city instantly</div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleDetectLiveLocation}
+                      disabled={isDetectingLocation}
+                      className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xs text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60 shrink-0"
+                    >
+                      {isDetectingLocation ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Detecting GPS...</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>📍 Use Current Location</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {newAddressForm.latitude && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xs text-[11px] font-mono">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>GPS Coordinates captured: <b>{newAddressForm.latitude.toFixed(5)}, {newAddressForm.longitude.toFixed(5)}</b></span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
@@ -561,17 +880,26 @@ export default function CheckoutPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
-                      Area, Street, Sector, Village *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={newAddressForm.addressLine}
-                      onChange={(e) => setNewAddressForm((prev) => ({ ...prev, addressLine: e.target.value }))}
-                      placeholder="e.g. Sector 18, Near Cyber Hub"
-                      className="h-10 w-full border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700">
+                        Area, Street, Sector, Landmark *
+                      </label>
+                      <span className="text-[10px] text-neutral-400 font-normal">
+                        🔍 Google Places search active
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        ref={autocompleteInputRef}
+                        type="text"
+                        required
+                        value={newAddressForm.addressLine}
+                        onChange={(e) => setNewAddressForm((prev) => ({ ...prev, addressLine: e.target.value }))}
+                        placeholder="Search area, colony, or street name..."
+                        className="h-10 w-full border border-neutral-300 pl-3 pr-8 text-xs outline-none focus:border-neutral-900"
+                      />
+                      <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400 pointer-events-none" />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">

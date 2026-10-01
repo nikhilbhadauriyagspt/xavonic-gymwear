@@ -24,10 +24,12 @@ import {
   ShoppingBag,
   PackageCheck,
   Home,
-  Check
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { ORDERS_API_BASE } from '../config/api';
 
 export default function ProfileDrawer() {
   const { 
@@ -48,6 +50,31 @@ export default function ProfileDrawer() {
   // Navigation State
   const [currentView, setCurrentView] = useState('menu'); // 'menu' | 'profile' | 'orders' | 'order-detail' | 'addresses' | 'add-address' | 'support'
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [customerOrders, setCustomerOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  // Fetch real-time customer orders from backend MySQL API
+  useEffect(() => {
+    if (user && isProfileOpen) {
+      const idOrPhone = user.phone || user.id || user.dbId;
+      if (idOrPhone) {
+        setIsLoadingOrders(true);
+        fetch(`${ORDERS_API_BASE}/user/${encodeURIComponent(idOrPhone)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && Array.isArray(data.orders)) {
+              setCustomerOrders(data.orders);
+            } else if (user.orders?.length) {
+              setCustomerOrders(user.orders);
+            }
+          })
+          .catch(() => {
+            if (user.orders?.length) setCustomerOrders(user.orders);
+          })
+          .finally(() => setIsLoadingOrders(false));
+      }
+    }
+  }, [user, isProfileOpen, currentView]);
 
   // Profile Edit Form State
   const [profileForm, setProfileForm] = useState({
@@ -78,6 +105,92 @@ export default function ProfileDrawer() {
     type: 'Home',
     isDefault: false
   });
+
+  // Customer Cancel & Return Dialog States
+  const [isCustomerCancelModalOpen, setIsCustomerCancelModalOpen] = useState(false);
+  const [customerCancelReason, setCustomerCancelReason] = useState('Ordered by mistake');
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+
+  const [isCustomerReturnModalOpen, setIsCustomerReturnModalOpen] = useState(false);
+  const [customerReturnReason, setCustomerReturnReason] = useState('Size / Fit issue');
+  const [customerReturnComment, setCustomerReturnComment] = useState('');
+  const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+
+  const handleCustomerCancelSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedOrder) return;
+    setIsSubmittingCancel(true);
+    try {
+      const res = await fetch(`${ORDERS_API_BASE}/${selectedOrder.orderNumber || selectedOrder.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cancellation_reason: customerCancelReason }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Order cancelled successfully.');
+        setIsCustomerCancelModalOpen(false);
+        setSelectedOrder((prev) => ({
+          ...prev,
+          orderStatus: 'Cancelled',
+          cancellationReason: customerCancelReason,
+          cancelledAt: new Date().toISOString(),
+        }));
+        const idOrPhone = user?.phone || user?.id || user?.dbId;
+        if (idOrPhone) {
+          fetch(`${ORDERS_API_BASE}/user/${encodeURIComponent(idOrPhone)}`)
+            .then((r) => r.json())
+            .then((d) => { if (d.success) setCustomerOrders(d.orders || []); });
+        }
+      } else {
+        toast.error(data.message || 'Failed to cancel order');
+      }
+    } catch {
+      toast.error('Network error cancelling order');
+    } finally {
+      setIsSubmittingCancel(false);
+    }
+  };
+
+  const handleCustomerReturnSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedOrder) return;
+    setIsSubmittingReturn(true);
+    try {
+      const res = await fetch(`${ORDERS_API_BASE}/${selectedOrder.orderNumber || selectedOrder.id}/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          return_reason: customerReturnReason,
+          return_comment: customerReturnComment,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Return request submitted! Our courier partner will pick up the package.');
+        setIsCustomerReturnModalOpen(false);
+        setSelectedOrder((prev) => ({
+          ...prev,
+          returnStatus: 'Requested',
+          returnReason: customerReturnReason,
+          returnComment: customerReturnComment,
+          refundStatus: 'Initiated',
+        }));
+        const idOrPhone = user?.phone || user?.id || user?.dbId;
+        if (idOrPhone) {
+          fetch(`${ORDERS_API_BASE}/user/${encodeURIComponent(idOrPhone)}`)
+            .then((r) => r.json())
+            .then((d) => { if (d.success) setCustomerOrders(d.orders || []); });
+        }
+      } else {
+        toast.error(data.message || 'Failed to submit return request');
+      }
+    } catch {
+      toast.error('Network error submitting return request');
+    } finally {
+      setIsSubmittingReturn(false);
+    }
+  };
 
   useEffect(() => {
     if (isProfileOpen) {
@@ -298,55 +411,114 @@ export default function ProfileDrawer() {
                 <div className="space-y-3 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between px-1">
                     <h4 className="text-xs font-semibold text-zinc-900">Your Orders</h4>
-                    <span className="text-[11px] text-zinc-400">{user.orders?.length} items</span>
+                    <span className="text-[11px] text-zinc-400 font-mono">
+                      {customerOrders.length} {customerOrders.length === 1 ? 'order' : 'orders'}
+                    </span>
                   </div>
 
-                  {user.orders?.map((order) => (
-                    <div 
-                      key={order.id} 
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setCurrentView('order-detail');
-                      }}
-                      className="border border-zinc-200 rounded-[10px] p-4 space-y-3 bg-white hover:border-zinc-400 transition-all cursor-pointer shadow-2xs group"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-zinc-950 group-hover:text-red-600 transition-colors">{order.id}</span>
-                        <span className={`px-2 py-0.5 text-[10px] font-medium rounded border ${order.statusColor}`}>
-                          {order.status}
-                        </span>
-                      </div>
+                  {isLoadingOrders ? (
+                    <div className="py-12 text-center text-zinc-400 space-y-2">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto text-zinc-900" />
+                      <p className="text-xs">Fetching your athlete orders...</p>
+                    </div>
+                  ) : customerOrders.length === 0 ? (
+                    <div className="py-12 text-center border border-dashed border-zinc-200 rounded-[10px] p-6 space-y-3">
+                      <Package className="w-8 h-8 mx-auto text-zinc-300" />
+                      <div className="text-xs font-semibold text-zinc-800">No orders placed yet</div>
+                      <p className="text-[11px] text-zinc-500 max-w-xs mx-auto">
+                        Explore our high-performance apparel collection and place your first order.
+                      </p>
+                    </div>
+                  ) : (
+                    customerOrders.map((order) => {
+                      const orderId = order.id || order.orderNumber;
+                      const status = order.status || order.orderStatus || 'Processing';
+                      const statusColor = order.statusColor || (
+                        status === 'Delivered'
+                          ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                          : status === 'In Transit'
+                          ? 'text-blue-700 bg-blue-50 border-blue-200'
+                          : status === 'Cancelled'
+                          ? 'text-red-700 bg-red-50 border-red-200'
+                          : 'text-amber-700 bg-amber-50 border-amber-200'
+                      );
+                      const totalFormatted = typeof order.total === 'string' ? order.total : `₹${Number(order.total_amount || order.totalAmount || 0).toLocaleString('en-IN')}`;
+                      const itemsList = order.items || [];
+                      const estDelivery = order.estimatedDelivery || (order.shipping_fee === 149 ? 'Tomorrow by 8:00 PM' : 'Within 2–4 Business Days');
 
-                      {/* Items Preview */}
-                      <div className="space-y-2 py-1">
-                        {order.items?.map((item, iIdx) => (
-                          <div key={iIdx} className="flex items-center gap-3">
-                            <img 
-                              src={item.image} 
-                              alt={item.title} 
-                              className="w-10 h-12 object-cover rounded bg-zinc-100 shrink-0" 
-                            />
-                            <div className="min-w-0 flex-1">
-                              <h5 className="text-xs font-medium text-zinc-800 line-clamp-1">{item.title}</h5>
-                              <p className="text-[11px] text-zinc-400">Size: {item.size} • Qty: {item.quantity}</p>
+                      return (
+                        <div 
+                          key={orderId} 
+                          onClick={() => {
+                            setSelectedOrder({
+                              ...order,
+                              id: orderId,
+                              orderNumber: orderId,
+                              status,
+                              statusColor,
+                              total: totalFormatted,
+                              estimatedDelivery: estDelivery,
+                              items: itemsList,
+                              date: order.date || (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'),
+                              trackingNumber: order.trackingNumber || order.tracking_number || 'XAV-TRACKING',
+                              courierPartner: order.courierPartner || order.courier_partner || 'Bluedart Express',
+                              subtotal: typeof order.subtotal === 'string' ? order.subtotal : `₹${Number(order.subtotal || 0).toLocaleString('en-IN')}`,
+                              shipping: order.shipping || (Number(order.shipping_fee || 0) === 0 ? 'FREE' : `₹${order.shipping_fee}`),
+                              paymentMethod: order.paymentMethod || order.payment_method || 'Prepaid',
+                              shippingAddress: typeof order.shipping_address === 'string' ? order.shipping_address : (
+                                order.shippingAddress?.addressLine 
+                                  ? `${order.shippingAddress.name || ''}, ${order.shippingAddress.addressLine}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}` 
+                                  : 'Saved Shipping Address'
+                              ),
+                              step: status === 'Delivered' ? 4 : status === 'In Transit' ? 3 : 1,
+                            });
+                            setCurrentView('order-detail');
+                          }}
+                          className="border border-zinc-200 rounded-[10px] p-4 space-y-3 bg-white hover:border-zinc-400 transition-all cursor-pointer shadow-2xs group"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-zinc-950 group-hover:text-red-600 transition-colors font-mono">
+                              #{orderId}
+                            </span>
+                            <span className={`px-2 py-0.5 text-[10px] font-medium rounded border ${statusColor}`}>
+                              {status}
+                            </span>
+                          </div>
+
+                          {/* Items Preview */}
+                          <div className="space-y-2 py-1">
+                            {itemsList.map((item, iIdx) => (
+                              <div key={iIdx} className="flex items-center gap-3">
+                                <img 
+                                  src={item.image || 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=120'} 
+                                  alt={item.title} 
+                                  className="w-10 h-12 object-cover rounded bg-zinc-100 shrink-0" 
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <h5 className="text-xs font-medium text-zinc-800 line-clamp-1">{item.title}</h5>
+                                  <p className="text-[11px] text-zinc-400 font-mono">
+                                    Size: {item.selectedSize || item.size || 'M'} • Qty: {item.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Footer */}
+                          <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500">
+                            <span className="flex items-center gap-1 text-zinc-800 font-medium">
+                              <Truck className="w-3.5 h-3.5 text-red-600" />
+                              {estDelivery}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <strong className="text-zinc-950 text-xs">{totalFormatted}</strong>
+                              <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
                             </div>
                           </div>
-                        ))}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-500">
-                        <span className="flex items-center gap-1 text-zinc-800 font-medium">
-                          <Truck className="w-3.5 h-3.5 text-red-600" />
-                          {order.estimatedDelivery}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <strong className="text-zinc-950 text-xs">{order.total}</strong>
-                          <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:translate-x-0.5 transition-transform" />
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })
+                  )}
                 </div>
               )}
 
@@ -519,7 +691,81 @@ export default function ProfileDrawer() {
                     <span className="font-semibold text-zinc-900 block text-[11px] uppercase tracking-wider">
                       Shipping Address
                     </span>
-                    <p className="text-zinc-600 text-[11px] leading-relaxed">{selectedOrder.shippingAddress}</p>
+                    <p className="text-zinc-600 text-[11px] leading-relaxed">
+                      {typeof selectedOrder.shippingAddress === 'object'
+                        ? [selectedOrder.shippingAddress.apartment, selectedOrder.shippingAddress.addressLine, selectedOrder.shippingAddress.city, selectedOrder.shippingAddress.state, selectedOrder.shippingAddress.pincode].filter(Boolean).join(', ')
+                        : selectedOrder.shippingAddress || 'Not provided'}
+                    </p>
+                  </div>
+
+                  {/* 🔴 CANCELLATION STATUS (If Cancelled) */}
+                  {selectedOrder.orderStatus === 'Cancelled' && (
+                    <div className="p-4 border border-red-200 bg-red-50/70 rounded-[10px] space-y-1.5 text-xs text-red-900">
+                      <div className="font-semibold flex items-center gap-1.5 text-red-700">
+                        <X className="w-4 h-4" />
+                        <span>Order Cancelled</span>
+                      </div>
+                      <p className="text-[11px] text-red-800">
+                        Reason: {selectedOrder.cancellationReason || 'Cancelled upon request'}
+                      </p>
+                      {selectedOrder.refundStatus && selectedOrder.refundStatus !== 'None' && (
+                        <div className="pt-1 text-[11px] text-red-900 font-medium">
+                          Refund: <span className="font-bold">{selectedOrder.refundStatus}</span> {selectedOrder.refundAmount ? `(₹${selectedOrder.refundAmount})` : ''}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 🔄 RETURN & REFUND TRACKER (If Return Requested) */}
+                  {selectedOrder.returnStatus && selectedOrder.returnStatus !== 'None' && (
+                    <div className="p-4 border border-purple-200 bg-purple-50/70 rounded-[10px] space-y-2.5 text-xs text-purple-950">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold flex items-center gap-1.5 text-purple-800">
+                          <RotateCcw className="w-4 h-4" />
+                          <span>Return & Exchange Request</span>
+                        </div>
+                        <span className="font-bold text-[10px] uppercase bg-purple-100 text-purple-900 px-2 py-0.5 rounded border border-purple-300">
+                          {selectedOrder.returnStatus}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 text-[11px] bg-white p-2.5 rounded border border-purple-100">
+                        <div>Reason: <strong>{selectedOrder.returnReason}</strong></div>
+                        {selectedOrder.returnComment && <div className="text-zinc-500 italic">"{selectedOrder.returnComment}"</div>}
+                        {selectedOrder.refundStatus && selectedOrder.refundStatus !== 'None' && (
+                          <div className="pt-1 text-emerald-700 font-semibold">
+                            Refund Status: {selectedOrder.refundStatus} {selectedOrder.refundTransactionId ? `(Ref: ${selectedOrder.refundTransactionId})` : ''}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CUSTOMER ACTIONS (Cancel Order / Request Return) */}
+                  <div className="pt-2 space-y-2">
+                    {/* Active Order -> Cancel Order */}
+                    {selectedOrder.orderStatus !== 'Cancelled' && selectedOrder.orderStatus !== 'Delivered' && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomerCancelModalOpen(true)}
+                        className="w-full py-2.5 border border-red-200 hover:bg-red-50 text-red-700 text-xs font-semibold rounded-[8px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Cancel This Order</span>
+                      </button>
+                    )}
+
+                    {/* Delivered Order -> Return / Exchange */}
+                    {selectedOrder.orderStatus === 'Delivered' && (!selectedOrder.returnStatus || selectedOrder.returnStatus === 'None') && (
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomerReturnModalOpen(true)}
+                        className="w-full py-2.5 border border-zinc-900 bg-white hover:bg-zinc-50 text-zinc-900 text-xs font-semibold rounded-[8px] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-red-600" />
+                        <span>Request Return or Size Exchange</span>
+                      </button>
+                    )}
                   </div>
 
                 </div>
@@ -951,6 +1197,125 @@ export default function ProfileDrawer() {
             )}
 
           </motion.div>
+
+          {/* CUSTOMER CANCEL ORDER MODAL */}
+          {isCustomerCancelModalOpen && selectedOrder && (
+            <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+              <div className="bg-white rounded-[12px] p-5 w-full max-w-sm space-y-3.5 shadow-2xl text-xs">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                  <h4 className="font-semibold text-zinc-950">Cancel Order #{selectedOrder.orderNumber}</h4>
+                  <button onClick={() => setIsCustomerCancelModalOpen(false)} className="text-zinc-400 hover:text-black">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <p className="text-zinc-600 text-[11px]">
+                  Please let us know why you are cancelling this order:
+                </p>
+
+                <form onSubmit={handleCustomerCancelSubmit} className="space-y-3">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Reason</label>
+                    <select
+                      value={customerCancelReason}
+                      onChange={(e) => setCustomerCancelReason(e.target.value)}
+                      className="w-full border border-zinc-300 rounded-[8px] p-2.5 text-xs outline-none bg-white text-zinc-900 font-medium cursor-pointer shadow-2xs focus:border-zinc-900"
+                    >
+                      <option value="Ordered by mistake" className="bg-white text-zinc-900">Ordered by mistake</option>
+                      <option value="Found better price / offer" className="bg-white text-zinc-900">Found better price / offer</option>
+                      <option value="Incorrect size / color chosen" className="bg-white text-zinc-900">Incorrect size / color chosen</option>
+                      <option value="Delivery timeline too long" className="bg-white text-zinc-900">Delivery timeline too long</option>
+                      <option value="Changed mind" className="bg-white text-zinc-900">Changed mind</option>
+                      <option value="Other" className="bg-white text-zinc-900">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomerCancelModalOpen(false)}
+                      className="px-3 py-1.5 border border-zinc-200 text-zinc-700 rounded-[6px]"
+                    >
+                      Keep Order
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingCancel}
+                      className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-[6px] transition-colors"
+                    >
+                      {isSubmittingCancel ? 'Cancelling...' : 'Confirm Cancel'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* CUSTOMER RETURN REQUEST MODAL */}
+          {isCustomerReturnModalOpen && selectedOrder && (
+            <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+              <div className="bg-white rounded-[12px] p-5 w-full max-w-md space-y-3.5 shadow-2xl text-xs">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
+                  <h4 className="font-semibold text-zinc-950 flex items-center gap-1.5">
+                    <RotateCcw className="w-4 h-4 text-red-600" />
+                    <span>Return / Exchange #{selectedOrder.orderNumber}</span>
+                  </h4>
+                  <button onClick={() => setIsCustomerReturnModalOpen(false)} className="text-zinc-400 hover:text-black">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <p className="text-zinc-600 text-[11px]">
+                  Our 7-Day Doorstep Pickup service will collect the item and initiate your refund or size exchange.
+                </p>
+
+                <form onSubmit={handleCustomerReturnSubmit} className="space-y-3">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Reason for Return *</label>
+                    <select
+                      value={customerReturnReason}
+                      onChange={(e) => setCustomerReturnReason(e.target.value)}
+                      className="w-full border border-zinc-300 rounded-[8px] p-2.5 text-xs outline-none bg-white text-zinc-900 font-medium cursor-pointer shadow-2xs focus:border-zinc-900"
+                    >
+                      <option value="Size / Fit issue (Too tight / loose)" className="bg-white text-zinc-900">Size / Fit issue (Too tight / loose)</option>
+                      <option value="Defective / Damaged product received" className="bg-white text-zinc-900">Defective / Damaged product received</option>
+                      <option value="Quality / Fabric not as expected" className="bg-white text-zinc-900">Quality / Fabric not as expected</option>
+                      <option value="Received wrong item or color" className="bg-white text-zinc-900">Received wrong item or color</option>
+                      <option value="No longer needed" className="bg-white text-zinc-900">No longer needed</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Comments / Sizing notes (Optional)</label>
+                    <textarea
+                      rows={3}
+                      value={customerReturnComment}
+                      onChange={(e) => setCustomerReturnComment(e.target.value)}
+                      placeholder="Please mention if you need a size exchange or refund..."
+                      className="w-full border border-zinc-300 rounded-[8px] p-2 text-xs outline-none focus:border-black resize-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomerReturnModalOpen(false)}
+                      className="px-3 py-1.5 border border-zinc-200 text-zinc-700 rounded-[6px]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingReturn}
+                      className="px-4 py-1.5 bg-black hover:bg-zinc-800 text-white font-semibold rounded-[6px] transition-colors"
+                    >
+                      {isSubmittingReturn ? 'Submitting...' : 'Submit Return Request'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
         </div>
       )}

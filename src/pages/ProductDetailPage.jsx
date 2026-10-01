@@ -33,17 +33,21 @@ import {
 import { allProducts, allCategories } from '../data/productsData';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { fetchLiveProductBySlugOrId, fetchLiveProducts } from '../services/productService';
+import { fetchProductReviews, submitCustomerReview, markReviewHelpful } from '../services/reviewService';
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, openCart } = useCart();
   const { isWishlisted: checkIsWishlisted, toggleWishlist: globalToggleWishlist } = useWishlist();
+  const { user, openAuth } = useAuth();
 
   const [liveProduct, setLiveProduct] = useState(null);
   const [allLiveProducts, setAllLiveProducts] = useState(allProducts);
+
 
   useEffect(() => {
     let isMounted = true;
@@ -91,51 +95,15 @@ export default function ProductDetailPage() {
   const [lightboxPos, setLightboxPos] = useState({ x: 50, y: 50 });
 
   // Reviews System
-  const [reviewsList, setReviewsList] = useState([
-    {
-      id: 'rev-1',
-      author: 'Vikram Mehta',
-      date: '2 days ago',
-      rating: 5,
-      verified: true,
-      size: 'L',
-      fit: 'True to Size',
-      title: 'Insane quality and shoulder drape!',
-      comment: 'The fabric density and muscle-lock cut are unmatched. Holds pump throughout the workout and feels ultra premium.',
-      images: [product?.gallery?.[0], product?.gallery?.[3]].filter(Boolean),
-      helpful: 24,
-      userLiked: false,
-    },
-    {
-      id: 'rev-2',
-      author: 'Aman Sharma',
-      date: '1 week ago',
-      rating: 5,
-      verified: true,
-      size: 'M',
-      fit: 'True to Size',
-      title: 'Best gymwear purchase this year',
-      comment: 'Zero chafing during heavy deadlifts. The compression supports the core and chest definition nicely.',
-      images: [product?.gallery?.[1]].filter(Boolean),
-      helpful: 18,
-      userLiked: false,
-    },
-    {
-      id: 'rev-3',
-      author: 'Rohan Deshmukh',
-      date: '2 weeks ago',
-      rating: 4,
-      verified: true,
-      size: 'XL',
-      fit: 'Runs Slightly Snug',
-      title: 'Heavy fabric, great aesthetic taper',
-      comment: 'Definitely size up if you prefer a looser pump cover drape, but the compression fits like a second skin.',
-      images: [],
-      helpful: 9,
-      userLiked: false,
-    },
-  ]);
-
+  const [reviewsList, setReviewsList] = useState([]);
+  const [reviewsStats, setReviewsStats] = useState({
+    totalReviews: 0,
+    avgRating: 4.9,
+    starCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    photosCount: 0,
+    fitSummary: {},
+  });
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [reviewFilter, setReviewFilter] = useState('all'); // 'all', 'photos', '5star'
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
@@ -149,6 +117,30 @@ export default function ProductDetailPage() {
     fit: 'True to Size',
     images: [],
   });
+
+  // Fetch Live Database Reviews
+  useEffect(() => {
+    let isMounted = true;
+    async function loadReviews() {
+      if (!product?.id && !productId) return;
+      setIsLoadingReviews(true);
+      try {
+        const data = await fetchProductReviews(product?.id || productId, reviewFilter);
+        if (isMounted && data?.success) {
+          setReviewsList(data.reviews || []);
+          if (data.stats) {
+            setReviewsStats(data.stats);
+          }
+        }
+      } catch (err) {
+        console.warn('Error loading product reviews:', err);
+      } finally {
+        if (isMounted) setIsLoadingReviews(false);
+      }
+    }
+    loadReviews();
+    return () => { isMounted = false; };
+  }, [product?.id, productId, reviewFilter]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -188,8 +180,44 @@ export default function ProductDetailPage() {
   const unitPrice = Number(product?.price || 0);
   const originalPrice = Number(product?.originalPrice || unitPrice);
 
+  // Get inventory for a given size and selected color
+  const getSizeStock = (size, colorName = activeColor.name) => {
+    if (!product) return 50;
+    const stockMap = product.size_stock || {};
+    // Check variant key first e.g. Black_M
+    const variantKey = `${colorName}_${size}`;
+    if (stockMap[variantKey] !== undefined) {
+      return Number(stockMap[variantKey]);
+    }
+    // Check size key e.g. M
+    if (stockMap[size] !== undefined) {
+      return Number(stockMap[size]);
+    }
+    // If stockMap has items but this size is omitted, treat as 0
+    if (Object.keys(stockMap).length > 0) {
+      return 0;
+    }
+    // Fallback to product total stock
+    return Number(product.stock ?? 50);
+  };
+
+  const selectedSizeStock = useMemo(() => {
+    return getSizeStock(selectedSize, activeColor.name);
+  }, [product, selectedSize, activeColor.name]);
+
+  const isSelectedSizeOutOfStock = selectedSizeStock <= 0;
+  const isSelectedSizeLowStock = selectedSizeStock > 0 && selectedSizeStock <= 3;
+
   const handleAddToCart = (shouldOpenDrawer = true) => {
+    if (isSelectedSizeOutOfStock) {
+      toast.error(`Size ${selectedSize} is currently out of stock!`);
+      return;
+    }
     const finalQty = bundleQty > 1 ? bundleQty : quantity;
+    if (finalQty > selectedSizeStock) {
+      toast.error(`Only ${selectedSizeStock} item(s) available in size ${selectedSize}`);
+      return;
+    }
 
     addToCart(
       {
@@ -205,6 +233,10 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
+    if (isSelectedSizeOutOfStock) {
+      toast.error(`Size ${selectedSize} is currently out of stock!`);
+      return;
+    }
     handleAddToCart(false);
     navigate('/checkout');
   };
@@ -308,60 +340,68 @@ export default function ProductDetailPage() {
     }));
   };
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    if (!newReviewForm.author.trim()) {
-      toast.error('Please enter your name');
-      return;
-    }
     if (!newReviewForm.comment.trim()) {
       toast.error('Please write a review comment');
       return;
     }
 
-    const createdReview = {
-      id: `rev-${Date.now()}`,
-      author: newReviewForm.author.trim(),
-      date: 'Just now',
-      rating: newReviewForm.rating,
-      verified: true,
-      size: newReviewForm.size || selectedSize,
-      fit: newReviewForm.fit,
-      title: newReviewForm.title.trim() || 'Verified Customer Review',
-      comment: newReviewForm.comment.trim(),
-      images: newReviewForm.images,
-      helpful: 0,
-      userLiked: false,
-    };
+    try {
+      const payload = {
+        user_id: user?.dbId || (typeof user?.id === 'number' ? user.id : null),
+        customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `GDL-${user?.dbId || '9842'}`),
+        author_name: user?.name || user?.displayName || 'Verified Athlete',
+        author_email: user?.email || '',
+        author_phone: user?.phone || '',
+        rating: newReviewForm.rating,
+        title: newReviewForm.title.trim() || 'Verified Customer Review',
+        comment: newReviewForm.comment.trim(),
+        size_purchased: newReviewForm.size || selectedSize,
+        fit_feedback: newReviewForm.fit || 'True to Size',
+        images: newReviewForm.images,
+      };
 
-    setReviewsList((prev) => [createdReview, ...prev]);
-    setIsWriteReviewOpen(false);
-    setNewReviewForm({
-      author: '',
-      email: '',
-      rating: 5,
-      title: '',
-      comment: '',
-      size: 'M',
-      fit: 'True to Size',
-      images: [],
-    });
-    toast.success('Thank you! Your review has been submitted successfully.');
+      const res = await submitCustomerReview(product?.id || productId, payload);
+      if (res.success && res.review) {
+        setReviewsList((prev) => [res.review, ...prev]);
+        setReviewsStats((prev) => ({
+          ...prev,
+          totalReviews: prev.totalReviews + 1,
+          photosCount: prev.photosCount + (payload.images?.length > 0 ? 1 : 0),
+        }));
+        setIsWriteReviewOpen(false);
+        setNewReviewForm({
+          rating: 5,
+          title: '',
+          comment: '',
+          size: selectedSize || 'M',
+          fit: 'True to Size',
+          images: [],
+        });
+        toast.success('Thank you! Your verified review has been published live.');
+      } else {
+        toast.error(res.message || 'Failed to publish review');
+      }
+    } catch (err) {
+      toast.error('Could not submit review. Please try again.');
+    }
   };
 
-  const toggleHelpful = (reviewId) => {
+  const toggleHelpful = async (reviewId) => {
     setReviewsList((prev) =>
       prev.map((r) => {
         if (r.id === reviewId) {
           return {
             ...r,
-            helpful: r.userLiked ? r.helpful - 1 : r.helpful + 1,
+            helpful: r.userLiked ? Math.max(0, r.helpful - 1) : r.helpful + 1,
             userLiked: !r.userLiked,
           };
         }
         return r;
       })
     );
+    await markReviewHelpful(reviewId);
   };
 
   const filteredReviews = useMemo(() => {
@@ -594,9 +634,9 @@ export default function ProductDetailPage() {
                     <div className="flex items-center text-amber-400">
                       <Star className="h-3.5 w-3.5 fill-current" />
                     </div>
-                    <span className="font-medium text-neutral-800">{product.rating || 4.9}</span>
+                    <span className="font-medium text-neutral-800">{reviewsStats.avgRating || product.rating || 4.9}</span>
                     <span className="text-neutral-300">•</span>
-                    <span className="underline underline-offset-2">{reviewsList.length} reviews</span>
+                    <span className="underline underline-offset-2">{(reviewsStats.totalReviews || reviewsList.length)} reviews</span>
                   </a>
                 </div>
               </div>
@@ -710,31 +750,74 @@ export default function ProductDetailPage() {
                   <span className="text-xs font-normal text-neutral-600 uppercase tracking-wider">
                     Size: <span className="font-medium text-neutral-900">{selectedSize}</span>
                   </span>
-                  <span className="text-[11px] font-normal text-neutral-400">Select fit</span>
+                  {selectedSizeStock > 0 ? (
+                    <span className={`text-[11px] font-medium ${isSelectedSizeLowStock ? 'text-amber-700' : 'text-neutral-500'}`}>
+                      {isSelectedSizeLowStock ? `Only ${selectedSizeStock} left!` : 'In Stock'}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-red-600">
+                      Sold Out
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {product.sizes?.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`grid h-9 min-w-9 place-items-center rounded-full border px-2.5 text-xs font-medium transition-all ${
-                        selectedSize === size
-                          ? 'border-neutral-900 bg-neutral-900 text-white'
-                          : 'border-neutral-300 bg-white text-neutral-800 hover:border-neutral-900'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {product.sizes?.map((size) => {
+                    const st = getSizeStock(size, activeColor.name);
+                    const isOut = st <= 0;
+                    const isLow = st > 0 && st <= 3;
+                    const isSelected = selectedSize === size;
+
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        className={`relative grid h-9 min-w-9 place-items-center rounded-full border px-3 text-xs font-medium transition-all ${
+                          isSelected
+                            ? isOut
+                              ? 'border-red-600 bg-red-600 text-white shadow-xs'
+                              : 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                            : isOut
+                            ? 'border-neutral-200 bg-neutral-100 text-neutral-400 line-through opacity-70 hover:border-neutral-300'
+                            : 'border-neutral-300 bg-white text-neutral-800 hover:border-neutral-900'
+                        }`}
+                        title={isOut ? `${size} (Out of Stock)` : isLow ? `${size} (${st} left)` : `${size} (In Stock)`}
+                      >
+                        <span>{size}</span>
+                        {isLow && !isSelected && (
+                          <span className="absolute -top-1 -right-0.5 w-2 h-2 rounded-full bg-amber-500" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* Real-time Inventory Warning Pill */}
+              {isSelectedSizeOutOfStock ? (
+                <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xs">
+                  <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                  <div>
+                    <span className="font-semibold">Size {selectedSize} is currently Out of Stock</span>
+                    <span className="text-[11px] text-neutral-500 block">Please select a different size or color variant.</span>
+                  </div>
+                </div>
+              ) : isSelectedSizeLowStock ? (
+                <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xs">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                  <span className="font-medium">
+                    ⚡ Hurry! Only <strong>{selectedSizeStock}</strong> left in size {selectedSize}.
+                  </span>
+                </div>
+              ) : null}
 
               {/* Quantity + Add to Cart + Buy Now */}
               <div className="space-y-2 pt-1">
                 <div className="flex gap-2">
-                  <div className="flex h-11 items-center border border-neutral-300 bg-white">
+                  <div className={`flex h-11 items-center border border-neutral-300 ${isSelectedSizeOutOfStock ? 'opacity-50 pointer-events-none bg-neutral-100' : 'bg-white'}`}>
                     <button
                       type="button"
+                      disabled={isSelectedSizeOutOfStock}
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       className="grid h-full w-9 place-items-center text-neutral-600 hover:text-black transition-colors"
                     >
@@ -743,7 +826,8 @@ export default function ProductDetailPage() {
                     <span className="w-8 text-center text-xs font-medium text-neutral-900">{quantity}</span>
                     <button
                       type="button"
-                      onClick={() => setQuantity((q) => Math.min(10, q + 1))}
+                      disabled={isSelectedSizeOutOfStock}
+                      onClick={() => setQuantity((q) => Math.min(Math.min(10, selectedSizeStock), q + 1))}
                       className="grid h-full w-9 place-items-center text-neutral-600 hover:text-black transition-colors"
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -752,19 +836,31 @@ export default function ProductDetailPage() {
 
                   <button
                     type="button"
+                    disabled={isSelectedSizeOutOfStock}
                     onClick={() => handleAddToCart(true)}
-                    className="flex h-11 flex-1 items-center justify-center gap-2 bg-neutral-900 px-4 text-xs font-medium uppercase tracking-widest text-white hover:bg-black active:scale-[0.99] transition-all"
+                    className={`flex h-11 flex-1 items-center justify-center gap-2 px-4 text-xs font-medium uppercase tracking-widest text-white transition-all ${
+                      isSelectedSizeOutOfStock
+                        ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed'
+                        : 'bg-neutral-900 hover:bg-black active:scale-[0.99] cursor-pointer'
+                    }`}
                   >
-                    <ShoppingBag className="h-3.5 w-3.5" /> Add to cart
+                    <ShoppingBag className="h-3.5 w-3.5" />
+                    {isSelectedSizeOutOfStock ? 'Sold Out' : 'Add to cart'}
                   </button>
                 </div>
 
                 <button
                   type="button"
+                  disabled={isSelectedSizeOutOfStock}
                   onClick={handleBuyNow}
-                  className="flex h-11 w-full items-center justify-center gap-2 border border-neutral-900 bg-white text-xs font-medium uppercase tracking-widest text-neutral-900 hover:bg-neutral-50 active:scale-[0.99] transition-all"
+                  className={`flex h-11 w-full items-center justify-center gap-2 border text-xs font-medium uppercase tracking-widest transition-all ${
+                    isSelectedSizeOutOfStock
+                      ? 'border-neutral-200 bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                      : 'border-neutral-900 bg-white text-neutral-900 hover:bg-neutral-50 active:scale-[0.99] cursor-pointer'
+                  }`}
                 >
-                  <Zap className="h-3.5 w-3.5" /> Buy now
+                  <Zap className="h-3.5 w-3.5" />
+                  {isSelectedSizeOutOfStock ? 'Unavailable in Size' : 'Buy now'}
                 </button>
               </div>
 
@@ -987,18 +1083,34 @@ export default function ProductDetailPage() {
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
                 <div className="flex items-center text-amber-400 shrink-0">
                   {[0, 1, 2, 3, 4].map((n) => (
-                    <Star key={n} className="h-4 w-4 fill-current" />
+                    <Star
+                      key={n}
+                      className={`h-4 w-4 ${
+                        n < Math.round(reviewsStats.avgRating || 4.9) ? 'fill-current' : 'text-neutral-200'
+                      }`}
+                    />
                   ))}
                 </div>
-                <span className="text-xs sm:text-sm font-semibold text-neutral-900">4.9 out of 5</span>
+                <span className="text-xs sm:text-sm font-semibold text-neutral-900">
+                  {reviewsStats.avgRating || 4.9} out of 5
+                </span>
                 <span className="text-neutral-300 hidden sm:inline">•</span>
-                <span className="text-xs text-neutral-500 font-normal">Based on {reviewsList.length} verified reviews</span>
+                <span className="text-xs text-neutral-500 font-normal">
+                  Based on {reviewsStats.totalReviews || reviewsList.length} verified reviews
+                </span>
               </div>
             </div>
 
             <button
-              onClick={() => setIsWriteReviewOpen(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 px-5 py-2.5 sm:px-6 sm:py-3 text-xs font-medium uppercase tracking-widest text-white hover:bg-black active:scale-[0.98] transition-all"
+              onClick={() => {
+                if (!user) {
+                  toast.info('Please sign in with your WhatsApp number to write a verified review.');
+                  openAuth();
+                } else {
+                  setIsWriteReviewOpen(true);
+                }
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-neutral-900 px-5 py-2.5 sm:px-6 sm:py-3 text-xs font-medium uppercase tracking-widest text-white hover:bg-black active:scale-[0.98] transition-all cursor-pointer"
             >
               <Camera className="h-4 w-4 shrink-0" />
               Write a review
@@ -1018,7 +1130,7 @@ export default function ProductDetailPage() {
                       : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
                   }`}
                 >
-                  All ({reviewsList.length})
+                  All ({reviewsStats.totalReviews || reviewsList.length})
                 </button>
                 <button
                   onClick={() => setReviewFilter('photos')}
@@ -1029,7 +1141,7 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   <ImageIcon className="h-3 w-3" />
-                  With Photos ({reviewsList.filter((r) => r.images?.length > 0).length})
+                  With Photos ({reviewsStats.photosCount || reviewsList.filter((r) => r.images?.length > 0).length})
                 </button>
                 <button
                   onClick={() => setReviewFilter('5star')}
@@ -1039,7 +1151,7 @@ export default function ProductDetailPage() {
                       : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-400'
                   }`}
                 >
-                  5 Stars ({reviewsList.filter((r) => r.rating === 5).length})
+                  5 Stars ({reviewsStats.starCounts?.[5] || reviewsList.filter((r) => r.rating === 5).length})
                 </button>
               </div>
             </div>
@@ -1048,8 +1160,32 @@ export default function ProductDetailPage() {
           {/* Reviews List */}
           <div className="divide-y divide-neutral-200">
             {filteredReviews.length === 0 ? (
-              <div className="py-12 text-center text-xs text-neutral-500">
-                No reviews match the selected filter.
+              <div className="py-12 text-center space-y-3">
+                <div className="h-10 w-10 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400">
+                  <Star className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-semibold text-neutral-800 uppercase tracking-wide">
+                    No Customer Reviews Yet
+                  </h4>
+                  <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
+                    Be the first athlete to share your fit, workout pump, and fabric feedback.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      toast.info('Please sign in with your WhatsApp number to write a verified review.');
+                      openAuth();
+                    } else {
+                      setIsWriteReviewOpen(true);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-900 text-white rounded-xs text-xs font-medium hover:bg-black transition-all cursor-pointer uppercase tracking-wider"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                  Write the First Review
+                </button>
               </div>
             ) : (
               filteredReviews.map((rev) => (
@@ -1278,33 +1414,24 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Name & Email */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
-                    Your Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Vikram Sharma"
-                    value={newReviewForm.author}
-                    onChange={(e) => setNewReviewForm((prev) => ({ ...prev, author: e.target.value }))}
-                    className="w-full h-10 border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900 transition-colors"
-                  />
+              {/* Logged in Athlete Banner (Auto Detected) */}
+              <div className="flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-sm">
+                <div className="w-8 h-8 rounded-full bg-neutral-900 text-white font-semibold text-[11px] flex items-center justify-center shrink-0 uppercase tracking-wider">
+                  {user?.name ? user.name.slice(0, 2) : 'AT'}
                 </div>
-                <div>
-                  <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. vikram@example.com"
-                    value={newReviewForm.email}
-                    onChange={(e) => setNewReviewForm((prev) => ({ ...prev, email: e.target.value }))}
-                    className="w-full h-10 border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900 transition-colors"
-                  />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-neutral-900 truncate">
+                      {user?.name || user?.displayName || `Athlete (+${user?.phone?.slice(-4) || '9842'})`}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-xs">
+                      <CheckCircle2 className="w-2.5 h-2.5" />
+                      Verified Athlete
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-neutral-500 truncate mt-0.5">
+                    {user?.phone ? `+${user.phone}` : 'Verified Mobile'} {user?.email ? `• ${user.email}` : ''}
+                  </div>
                 </div>
               </div>
 

@@ -34,10 +34,21 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
   const [price, setPrice] = useState(product.price || 0);
   const [originalPrice, setOriginalPrice] = useState(product.original_price || 0);
   const [discountLabel, setDiscountLabel] = useState(product.discount_label || '');
-  const [stock, setStock] = useState(product.stock || 50);
+  const [stock, setStock] = useState(product.stock !== undefined ? product.stock : 50);
 
-  const [availableSizes, setAvailableSizes] = useState(product.sizes || ['S', 'M', 'L', 'XL']);
+  const [availableSizes, setAvailableSizes] = useState(product.sizes || ['S', 'M', 'L', 'XL', 'XXL']);
   const allPossibleSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
+  // Size-wise / Color-wise stock inventory matrix (e.g. { "S": 10, "M": 15, "Black_M": 5, "Black_L": 2 })
+  const [sizeStock, setSizeStock] = useState(() => {
+    return product.size_stock || product.sizeStock || {
+      'S': 10,
+      'M': 15,
+      'L': 12,
+      'XL': 8,
+      'XXL': 5,
+    };
+  });
 
   const [colors, setColors] = useState(() => {
     return (product.colors || []).map((c, idx) => ({
@@ -171,6 +182,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
       formData.append('original_price', originalPrice);
       formData.append('discount_label', discountLabel);
       formData.append('stock', stock);
+      formData.append('size_stock_json', JSON.stringify(sizeStock));
       formData.append('fabric', fabric);
       formData.append('fit', fit);
       formData.append('model_stats', modelStats);
@@ -379,12 +391,12 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700">Stock Available</label>
+                <label className="text-[11px] font-medium text-neutral-700">Total Product Stock</label>
                 <input
                   type="number"
                   value={stock}
                   onChange={(e) => setStock(Number(e.target.value))}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-3 py-1.5 text-xs"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-mono font-semibold"
                 />
               </div>
             </div>
@@ -407,6 +419,119 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* ⚡ VARIANT-LEVEL INVENTORY MATRIX (Size & Color combinations) */}
+            <div className="pt-3 border-t border-neutral-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-neutral-900 block">
+                    Size-Wise & Color Variant Inventory
+                  </span>
+                  <span className="text-[10px] text-neutral-500">
+                    Set exact stock for each size. Low stock (&le; 3) and Out of stock (0) badges are automatically applied.
+                  </span>
+                </div>
+              </div>
+
+              {/* Sizes Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-1">
+                {availableSizes.map((sz) => {
+                  const currentSzStock = sizeStock[sz] !== undefined ? sizeStock[sz] : 10;
+                  const isLow = currentSzStock > 0 && currentSzStock <= 3;
+                  const isOut = currentSzStock === 0;
+
+                  return (
+                    <div
+                      key={`sz-stock-${sz}`}
+                      className={`p-2.5 rounded-sm border text-xs space-y-1.5 ${
+                        isOut
+                          ? 'bg-red-50/50 border-red-200'
+                          : isLow
+                          ? 'bg-amber-50/50 border-amber-200'
+                          : 'bg-white border-neutral-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between font-semibold">
+                        <span className="text-neutral-900">Size {sz}</span>
+                        {isOut ? (
+                          <span className="text-[9px] px-1 py-0.2 bg-red-600 text-white rounded-2xs font-mono uppercase">
+                            Out of Stock
+                          </span>
+                        ) : isLow ? (
+                          <span className="text-[9px] px-1 py-0.2 bg-amber-500 text-white rounded-2xs font-mono uppercase">
+                            Low: {currentSzStock}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-2xs border border-emerald-200 font-mono">
+                            In Stock
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          value={currentSzStock}
+                          onChange={(e) => {
+                            const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                            setSizeStock((prev) => ({
+                              ...prev,
+                              [sz]: val,
+                            }));
+                          }}
+                          className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-2 py-1 text-xs font-mono outline-none"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Color + Size Combinations (Optional Variant breakdown) */}
+              {colors.length > 1 && (
+                <div className="pt-2">
+                  <span className="text-[11px] font-semibold text-neutral-700 block mb-1">
+                    Color-Specific Variant Breakdown (Optional)
+                  </span>
+                  <div className="space-y-1.5 bg-neutral-50/60 p-2.5 border border-neutral-200 rounded-sm">
+                    {colors.map((col) => (
+                      <div key={col.id || col.name} className="flex flex-wrap items-center gap-2 text-xs py-1 border-b border-neutral-100 last:border-b-0">
+                        <div className="flex items-center gap-1.5 w-28 shrink-0">
+                          <span className="h-3 w-3 rounded-full border border-neutral-300" style={{ backgroundColor: col.hex }} />
+                          <span className="font-medium text-neutral-900 truncate">{col.name}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 flex-1">
+                          {availableSizes.map((sz) => {
+                            const comboKey = `${col.name}_${sz}`;
+                            const comboStock = sizeStock[comboKey] !== undefined ? sizeStock[comboKey] : (sizeStock[sz] || 5);
+                            return (
+                              <div key={comboKey} className="flex items-center gap-1 bg-white border border-neutral-200 px-1.5 py-0.5 rounded-sm text-[11px]">
+                                <span className="text-neutral-500 font-mono">{sz}:</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={comboStock}
+                                  onChange={(e) => {
+                                    const val = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                    setSizeStock((prev) => ({
+                                      ...prev,
+                                      [comboKey]: val,
+                                    }));
+                                  }}
+                                  className="w-10 text-center bg-transparent border-0 font-mono outline-none font-semibold text-neutral-900"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
 

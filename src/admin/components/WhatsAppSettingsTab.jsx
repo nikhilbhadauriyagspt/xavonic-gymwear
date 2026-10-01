@@ -16,12 +16,14 @@ import {
   ExternalLink,
   Server,
   Lock,
+  MapPin,
+  Navigation,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
 
 export default function GatewaySettingsTab() {
-  const [activeSubTab, setActiveSubTab] = useState('whatsapp'); // 'whatsapp' | 'email'
+  const [activeSubTab, setActiveSubTab] = useState('whatsapp'); // 'whatsapp' | 'email' | 'cloudinary' | 'maps'
 
   // WhatsApp Config State
   const [waConfig, setWaConfig] = useState({
@@ -50,12 +52,20 @@ export default function GatewaySettingsTab() {
     api_secret: 'lkB-KXtVa7j9Zi8pzhTn1VhT5xU',
   });
 
+  // Google Maps & Geocoding Config State
+  const [mapsConfig, setMapsConfig] = useState({
+    api_key: 'AIzaSyAWnFjD1hsIsyYB7nQs_fAUd2BVuziu0xE',
+    enable_places_autocomplete: true,
+    enable_gps_geocoding: true,
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [showWaToken, setShowWaToken] = useState(false);
   const [showSmtpPass, setShowSmtpPass] = useState(false);
   const [showCloudSecret, setShowCloudSecret] = useState(false);
+  const [showMapsKey, setShowMapsKey] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testEmail, setTestEmail] = useState('');
 
@@ -69,7 +79,7 @@ export default function GatewaySettingsTab() {
       setIsLoading(true);
       const token = localStorage.getItem('xavonic_admin_token');
 
-      const [waRes, smtpRes, cloudRes] = await Promise.all([
+      const [waRes, smtpRes, cloudRes, mapsRes] = await Promise.all([
         fetch(`${ADMIN_API_BASE}/settings/whatsapp`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -79,19 +89,50 @@ export default function GatewaySettingsTab() {
         fetch(`${ADMIN_API_BASE}/settings/cloudinary`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${ADMIN_API_BASE}/settings/maps`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       const waData = await waRes.json();
       const smtpData = await smtpRes.json();
       const cloudData = await cloudRes.json();
+      const mapsData = await mapsRes.json();
 
       if (waData.success && waData.config) setWaConfig(waData.config);
       if (smtpData.success && smtpData.config) setSmtpConfig(smtpData.config);
       if (cloudData.success && cloudData.config) setCloudinaryConfig(cloudData.config);
+      if (mapsData.success && mapsData.config) setMapsConfig(mapsData.config);
     } catch (err) {
       console.warn('Failed to fetch gateway configs:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveMaps = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      const token = localStorage.getItem('xavonic_admin_token');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/maps`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(mapsConfig),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Google Maps API & Geolocation settings saved to MySQL database!');
+      } else {
+        toast.error(data.message || 'Failed to save Google Maps settings.');
+      }
+    } catch (err) {
+      toast.error('Could not connect to backend server.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -303,6 +344,19 @@ export default function GatewaySettingsTab() {
           >
             <Layers className="h-3.5 w-3.5 text-sky-600" />
             <span>Cloudinary CDN</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('maps')}
+            className={`px-3 py-1.5 font-medium rounded-sm flex items-center gap-1.5 transition-colors cursor-pointer ${
+              activeSubTab === 'maps'
+                ? 'bg-white text-neutral-900 shadow-xs'
+                : 'text-neutral-500 hover:text-neutral-900'
+            }`}
+          >
+            <MapPin className="h-3.5 w-3.5 text-amber-600" />
+            <span>Google Maps API</span>
           </button>
         </div>
       </div>
@@ -778,6 +832,110 @@ export default function GatewaySettingsTab() {
               >
                 {isSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 <span>Save Cloudinary Settings</span>
+              </button>
+            </div>
+
+          </div>
+        </form>
+      )}
+
+      {/* ======================================================== */}
+      {/* 4. GOOGLE MAPS & GEOLOCATION API CONFIGURATION TAB      */}
+      {/* ======================================================== */}
+      {activeSubTab === 'maps' && (
+        <form onSubmit={handleSaveMaps} className="space-y-4">
+          <div className="bg-white border border-neutral-200 rounded-sm p-4 sm:p-5 space-y-4">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-sm bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-xs font-semibold uppercase text-neutral-900 tracking-wider">
+                    Google Maps Platform & Places Autocomplete
+                  </h2>
+                  <p className="text-[11px] text-neutral-500">
+                    Powers live GPS auto-detect, customer address autocomplete, and exact delivery coordinates
+                  </p>
+                </div>
+              </div>
+
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-xs border border-emerald-200">
+                <Shield className="h-3 w-3" />
+                Active Key Loaded
+              </span>
+            </div>
+
+            <div className="space-y-3.5">
+              
+              {/* Google Maps API Key */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-medium uppercase text-neutral-700">
+                    Google Maps API Key (Places & Geocoding) *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowMapsKey(!showMapsKey)}
+                    className="text-[10px] text-neutral-500 hover:text-neutral-900 flex items-center gap-1"
+                  >
+                    {showMapsKey ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    <span>{showMapsKey ? 'Hide' : 'Show'}</span>
+                  </button>
+                </div>
+                <input
+                  type={showMapsKey ? 'text' : 'password'}
+                  required
+                  value={mapsConfig.api_key}
+                  onChange={(e) => setMapsConfig({ ...mapsConfig, api_key: e.target.value })}
+                  placeholder="AIzaSyAWnFjD1hsIsyYB7nQs_fAUd2BVuziu0xE"
+                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                />
+                <p className="text-[10px] text-neutral-400">
+                  You can change this API key anytime in the future. It will instantly update across checkout.
+                </p>
+              </div>
+
+              {/* Toggles */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <label className="flex items-center gap-2 p-3 bg-neutral-50 border border-neutral-200 rounded-sm cursor-pointer hover:bg-neutral-100">
+                  <input
+                    type="checkbox"
+                    checked={mapsConfig.enable_places_autocomplete}
+                    onChange={(e) => setMapsConfig({ ...mapsConfig, enable_places_autocomplete: e.target.checked })}
+                    className="accent-neutral-900 h-4 w-4"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-neutral-900 block">Google Places Autocomplete</span>
+                    <span className="text-[11px] text-neutral-500">Auto-suggest street, colony, and area as user types</span>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-2 p-3 bg-neutral-50 border border-neutral-200 rounded-sm cursor-pointer hover:bg-neutral-100">
+                  <input
+                    type="checkbox"
+                    checked={mapsConfig.enable_gps_geocoding}
+                    onChange={(e) => setMapsConfig({ ...mapsConfig, enable_gps_geocoding: e.target.checked })}
+                    className="accent-neutral-900 h-4 w-4"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-neutral-900 block">High-Accuracy GPS Auto-Detection</span>
+                    <span className="text-[11px] text-neutral-500">Allow customers to 1-click fill city, state, and pin code</span>
+                  </div>
+                </label>
+              </div>
+
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-neutral-900 hover:bg-red-600 text-white text-xs font-medium uppercase tracking-wider rounded-sm transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {isSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                <span>Save Google Maps Settings</span>
               </button>
             </div>
 

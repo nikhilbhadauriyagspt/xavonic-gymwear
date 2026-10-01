@@ -263,17 +263,98 @@ export default function AllProductsTab({ onNavigateToAdd }) {
 
                       {/* Stock */}
                       <td className="py-2.5 px-3.5">
-                        <span className="font-medium text-neutral-800 text-xs">
-                          {prod.stock || 50} units
-                        </span>
+                        {(() => {
+                          const sizeStockObj = (typeof prod.size_stock === 'object' && prod.size_stock !== null)
+                            ? prod.size_stock
+                            : (typeof prod.size_stock_json === 'string'
+                                ? (() => { try { return JSON.parse(prod.size_stock_json); } catch { return {}; } })()
+                                : (prod.size_stock_json || {}));
+                          const stockEntries = Object.entries(sizeStockObj);
+                          const totalUnits = Number(prod.stock ?? 0);
+
+                          return (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`font-semibold text-xs ${
+                                  totalUnits === 0 ? 'text-red-600' : totalUnits <= 5 ? 'text-amber-600' : 'text-neutral-900'
+                                }`}>
+                                  {totalUnits} units total
+                                </span>
+                              </div>
+
+                              {stockEntries.length > 0 ? (
+                                <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                  {stockEntries.map(([k, v]) => {
+                                    const count = Number(v);
+                                    const isOut = count === 0;
+                                    const isLow = count > 0 && count <= 3;
+                                    return (
+                                      <span
+                                        key={k}
+                                        className={`inline-flex items-center px-1.5 py-0.5 rounded-xs text-[9px] font-medium border ${
+                                          isOut
+                                            ? 'bg-red-50 text-red-700 border-red-200'
+                                            : isLow
+                                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                            : 'bg-neutral-100 text-neutral-700 border-neutral-200'
+                                        }`}
+                                        title={`${k}: ${count} available`}
+                                      >
+                                        <span className="font-semibold">{k}:</span>&nbsp;{count}
+                                        {isOut && <span className="ml-0.5 text-[8px] text-red-600 font-bold">(Out)</span>}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-neutral-400">
+                                  Default ({prod.sizes?.join('/') || 'S/M/L/XL'})
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* Status */}
                       <td className="py-2.5 px-3.5">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          <span>Active</span>
-                        </span>
+                        {(() => {
+                          const sizeStockObj = (typeof prod.size_stock === 'object' && prod.size_stock !== null)
+                            ? prod.size_stock
+                            : (typeof prod.size_stock_json === 'string'
+                                ? (() => { try { return JSON.parse(prod.size_stock_json); } catch { return {}; } })()
+                                : (prod.size_stock_json || {}));
+                          const totalUnits = Number(prod.stock ?? 0);
+                          const hasOutVariants = Object.values(sizeStockObj).some(v => Number(v) === 0);
+                          const hasLowVariants = Object.values(sizeStockObj).some(v => Number(v) > 0 && Number(v) <= 3);
+
+                          if (totalUnits === 0) {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-xs border border-red-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                <span>Out of Stock</span>
+                              </span>
+                            );
+                          }
+
+                          if (hasOutVariants || hasLowVariants) {
+                            return (
+                              <div className="space-y-0.5">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-xs border border-amber-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                  <span>Low Stock Alert</span>
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-xs border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span>In Stock</span>
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Actions */}

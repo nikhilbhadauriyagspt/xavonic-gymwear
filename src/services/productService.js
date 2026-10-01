@@ -100,6 +100,8 @@ export function normalizeProduct(p) {
     imageBack: imageBack || gallery[1] || imageFront || gallery[0],
     rating: Number(p.rating || 4.9),
     reviewsCount: Number(p.reviews_count || p.reviewsCount || 48),
+    stock: Number(p.stock ?? 50),
+    size_stock: p.size_stock || (typeof p.size_stock_json === 'string' ? (() => { try { return JSON.parse(p.size_stock_json); } catch { return {}; } })() : (p.size_stock_json || {})),
     inStock: Boolean(p.in_stock ?? true),
     status: p.status || 'active',
   };

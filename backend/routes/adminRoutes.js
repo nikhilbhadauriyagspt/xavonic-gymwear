@@ -15,11 +15,14 @@ const {
   saveCloudinaryConfig,
   getOffersConfig,
   saveOffersConfig,
+  getGoogleMapsConfig,
+  saveGoogleMapsConfig,
 } = require('../controllers/adminSettingsController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
 
 const {
   getCustomers,
+  getCustomerDetail,
   deleteCustomer,
 } = require('../controllers/adminCustomerController');
 
@@ -38,8 +41,34 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 
+const {
+  getAdminReviews,
+  updateReviewStatus,
+  deleteReview,
+} = require('../controllers/reviewController');
+
+const {
+  getAdminOrders,
+  updateOrderStatus,
+  cancelOrder,
+  updateReturnAndRefund,
+  deleteOrder,
+} = require('../controllers/orderController');
+
 // Public: Admin Login
 router.post('/login', loginAdmin);
+
+// Orders Management for Admin
+router.get('/orders', verifyAdminToken, getAdminOrders);
+router.patch('/orders/:orderId/status', verifyAdminToken, updateOrderStatus);
+router.post('/orders/:orderId/cancel', verifyAdminToken, cancelOrder);
+router.patch('/orders/:orderId/return-refund', verifyAdminToken, updateReturnAndRefund);
+router.delete('/orders/:orderId', verifyAdminToken, deleteOrder);
+
+// Reviews Moderation for Admin
+router.get('/reviews', verifyAdminToken, getAdminReviews);
+router.patch('/reviews/:reviewId/status', verifyAdminToken, updateReviewStatus);
+router.delete('/reviews/:reviewId', verifyAdminToken, deleteReview);
 
 // Products Management (Public GET for Storefront, Protected POST/PUT/DELETE for Admin)
 router.get('/products', getProducts);
@@ -53,6 +82,7 @@ router.get('/me', verifyAdminToken, getAdminProfile);
 
 // Protected: Customers List & Management
 router.get('/customers', verifyAdminToken, getCustomers);
+router.get('/customers/:id', verifyAdminToken, getCustomerDetail);
 router.delete('/customers/:id', verifyAdminToken, deleteCustomer);
 
 // Categories Management (Public GET for Frontend, Protected POST/PUT/DELETE for Admin)
@@ -79,4 +109,9 @@ router.post('/settings/cloudinary', verifyAdminToken, saveCloudinaryConfig);
 router.get('/settings/offers', getOffersConfig);
 router.post('/settings/offers', verifyAdminToken, saveOffersConfig);
 
+// Public/Protected: Google Maps API & Geolocation
+router.get('/settings/maps', getGoogleMapsConfig);
+router.post('/settings/maps', verifyAdminToken, saveGoogleMapsConfig);
+
 module.exports = router;
+

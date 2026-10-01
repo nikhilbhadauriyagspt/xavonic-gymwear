@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "start": "node backend/server.js",
     "server": "node backend/server.js",
     "db:export": "node backend/scripts/exportDb.js",
     "db:restore": "node backend/scripts/restoreDb.js",

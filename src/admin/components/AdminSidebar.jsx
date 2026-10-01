@@ -13,6 +13,7 @@ import {
   List,
   X,
   Tag,
+  Star,
 } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 
@@ -213,7 +214,25 @@ export default function AdminSidebar({
               </span>
             </button>
 
-            {/* 5. Global Offers & Discounts */}
+            {/* 5. Reviews & Ratings Moderation */}
+            <button
+              onClick={() => {
+                setActiveTab('reviews');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-sm transition-colors cursor-pointer ${
+                activeTab === 'reviews'
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Star className={`h-3.5 w-3.5 ${activeTab === 'reviews' ? 'text-amber-400 fill-current' : 'text-amber-500'}`} />
+                <span>Reviews & Ratings</span>
+              </div>
+            </button>
+
+            {/* 6. Global Offers & Discounts */}
             <button
               onClick={() => {
                 setActiveTab('offers');

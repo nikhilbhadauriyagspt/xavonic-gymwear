@@ -50,9 +50,10 @@ exports.getProducts = async (req, res) => {
       let sizes = [];
       let colors = [];
       let features = [];
+      let sizeStock = {};
       try {
-        sizes = typeof item.sizes_json === 'string' ? JSON.parse(item.sizes_json) : (item.sizes_json || ['S', 'M', 'L', 'XL']);
-      } catch (_) { sizes = ['S', 'M', 'L', 'XL']; }
+        sizes = typeof item.sizes_json === 'string' ? JSON.parse(item.sizes_json) : (item.sizes_json || ['S', 'M', 'L', 'XL', 'XXL']);
+      } catch (_) { sizes = ['S', 'M', 'L', 'XL', 'XXL']; }
 
       try {
         colors = typeof item.colors_json === 'string' ? JSON.parse(item.colors_json) : (item.colors_json || []);
@@ -62,6 +63,10 @@ exports.getProducts = async (req, res) => {
         features = typeof item.features_json === 'string' ? JSON.parse(item.features_json) : (item.features_json || []);
       } catch (_) { features = []; }
 
+      try {
+        sizeStock = typeof item.size_stock_json === 'string' ? JSON.parse(item.size_stock_json) : (item.size_stock_json || {});
+      } catch (_) { sizeStock = {}; }
+
       // Build top-level gallery from color variants
       const allGalleries = colors.flatMap((c) => c.gallery || []).filter(Boolean);
 
@@ -70,6 +75,8 @@ exports.getProducts = async (req, res) => {
         sizes,
         colors,
         features,
+        size_stock: sizeStock,
+        sizeStock,
         gallery: allGalleries.length > 0 ? allGalleries : (colors[0]?.image ? [colors[0].image] : []),
       };
     });
@@ -103,13 +110,15 @@ exports.getProductByIdOrSlug = async (req, res) => {
     }
 
     const item = rows[0];
-    let sizes = ['S', 'M', 'L', 'XL'];
+    let sizes = ['S', 'M', 'L', 'XL', 'XXL'];
     let colors = [];
     let features = [];
+    let sizeStock = {};
 
     try { sizes = typeof item.sizes_json === 'string' ? JSON.parse(item.sizes_json) : (item.sizes_json || sizes); } catch (_) {}
     try { colors = typeof item.colors_json === 'string' ? JSON.parse(item.colors_json) : (item.colors_json || []); } catch (_) {}
     try { features = typeof item.features_json === 'string' ? JSON.parse(item.features_json) : (item.features_json || []); } catch (_) {}
+    try { sizeStock = typeof item.size_stock_json === 'string' ? JSON.parse(item.size_stock_json) : (item.size_stock_json || {}); } catch (_) {}
 
     const allGalleries = colors.flatMap((c) => c.gallery || []).filter(Boolean);
 
@@ -120,6 +129,8 @@ exports.getProductByIdOrSlug = async (req, res) => {
         sizes,
         colors,
         features,
+        size_stock: sizeStock,
+        sizeStock,
         gallery: allGalleries.length > 0 ? allGalleries : (colors[0]?.image ? [colors[0].image] : []),
       },
     });
@@ -212,13 +223,21 @@ exports.createProduct = async (req, res) => {
       if (features_json) parsedFeatures = typeof features_json === 'string' ? JSON.parse(features_json) : features_json;
     } catch (_) {}
 
+    // Parse Size Stock Inventory (e.g. { "S": 10, "M": 15, "L": 5, "XL": 2, "XXL": 0 } or variant combo)
+    let parsedSizeStock = {};
+    try {
+      if (req.body.size_stock_json) {
+        parsedSizeStock = typeof req.body.size_stock_json === 'string' ? JSON.parse(req.body.size_stock_json) : req.body.size_stock_json;
+      }
+    } catch (_) {}
+
     const [result] = await db.query(
       `INSERT INTO products (
         title, slug, sku, category_id, category_slug, category_name, gender_target,
-        price, original_price, discount_label, stock, in_stock,
+        price, original_price, discount_label, stock, size_stock_json, in_stock,
         sizes_json, colors_json, features_json,
         fabric, fit, model_stats, description, care_instructions, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title,
         cleanSlug,
@@ -231,6 +250,7 @@ exports.createProduct = async (req, res) => {
         Number(original_price) || 0,
         discount_label,
         Number(stock) || 0,
+        JSON.stringify(parsedSizeStock),
         in_stock ? 1 : 0,
         JSON.stringify(parsedSizes),
         JSON.stringify(parsedColors),
@@ -273,6 +293,7 @@ exports.updateProduct = async (req, res) => {
       original_price,
       discount_label,
       stock,
+      size_stock_json,
       in_stock,
       fabric,
       fit,
@@ -310,7 +331,7 @@ exports.updateProduct = async (req, res) => {
       }
     }
 
-    let parsedSizes = ['S', 'M', 'L', 'XL'];
+    let parsedSizes = ['S', 'M', 'L', 'XL', 'XXL'];
     try {
       if (sizes_json) parsedSizes = typeof sizes_json === 'string' ? JSON.parse(sizes_json) : sizes_json;
     } catch (_) {}
@@ -318,6 +339,11 @@ exports.updateProduct = async (req, res) => {
     let parsedFeatures = [];
     try {
       if (features_json) parsedFeatures = typeof features_json === 'string' ? JSON.parse(features_json) : features_json;
+    } catch (_) {}
+
+    let parsedSizeStock = null;
+    try {
+      if (size_stock_json) parsedSizeStock = typeof size_stock_json === 'string' ? JSON.parse(size_stock_json) : size_stock_json;
     } catch (_) {}
 
     await db.query(
@@ -333,6 +359,7 @@ exports.updateProduct = async (req, res) => {
         original_price = COALESCE(?, original_price),
         discount_label = COALESCE(?, discount_label),
         stock = COALESCE(?, stock),
+        size_stock_json = COALESCE(?, size_stock_json),
         in_stock = COALESCE(?, in_stock),
         sizes_json = ?,
         colors_json = ?,
@@ -356,6 +383,7 @@ exports.updateProduct = async (req, res) => {
         original_price !== undefined ? Number(original_price) : null,
         discount_label,
         stock !== undefined ? Number(stock) : null,
+        parsedSizeStock ? JSON.stringify(parsedSizeStock) : null,
         in_stock !== undefined ? (in_stock ? 1 : 0) : null,
         JSON.stringify(parsedSizes),
         JSON.stringify(parsedColors),
