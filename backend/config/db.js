@@ -295,6 +295,28 @@ function initDatabaseTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `;
 
+  // Create Abandoned Checkouts Table (For WhatsApp Abandoned Cart Recovery & Admin Lead Generation)
+  const createAbandonedCheckoutsTable = `
+    CREATE TABLE IF NOT EXISTS abandoned_checkouts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      customer_name VARCHAR(150) NOT NULL DEFAULT 'Guest Athlete',
+      customer_phone VARCHAR(50) NOT NULL,
+      customer_email VARCHAR(150) NULL DEFAULT '',
+      items_json JSON NOT NULL,
+      items_count INT DEFAULT 1,
+      cart_total DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+      recovery_token VARCHAR(100) UNIQUE NOT NULL,
+      whatsapp_sent TINYINT(1) DEFAULT 0,
+      whatsapp_sent_at DATETIME NULL,
+      status ENUM('abandoned', 'recovered', 'expired') DEFAULT 'abandoned',
+      recovered_order_number VARCHAR(50) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_phone (customer_phone),
+      INDEX idx_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `;
+
   Promise.all([
     promisePool.query(createAdminsTable),
     promisePool.query(createUsersTable),
@@ -307,9 +329,10 @@ function initDatabaseTables() {
     promisePool.query(createBannersTable),
     promisePool.query(createStockNotificationsTable),
     promisePool.query(createAdminNotificationsTable),
+    promisePool.query(createAbandonedCheckoutsTable),
   ])
     .then(async () => {
-      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews, banners, stock_notifications, admin_notifications)');
+      console.log('✅ MySQL Tables verified in phpMyAdmin (admins, users, otp_verifications, store_settings, categories, products, orders, reviews, banners, stock_notifications, admin_notifications, abandoned_checkouts)');
       
       // Auto-migrate users table columns if missing
       try {

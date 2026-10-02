@@ -123,6 +123,8 @@ export async function fetchLiveProducts() {
   return fallbackProducts.map(normalizeProduct);
 }
 
+export const getAllProducts = fetchLiveProducts;
+
 export async function fetchLiveProductBySlugOrId(slugOrId) {
   try {
     const res = await fetch(`${API_BASE}/products/${slugOrId}`);

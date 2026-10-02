@@ -1,5 +1,5 @@
 -- GUIDELYA COMPLETE DATABASE BACKUP
--- Created at: 2026-10-02T22:02:32.552Z
+-- Created at: 2026-10-02T22:23:51.087Z
 
 CREATE DATABASE IF NOT EXISTS `guidelya_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `guidelya_db`;
@@ -14,7 +14,7 @@ CREATE TABLE `store_settings` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `setting_key` (`setting_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=1010 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1025 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO `store_settings` (`id`, `setting_key`, `setting_value`, `updated_at`) VALUES (1, 'whatsapp_mode', 'test', '2026-10-01 01:37:07.000');
 INSERT INTO `store_settings` (`id`, `setting_key`, `setting_value`, `updated_at`) VALUES (2, 'whatsapp_meta_token', '', '2026-10-01 01:37:07.000');

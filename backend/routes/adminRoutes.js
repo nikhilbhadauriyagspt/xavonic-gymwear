@@ -71,6 +71,8 @@ const {
   cancelOrder,
   updateReturnAndRefund,
   deleteOrder,
+  getAbandonedCheckouts,
+  sendAbandonedCartWhatsAppRecovery,
 } = require('../controllers/orderController');
 
 const {
@@ -102,6 +104,10 @@ router.patch('/orders/:orderId/status', verifyAdminToken, updateOrderStatus);
 router.post('/orders/:orderId/cancel', verifyAdminToken, cancelOrder);
 router.patch('/orders/:orderId/return-refund', verifyAdminToken, updateReturnAndRefund);
 router.delete('/orders/:orderId', verifyAdminToken, deleteOrder);
+
+// Abandoned Checkouts & WhatsApp Recovery for Admin
+router.get('/abandoned-checkouts', verifyAdminToken, getAbandonedCheckouts);
+router.post('/abandoned-checkouts/:id/recover', verifyAdminToken, sendAbandonedCartWhatsAppRecovery);
 
 // Reviews Moderation for Admin
 router.get('/reviews', verifyAdminToken, getAdminReviews);

@@ -33,6 +33,7 @@ import {
   fetchPublicPaymentConfig,
   createClientPaymentOrder,
   verifyClientPaymentAndPlaceOrder,
+  captureAbandonedCheckout,
 } from '../services/orderService';
 import { ADMIN_API_BASE } from '../config/api';
 import OrderInvoiceModal from '../components/OrderInvoiceModal';
@@ -476,6 +477,39 @@ export default function CheckoutPage() {
     0,
     rawSubtotal - totalDiscount + shippingFee + priorityFee + codFee
   );
+
+  // ⏳ Abandoned Cart Capture (Auto sync phone & cart to Admin WhatsApp recovery)
+  useEffect(() => {
+    if (step === 'confirmed' || !cartItems || cartItems.length === 0) return;
+    const phone = contactPhone || newAddressForm?.phone;
+    if (!phone || phone.replace(/\D/g, '').length < 10) return;
+
+    const timer = setTimeout(() => {
+      const activeAddress =
+        selectedAddressId === 'new'
+          ? newAddressForm
+          : defaultSavedAddresses.find((a) => a.id === selectedAddressId) || newAddressForm;
+
+      captureAbandonedCheckout({
+        phone: phone.trim(),
+        email: contactEmail || user?.email || '',
+        customerName: activeAddress?.name || user?.name || 'Shopper',
+        cartTotal: grandTotal,
+        cartItems: cartItems.map((item) => ({
+          id: item.id,
+          name: item.name,
+          size: item.size || item.selectedSize || 'Standard',
+          color: item.color || item.selectedColor || 'Default',
+          price: item.price,
+          quantity: item.quantity || 1,
+          image: item.image || item.images?.[0],
+        })),
+        addressSummary: `${activeAddress?.city || ''}, ${activeAddress?.state || ''} ${activeAddress?.pincode || ''}`.trim(),
+      }).catch(() => {});
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [contactPhone, newAddressForm.phone, contactEmail, grandTotal, cartItems, step, selectedAddressId]);
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();

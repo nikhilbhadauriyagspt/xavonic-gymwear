@@ -21,6 +21,7 @@ import LastMidBanner from './components/LastMidBanner';
 import MostLovedProducts from './components/MostLovedProducts';
 import AboutStory from './components/AboutStory';
 import Footer from './components/Footer';
+import LiveSalesPopup from './components/LiveSalesPopup';
 import CollectionsPage from './pages/CollectionsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import WishlistPage from './pages/WishlistPage';
@@ -139,6 +140,9 @@ function MainLayout() {
 
       {/* Clean Decent Footer */}
       <Footer />
+
+      {/* Live Sales Activity FOMO Toast */}
+      <LiveSalesPopup />
     </div>
   );
 }

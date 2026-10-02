@@ -13,6 +13,7 @@ import AddProductTab from './components/AddProductTab';
 import OffersDiscountsTab from './components/OffersDiscountsTab';
 import ReviewsTab from './components/ReviewsTab';
 import OrdersTab from './components/OrdersTab';
+import AbandonedCheckoutsTab from './components/AbandonedCheckoutsTab';
 import BannersTab from './components/BannersTab';
 import ShippingTab from './components/ShippingTab';
 import BrandContentTab from './components/BrandContentTab';
@@ -145,6 +146,10 @@ export default function AdminPage() {
 
             {activeTab === 'orders' && (
               <OrdersTab />
+            )}
+
+            {activeTab === 'abandoned-checkouts' && (
+              <AbandonedCheckoutsTab />
             )}
 
             {activeTab === 'categories' && (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -15,80 +15,8 @@ import catStringers from '../assets/cat_stringers.jpg';
 import heroOversized from '../assets/hero_oversized.jpg';
 import spotlightSide from '../assets/spotlight_side.jpg';
 
-const searchableCatalog = [
-  {
-    id: 'search-1',
-    title: 'Acid Wash Heavyweight Oversized Tee',
-    category: 'Oversized Tees',
-    price: '₹1,499',
-    originalPrice: '₹2,299',
-    image: spotlightFront,
-    tags: ['oversized', 'acid wash', 't-shirt', 'tee', 'pump cover', 'heavyweight', 'cotton', 'topwear'],
-  },
-  {
-    id: 'search-2',
-    title: 'Pro Muscle-Lock Compression Shirt',
-    category: 'Compression',
-    price: '₹1,299',
-    originalPrice: '₹1,899',
-    image: heroCompression,
-    tags: ['compression', 'tight', 'second skin', 'rashguard', 'muscle lock', 'gym tee', 'topwear'],
-  },
-  {
-    id: 'search-3',
-    title: 'Tapered Tactical Gym Joggers',
-    category: 'Gym Lowers',
-    price: '₹1,699',
-    originalPrice: '₹2,499',
-    image: catTrackpants,
-    tags: ['joggers', 'pants', 'trackpants', 'bottomwear', 'zipper pockets', 'lowers', 'sweatpants'],
-  },
-  {
-    id: 'search-4',
-    title: '5" Tactical Inseam Gym Shorts',
-    category: 'Training Shorts',
-    price: '₹1,099',
-    originalPrice: '₹1,599',
-    image: catShorts,
-    tags: ['shorts', '5 inch', '5"', 'training shorts', 'bottomwear', 'quads', 'squat'],
-  },
-  {
-    id: 'search-5',
-    title: 'Drop Cut Curved Hem Athletic Tee',
-    category: 'Oversized Tees',
-    price: '₹1,199',
-    originalPrice: '₹1,699',
-    image: catDropcut,
-    tags: ['drop cut', 'curved hem', 't-shirt', 'v taper', 'athletic fit', 'topwear'],
-  },
-  {
-    id: 'search-6',
-    title: 'Deep Cut Athletic Stringer Tank',
-    category: 'Stringers & Tanks',
-    price: '₹999',
-    originalPrice: '₹1,499',
-    image: catStringers,
-    tags: ['stringer', 'tank top', 'racerback', 'bodybuilding', 'sleeveless', 'topwear'],
-  },
-  {
-    id: 'search-7',
-    title: 'Heavyweight Vintage Distressed Graphic Tee',
-    category: 'Oversized Tees',
-    price: '₹1,399',
-    originalPrice: '₹1,999',
-    image: heroOversized,
-    tags: ['vintage', 'graphic tee', 'distressed', 'heavyweight', 'oversized', 'streetwear'],
-  },
-  {
-    id: 'search-8',
-    title: '2-in-1 Compression Liner Lowers',
-    category: 'Gym Lowers',
-    price: '₹1,599',
-    originalPrice: '₹2,399',
-    image: heroJoggers,
-    tags: ['2 in 1', 'compression pants', 'layer lower', 'tights', 'joggers', 'bottomwear'],
-  },
-];
+import { useNavigate } from 'react-router-dom';
+import { getAllProducts } from '../services/productService';
 
 const trendingSearches = [
   'Acid Wash Oversized',
@@ -100,9 +28,19 @@ const trendingSearches = [
 ];
 
 export default function SearchModal({ isOpen, onClose }) {
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [catalog, setCatalog] = useState([]);
   const inputRef = useRef(null);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    getAllProducts().then((prods) => {
+      if (prods && prods.length > 0) {
+        setCatalog(prods);
+      }
+    }).catch(() => {});
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -132,14 +70,16 @@ export default function SearchModal({ isOpen, onClose }) {
 
   const cleanQuery = query.trim().toLowerCase();
 
-  const filteredResults = cleanQuery === '' 
-    ? [] 
-    : searchableCatalog.filter((item) => {
-        const titleMatch = item.title.toLowerCase().includes(cleanQuery);
-        const categoryMatch = item.category.toLowerCase().includes(cleanQuery);
-        const tagMatch = item.tags.some((tag) => tag.toLowerCase().includes(cleanQuery));
-        return titleMatch || categoryMatch || tagMatch;
-      });
+  const filteredResults = useMemo(() => {
+    if (!cleanQuery) return [];
+    return catalog.filter((item) => {
+      const titleMatch = (item.title || '').toLowerCase().includes(cleanQuery);
+      const catMatch = (item.category || item.category_slug || '').toLowerCase().includes(cleanQuery);
+      const descMatch = (item.description || '').toLowerCase().includes(cleanQuery);
+      const fitMatch = (item.fit || '').toLowerCase().includes(cleanQuery);
+      return titleMatch || catMatch || descMatch || fitMatch;
+    });
+  }, [cleanQuery, catalog]);
 
   return (
     <AnimatePresence>
@@ -233,32 +173,36 @@ export default function SearchModal({ isOpen, onClose }) {
                   {/* Featured Quick Drops list */}
                   <div className="pt-4 border-t border-zinc-100 space-y-3">
                     <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block">
-                      Recommended Drops
+                      Trending Recommended Drops
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {searchableCatalog.slice(0, 4).map((item) => (
-                        <div
-                          key={item.id}
-                          onClick={() => {
-                            addToCart(item, 'L', 1);
-                            onClose();
-                          }}
-                          className="group flex items-center gap-3 p-2 bg-zinc-50/70 hover:bg-zinc-100 border border-zinc-100 hover:border-zinc-300 transition-all cursor-pointer rounded-none"
-                        >
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="w-12 h-14 object-cover shrink-0 bg-zinc-200"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-medium text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-1">
-                              {item.title}
-                            </h4>
-                            <p className="text-[11px] text-zinc-500">{item.price}</p>
+                      {catalog.slice(0, 4).map((item) => {
+                        const img = item.imageFront || item.image || item.colors?.[0]?.image || spotlightFront;
+                        const price = Number(item.price || 0);
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => {
+                              navigate(`/product/${item.slug || item.id}`);
+                              onClose();
+                            }}
+                            className="group flex items-center gap-3 p-2 bg-zinc-50/70 hover:bg-zinc-100 border border-zinc-100 hover:border-zinc-300 transition-all cursor-pointer rounded-xs"
+                          >
+                            <img
+                              src={img}
+                              alt={item.title}
+                              className="w-12 h-14 object-cover shrink-0 bg-zinc-200 rounded-2xs"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-xs font-semibold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-1">
+                                {item.title}
+                              </h4>
+                              <p className="text-[11px] font-bold text-neutral-900 font-mono">₹{price.toLocaleString('en-IN')}</p>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all mr-1" />
                           </div>
-                          <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all mr-1" />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </motion.div>
@@ -274,55 +218,62 @@ export default function SearchModal({ isOpen, onClose }) {
                 >
                   <div className="flex items-center justify-between text-xs text-zinc-500 pb-1">
                     <span>Results for "{query}"</span>
-                    <span>{filteredResults.length} {filteredResults.length === 1 ? 'fit' : 'fits'} found</span>
+                    <span className="font-semibold text-neutral-900">{filteredResults.length} {filteredResults.length === 1 ? 'fit' : 'fits'} found</span>
                   </div>
 
                   <div className="divide-y divide-zinc-100">
-                    {filteredResults.map((item, idx) => (
-                      <motion.div
-                        key={item.id}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.18, delay: idx * 0.03 }}
-                        className="group flex items-center justify-between gap-4 py-3 hover:bg-zinc-50 px-2 transition-colors cursor-pointer"
-                        onClick={() => {
-                          addToCart(item, 'L', 1);
-                          onClose();
-                        }}
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="w-12 h-15 object-cover shrink-0 bg-zinc-100 border border-zinc-200"
-                          />
-                          <div className="min-w-0 space-y-0.5">
-                            <span className="text-[10px] font-semibold text-red-600 uppercase tracking-wider block">
-                              {item.category}
-                            </span>
-                            <h4 className="text-xs sm:text-sm font-normal text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-1">
-                              {item.title}
-                            </h4>
-                            <div className="flex items-center gap-2 pt-0.5">
-                              <span className="text-xs font-semibold text-zinc-950">{item.price}</span>
-                              <span className="text-[11px] text-zinc-400 line-through">{item.originalPrice}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(item, 'L', 1);
+                    {filteredResults.map((item, idx) => {
+                      const img = item.imageFront || item.image || item.colors?.[0]?.image || spotlightFront;
+                      const price = Number(item.price || 0);
+                      const origPrice = Number(item.originalPrice || item.original_price || price);
+                      return (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.18, delay: idx * 0.03 }}
+                          className="group flex items-center justify-between gap-4 py-3 hover:bg-zinc-50 px-2 transition-colors cursor-pointer rounded-xs"
+                          onClick={() => {
+                            navigate(`/product/${item.slug || item.id}`);
                             onClose();
                           }}
-                          className="px-3 py-1.5 bg-zinc-950 hover:bg-red-600 text-white text-[11px] font-medium transition-colors cursor-pointer rounded-none shrink-0"
                         >
-                          Quick Add
-                        </button>
-                      </motion.div>
-                    ))}
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <img
+                              src={img}
+                              alt={item.title}
+                              className="w-12 h-15 object-cover shrink-0 bg-zinc-100 border border-zinc-200 rounded-2xs"
+                            />
+                            <div className="min-w-0 space-y-0.5">
+                              <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider block">
+                                {item.category_name || item.category || 'Gymwear'}
+                              </span>
+                              <h4 className="text-xs sm:text-sm font-semibold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-1">
+                                {item.title}
+                              </h4>
+                              <div className="flex items-center gap-2 pt-0.5 font-mono">
+                                <span className="text-xs font-bold text-zinc-950">₹{price.toLocaleString('en-IN')}</span>
+                                {origPrice > price && (
+                                  <span className="text-[11px] text-zinc-400 line-through">₹{origPrice.toLocaleString('en-IN')}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(item, 'L', 1);
+                              onClose();
+                            }}
+                            className="px-3.5 py-1.5 bg-zinc-950 hover:bg-red-600 text-white text-[11px] font-semibold uppercase tracking-wider transition-colors cursor-pointer rounded-2xs shrink-0"
+                          >
+                            + Bag
+                          </button>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 </motion.div>
               )}

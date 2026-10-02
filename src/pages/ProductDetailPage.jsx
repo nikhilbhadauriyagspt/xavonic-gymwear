@@ -43,6 +43,8 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import { fetchLiveProductBySlugOrId, fetchLiveProducts } from '../services/productService';
 import { fetchProductReviews, submitCustomerReview, markReviewHelpful } from '../services/reviewService';
+import { submitStockRestockAlert } from '../services/orderService';
+import SmartFitFinderModal from '../components/SmartFitFinderModal';
 import { AUTH_API_BASE } from '../config/api';
 
 export default function ProductDetailPage() {
@@ -171,6 +173,7 @@ export default function ProductDetailPage() {
 
   // Out of Stock Notification States
   const [isNotifyModalOpen, setIsNotifyModalOpen] = useState(false);
+  const [isFitFinderOpen, setIsFitFinderOpen] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState(user?.email || '');
   const [notifyPhone, setNotifyPhone] = useState(user?.phone || '');
   const [isSubmittingNotify, setIsSubmittingNotify] = useState(false);
@@ -526,25 +529,20 @@ export default function ProductDetailPage() {
     }
     setIsSubmittingNotify(true);
     try {
-      const res = await fetch(`${AUTH_API_BASE}/stock-notifications`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product?.id || productId,
-          productTitle: product?.title || 'Product',
-          variantSize: selectedSize || 'All',
-          variantColor: activeColor?.name || '',
-          email: notifyEmail.trim(),
-          phone: notifyPhone.trim(),
-          name: user?.name || '',
-        }),
+      const data = await submitStockRestockAlert({
+        product_id: product?.id || productId,
+        product_title: product?.title || 'Athletic Wear',
+        variant_size: selectedSize || 'All',
+        variant_color: activeColor?.name || '',
+        customer_email: notifyEmail.trim(),
+        customer_phone: notifyPhone.trim(),
+        customer_name: user?.name || 'Athlete',
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success(data.message || `You're on the waitlist! We'll notify you as soon as Size ${selectedSize} is restocked.`);
+      if (data && data.success) {
+        toast.success(data.message || `You're on the waitlist! We'll notify you on WhatsApp as soon as Size ${selectedSize} is back.`);
         setIsNotifyModalOpen(false);
       } else {
-        toast.error(data.message || 'Could not subscribe to alerts.');
+        toast.error(data?.message || 'Could not subscribe to alerts.');
       }
     } catch (err) {
       toast.error('Connection error. Please try again.');
@@ -801,14 +799,22 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              {/* Size Guide Trigger */}
-              <div className="flex justify-end">
+              {/* Size Guide & Smart Fit Finder Triggers */}
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsFitFinderOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors bg-amber-50 border border-amber-200 px-2 py-1 rounded-xs cursor-pointer shadow-2xs"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-current" /> Find My Size (AI Fit)
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setIsSizeGuideOpen(true)}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-neutral-600 hover:text-neutral-950 transition-colors underline underline-offset-3"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-neutral-600 hover:text-neutral-950 transition-colors underline underline-offset-3 cursor-pointer"
                 >
-                  <Ruler className="h-3.5 w-3.5" /> Size Guide
+                  <Ruler className="h-3.5 w-3.5" /> Size Chart
                 </button>
               </div>
 
@@ -1104,6 +1110,86 @@ export default function ProductDetailPage() {
                   </a>
                 </div>
               </div>
+
+              {/* 🛍️ Frequently Bought Together / Bundle Deal */}
+              {relatedProducts && relatedProducts.length > 0 && (
+                <div className="border border-neutral-200 bg-[#f9f9f8] p-3.5 sm:p-4 rounded-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Layers className="h-3.5 w-3.5 text-neutral-900" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                        Frequently Bought Together
+                      </span>
+                    </div>
+                    <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-2xs tracking-wider">
+                      COMBO 15% OFF
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const bundlePair = relatedProducts[0];
+                    const pairPrice = Number(bundlePair.price || 999);
+                    const pairOrigPrice = Number(bundlePair.originalPrice || pairPrice);
+                    const comboRawTotal = unitPrice + pairPrice;
+                    const comboDiscounted = Math.round(comboRawTotal * 0.85); // 15% OFF bundle
+                    const comboSavings = comboRawTotal - comboDiscounted;
+
+                    return (
+                      <div className="space-y-3">
+                        {/* Bundle Thumbnails */}
+                        <div className="flex items-center gap-2">
+                          <div className="h-16 w-12 shrink-0 bg-neutral-200 border border-neutral-300 rounded-2xs overflow-hidden">
+                            <img src={currentImages[0]} alt="" className="h-full w-full object-cover" />
+                          </div>
+                          <span className="text-sm font-bold text-neutral-400">+</span>
+                          <div className="h-16 w-12 shrink-0 bg-neutral-200 border border-neutral-300 rounded-2xs overflow-hidden">
+                            <img
+                              src={bundlePair.imageFront || bundlePair.image || bundlePair.colors?.[0]?.image || currentImages[0]}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+
+                          <div className="min-w-0 pl-1">
+                            <span className="text-[11px] text-neutral-600 line-clamp-1">
+                              <strong>This Item:</strong> {product.title}
+                            </span>
+                            <span className="text-[11px] text-neutral-600 line-clamp-1 mt-0.5">
+                              <strong>Pair With:</strong> {bundlePair.title}
+                            </span>
+                            <div className="flex items-baseline gap-2 mt-1">
+                              <span className="text-xs font-bold text-neutral-950 font-mono">
+                                ₹{comboDiscounted.toLocaleString('en-IN')}.00
+                              </span>
+                              <span className="text-[10px] text-neutral-400 line-through font-mono">
+                                ₹{comboRawTotal.toLocaleString('en-IN')}
+                              </span>
+                              <span className="text-[10px] text-emerald-700 font-semibold">
+                                Save ₹{comboSavings}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 1-Click Add Bundle to Cart */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addToCart({ ...product, imageFront: currentImages[0] }, selectedSize, 1, activeColor.name);
+                            addToCart(bundlePair, 'L', 1);
+                            openCart();
+                            toast.success(`Bundle Added! Both ${product.title} and ${bundlePair.title} are in your bag with combo savings.`);
+                          }}
+                          className="w-full flex items-center justify-center gap-2 h-10 bg-neutral-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xs transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                        >
+                          <ShoppingBag className="h-3.5 w-3.5" />
+                          <span>Add Both To Bag (₹{comboDiscounted.toLocaleString('en-IN')})</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           </aside>
         </div>
@@ -2238,6 +2324,14 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* SMART AI FIT & SIZE FINDER MODAL */}
+      <SmartFitFinderModal
+        isOpen={isFitFinderOpen}
+        onClose={() => setIsFitFinderOpen(false)}
+        onSelectSize={(sz) => setSelectedSize(sz)}
+        currentProduct={product}
+      />
     </div>
   );
 }

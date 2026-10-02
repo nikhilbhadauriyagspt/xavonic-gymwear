@@ -17,6 +17,7 @@ import {
   Image as ImageIcon,
   Truck,
   Globe,
+  Clock,
 } from 'lucide-react';
 import logoBlack from '../../assets/logo_balck.png';
 
@@ -106,6 +107,27 @@ export default function AdminSidebar({
                 activeTab === 'orders' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-600 border border-red-200'
               }`}>
                 {pendingOrdersCount}
+              </span>
+            </button>
+
+            {/* 2.1 Abandoned Checkouts */}
+            <button
+              onClick={() => {
+                setActiveTab('abandoned-checkouts');
+                setIsMobileSidebarOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-medium rounded-sm transition-colors cursor-pointer ${
+                activeTab === 'abandoned-checkouts'
+                  ? 'bg-neutral-900 text-white'
+                  : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Clock className={`h-3.5 w-3.5 ${activeTab === 'abandoned-checkouts' ? 'text-white' : 'text-amber-500'}`} />
+                <span>Abandoned Carts</span>
+              </div>
+              <span className="px-1.5 py-0.2 rounded-xs text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                WA
               </span>
             </button>
 
