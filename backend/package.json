@@ -16,10 +16,12 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "guidelya.com": "file:..",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.4.0",
     "mysql2": "^3.24.5",
     "nodemailer": "^10.0.13",
+    "razorpay": "^2.9.8",
     "sqlite3": "^6.0.1",
     "streamifier": "^0.1.1"
   }
