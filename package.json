@@ -11,6 +11,7 @@
     "start": "node backend/server.js",
     "server": "node backend/server.js",
     "db:export": "node backend/scripts/exportDb.js",
+    "db:import": "node backend/scripts/importDb.js",
     "db:restore": "node backend/scripts/restoreDb.js",
     "db:setup": "node backend/scripts/restoreDb.js"
   },
@@ -19,6 +20,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^13.4.6",
     "lucide-react": "^1.48.0",
+    "razorpay": "^2.9.8",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",

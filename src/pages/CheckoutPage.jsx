@@ -26,16 +26,130 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useBrand } from '../context/BrandContext';
 import { toast } from 'sonner';
-import { placeCustomerOrder } from '../services/orderService';
+import {
+  placeCustomerOrder,
+  fetchPublicPaymentConfig,
+  createClientPaymentOrder,
+  verifyClientPaymentAndPlaceOrder,
+} from '../services/orderService';
 import { ADMIN_API_BASE } from '../config/api';
 import OrderInvoiceModal from '../components/OrderInvoiceModal';
 import { printOrderInvoice } from '../utils/invoiceGenerator';
+
+// Real E-commerce Brand SVG Vector Logos
+const PhonePeLogo = () => (
+  <svg viewBox="0 0 48 48" className="h-7 w-7 shrink-0" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="48" height="48" rx="12" fill="#5f259f"/>
+    <path d="M29.5 14H21.2c-1.8 0-3.2 1.4-3.2 3.2v16.1c0 .9.7 1.7 1.6 1.7.9 0 1.6-.7 1.6-1.7v-6.2h4.5c4.7 0 8.5-3.8 8.5-8.5s-3.8-8.6-8.5-8.6zm0 10.9h-5.3v-5.6h5.3c1.5 0 2.8 1.3 2.8 2.8s-1.3 2.8-2.8 2.8z" fill="#fff"/>
+    <path d="M29.5 25.5l-8.5 8.5" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+  </svg>
+);
+
+const GooglePayLogo = () => (
+  <svg viewBox="0 0 48 48" className="h-7 w-7 shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <rect width="48" height="48" rx="12" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1"/>
+    <path d="M24 13c2.6 0 5 .9 6.8 2.6l-2.9 2.9C26.7 17.4 25.4 16.8 24 16.8c-4 0-7.3 3.3-7.3 7.2s3.3 7.2 7.3 7.2c3.6 0 6.2-2.3 7-5.5H24v-3.8h11c.1.6.2 1.3.2 2 0 6.4-4.3 11-11.2 11C16.9 35 11 29.1 11 24S16.9 13 24 13z" fill="#4285F4"/>
+    <path d="M32.8 17.5L29.9 20.4C28.5 19.2 26.5 18.5 24 18.5c-3.3 0-6.1 2.2-7.1 5.2l-3.4-2.7C15.4 16.6 19.3 13.8 24 13.8c3.3 0 6.1 1.2 8.8 3.7z" fill="#EA4335"/>
+    <path d="M16.9 24.8c-.3-.8-.4-1.6-.4-2.5 0-.9.1-1.7.4-2.5l3.4 2.7c-.3.7-.4 1.5-.4 2.3 0 .8.1 1.6.4 2.3l-3.4-.3z" fill="#FBBC05"/>
+    <path d="M24 32.2c2.4 0 4.4-.8 5.9-2.2l3.2 2.5C30.9 34.5 27.7 35.8 24 35.8c-4.7 0-8.6-2.8-10.5-6.8l3.4-2.7c1 3.1 3.8 5.9 7.1 5.9z" fill="#34A853"/>
+  </svg>
+);
+
+const PaytmLogo = () => (
+  <svg viewBox="0 0 48 48" className="h-7 w-7 shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <rect width="48" height="48" rx="12" fill="#002E6E"/>
+    <text x="24" y="27" fill="#00BAF2" fontSize="12" fontWeight="900" fontFamily="system-ui, -apple-system, sans-serif" textAnchor="middle" letterSpacing="-0.5">Paytm</text>
+    <path d="M14 33h20" stroke="#00BAF2" strokeWidth="2.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const BhimUpiLogo = () => (
+  <svg viewBox="0 0 48 48" className="h-7 w-7 shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <rect width="48" height="48" rx="12" fill="#ffffff" stroke="#e5e7eb" strokeWidth="1"/>
+    <path d="M24 12l10 12-10 12-10-12z" fill="#097939"/>
+    <path d="M24 12l10 12-5 6-10-6z" fill="#ed7524"/>
+    <text x="24" y="27" fill="#ffffff" fontSize="7" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">UPI</text>
+  </svg>
+);
+
+const VisaCardLogo = () => (
+  <svg viewBox="0 0 38 24" className="h-5 w-8 rounded-xs" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="3" fill="#0F2080"/>
+    <text x="19" y="16" fill="#fff" fontSize="11" fontStyle="italic" fontWeight="900" fontFamily="sans-serif" textAnchor="middle" letterSpacing="0.8">VISA</text>
+  </svg>
+);
+
+const MastercardCardLogo = () => (
+  <svg viewBox="0 0 38 24" className="h-5 w-8 rounded-xs" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="3" fill="#18181b"/>
+    <circle cx="15" cy="12" r="7" fill="#EB001B"/>
+    <circle cx="23" cy="12" r="7" fill="#F79E1B" fillOpacity="0.9"/>
+  </svg>
+);
+
+const RupayCardLogo = () => (
+  <svg viewBox="0 0 38 24" className="h-5 w-8 rounded-xs" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="3" fill="#ffffff" stroke="#e4e4e7" strokeWidth="1"/>
+    <text x="19" y="15" fill="#00B050" fontSize="9" fontWeight="900" fontFamily="sans-serif" textAnchor="middle">Ru<tspan fill="#F58220">Pay</tspan></text>
+  </svg>
+);
+
+const AmexCardLogo = () => (
+  <svg viewBox="0 0 38 24" className="h-5 w-8 rounded-xs" xmlns="http://www.w3.org/2000/svg">
+    <rect width="38" height="24" rx="3" fill="#007BC1"/>
+    <text x="19" y="15" fill="#fff" fontSize="7.5" fontWeight="900" fontFamily="sans-serif" textAnchor="middle" letterSpacing="0.5">AMEX</text>
+  </svg>
+);
+
+const BankBadge = ({ name, code, color, bg }) => (
+  <div className="flex items-center gap-2 p-2 border border-neutral-200 rounded-xs bg-white hover:border-neutral-900 transition-all cursor-pointer">
+    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${bg}`}>
+      {code}
+    </div>
+    <span className="text-xs font-medium text-neutral-800 line-clamp-1">{name}</span>
+  </div>
+);
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, shippingConfig } = useCart();
   const { user, openAuth, addAddress } = useAuth();
+  const { brand } = useBrand();
+
+  // Razorpay Gateway State
+  const [razorpayConfig, setRazorpayConfig] = useState({
+    enabled: true,
+    key_id: '',
+    brand_name: 'Guidelya Activewear',
+    theme_color: '#171717',
+  });
+
+  // Fetch Public Payment Gateway Config on Mount
+  useEffect(() => {
+    fetchPublicPaymentConfig().then((data) => {
+      if (data && data.success && data.config) {
+        setRazorpayConfig(data.config);
+      }
+    }).catch(() => {});
+    loadRazorpayScript();
+  }, []);
 
   // Stepper state: 'details' (Shipping & Payment) | 'confirmed' (Order Success)
   const [step, setStep] = useState('details');
@@ -413,6 +527,33 @@ export default function CheckoutPage() {
     toast.success('Delivery address saved successfully');
   };
 
+  const showOrderSuccess = (order, selectedAddr) => {
+    const fullConfirmedOrder = {
+      id: order.orderNumber || order.id,
+      date: 'Just now',
+      status: order.orderStatus || 'Order Confirmed',
+      statusColor: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      step: 1,
+      estimatedDelivery: order.estimatedDelivery || (shippingMethod === 'priority' ? 'Tomorrow, by 8:00 PM' : 'Within 2–4 Business Days'),
+      items: [...cartItems],
+      subtotal: `₹${rawSubtotal.toLocaleString('en-IN')}`,
+      discount: totalDiscount > 0 ? `₹${totalDiscount.toLocaleString('en-IN')}` : '₹0',
+      shipping: shippingFee === 0 ? 'FREE' : `₹${shippingFee}`,
+      total: `₹${grandTotal.toLocaleString('en-IN')}`,
+      paymentMethod: order.paymentMethod || (paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'Prepaid Online (Razorpay)'),
+      paymentStatus: order.paymentStatus || (paymentMethod === 'cod' ? 'Pending' : 'Paid'),
+      trackingNumber: order.trackingNumber || `XAV-${Math.floor(10000000 + Math.random() * 90000000)}`,
+      courierPartner: order.courierPartner || 'Bluedart Express',
+      shippingAddress: `${selectedAddr.name}, ${selectedAddr.addressLine}, ${selectedAddr.city}, ${selectedAddr.state} - ${selectedAddr.pincode} (Ph: ${selectedAddr.phone})`,
+    };
+
+    setConfirmedOrder(fullConfirmedOrder);
+    setStep('confirmed');
+    clearCart();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast.success('Order Placed Successfully! Your athlete kit is being prepared.');
+  };
+
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
       toast.error('Your bag is empty.');
@@ -430,67 +571,153 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    try {
-      const payload = {
-        user_id: user?.dbId || (typeof user?.id === 'number' ? user.id : null),
-        customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `GDL-${user?.dbId || '9842'}`),
-        customer_name: selectedAddr.name || user?.name || 'Customer',
-        customer_email: contactEmail || user?.email || '',
-        customer_phone: selectedAddr.phone || contactPhone || user?.phone || '',
-        items: cartItems.map((item) => ({
-          id: item.id,
-          title: item.title,
-          slug: item.slug || '',
-          price: Number(item.price || 0),
-          originalPrice: Number(item.originalPrice || item.price || 0),
-          selectedSize: item.selectedSize || item.size || 'M',
-          selectedColor: item.selectedColor || item.color || 'Standard',
-          quantity: Number(item.quantity || 1),
-          image: item.image || item.imageFront || item.gallery?.[0] || '',
-        })),
-        subtotal: rawSubtotal,
-        discount_amount: totalDiscount,
-        coupon_code: appliedCoupon?.code || '',
-        shipping_fee: shippingFee,
-        total_amount: grandTotal,
-        payment_method:
-          paymentMethod === 'upi'
-            ? `UPI (${selectedUpiApp.toUpperCase()})`
-            : paymentMethod === 'card'
-            ? 'Credit/Debit Card'
-            : paymentMethod === 'netbanking'
-            ? 'NetBanking'
-            : 'Cash on Delivery (COD)',
-        shipping_address: selectedAddr,
-        save_address: true,
-      };
+    const payload = {
+      user_id: user?.dbId || (typeof user?.id === 'number' ? user.id : null),
+      customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `GDL-${user?.dbId || '9842'}`),
+      customer_name: selectedAddr.name || user?.name || 'Customer',
+      customer_email: contactEmail || user?.email || '',
+      customer_phone: selectedAddr.phone || contactPhone || user?.phone || '',
+      items: cartItems.map((item) => ({
+        id: item.id,
+        title: item.title,
+        slug: item.slug || '',
+        price: Number(item.price || 0),
+        originalPrice: Number(item.originalPrice || item.price || 0),
+        selectedSize: item.selectedSize || item.size || 'M',
+        selectedColor: item.selectedColor || item.color || 'Standard',
+        quantity: Number(item.quantity || 1),
+        image: item.image || item.imageFront || item.gallery?.[0] || '',
+      })),
+      subtotal: rawSubtotal,
+      discount_amount: totalDiscount,
+      coupon_code: appliedCoupon?.code || '',
+      shipping_fee: shippingFee,
+      total_amount: grandTotal,
+      payment_method:
+        paymentMethod === 'upi'
+          ? `UPI (${selectedUpiApp.toUpperCase()})`
+          : paymentMethod === 'card'
+          ? 'Credit/Debit Card'
+          : paymentMethod === 'netbanking'
+          ? 'NetBanking'
+          : 'Cash on Delivery (COD)',
+      payment_status: paymentMethod === 'cod' ? 'Pending' : 'Pending',
+      shipping_address: selectedAddr,
+      save_address: true,
+    };
 
-      const res = await placeCustomerOrder(payload);
+    // Flow 1: Online Prepaid (Razorpay Native Modal / UPI App Intent)
+    if (isPrepaid) {
+      if (!razorpayConfig?.key_id) {
+        toast.error('Online Payment Gateway is not yet configured. Please add your Razorpay Key ID & Secret in Admin Settings (Razorpay tab) or choose Cash on Delivery (COD).');
+        setIsProcessing(false);
+        return;
+      }
 
-      if (res.success && res.order) {
-        const fullConfirmedOrder = {
-          id: res.order.orderNumber || res.order.id,
-          date: 'Just now',
-          status: 'Order Confirmed',
-          statusColor: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-          step: 1,
-          estimatedDelivery: res.order.estimatedDelivery || (shippingMethod === 'priority' ? 'Tomorrow, by 8:00 PM' : 'Within 2–4 Business Days'),
-          items: [...cartItems],
-          subtotal: `₹${rawSubtotal.toLocaleString('en-IN')}`,
-          discount: `₹${totalDiscount.toLocaleString('en-IN')}`,
-          shipping: shippingFee === 0 ? 'FREE' : `₹${shippingFee}`,
-          total: `₹${grandTotal.toLocaleString('en-IN')}`,
-          paymentMethod: res.order.paymentMethod,
-          trackingNumber: res.order.trackingNumber || `XAV-${Math.floor(10000000 + Math.random() * 90000000)}`,
-          courierPartner: res.order.courierPartner || 'Bluedart Express',
-          shippingAddress: `${selectedAddr.name}, ${selectedAddr.addressLine}, ${selectedAddr.city}, ${selectedAddr.state} - ${selectedAddr.pincode} (Ph: ${selectedAddr.phone})`,
+      try {
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded || !window.Razorpay) {
+          toast.error('Payment gateway SDK could not load. Please check your internet connection.');
+          setIsProcessing(false);
+          return;
+        }
+
+        // Create Razorpay Order on server
+        const rzpOrderRes = await createClientPaymentOrder(
+          grandTotal,
+          `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+          {
+            customer_name: payload.customer_name,
+            customer_phone: payload.customer_phone,
+            customer_email: payload.customer_email,
+          }
+        );
+
+        if (!rzpOrderRes.success || !rzpOrderRes.order) {
+          toast.error(rzpOrderRes.message || 'Failed to initialize payment gateway.');
+          setIsProcessing(false);
+          return;
+        }
+
+        const razorpayOrder = rzpOrderRes.order;
+
+        const options = {
+          key: razorpayConfig.key_id,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency || 'INR',
+          name: razorpayConfig.brand_name || brand?.brand_name || 'Guidelya Activewear',
+          description: `Checkout Order (${cartItems.length} items)`,
+          image: brand?.logo_black || '/logo.png',
+          order_id: razorpayOrder.id,
+          prefill: {
+            name: payload.customer_name,
+            email: payload.customer_email,
+            contact: payload.customer_phone,
+          },
+          notes: {
+            customer_phone: payload.customer_phone,
+            city: selectedAddr.city,
+            pincode: selectedAddr.pincode,
+          },
+          theme: {
+            color: razorpayConfig.theme_color || '#171717',
+          },
+          modal: {
+            ondismiss: () => {
+              setIsProcessing(false);
+              toast.info('Payment was closed. You can complete it anytime.');
+            },
+          },
+          handler: async function (response) {
+            try {
+              setIsProcessing(true);
+              const verifyRes = await verifyClientPaymentAndPlaceOrder({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderPayload: {
+                  ...payload,
+                  payment_status: 'Paid',
+                  transaction_id: response.razorpay_payment_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                },
+              });
+
+              if (verifyRes.success && verifyRes.order) {
+                showOrderSuccess(verifyRes.order, selectedAddr);
+              } else {
+                toast.error(verifyRes.message || 'Payment received, but order confirmation had an issue. Please contact support.');
+              }
+            } catch (err) {
+              console.error('Payment verification error:', err);
+              toast.error('Network error verifying payment.');
+            } finally {
+              setIsProcessing(false);
+            }
+          },
         };
 
-        setConfirmedOrder(fullConfirmedOrder);
-        setStep('confirmed');
-        clearCart();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        toast.success('Order Placed Successfully! Your athlete kit is being prepared.');
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+          setIsProcessing(false);
+          toast.error(resp.error?.description || 'Payment Failed. Please try another card or UPI.');
+        });
+        rzp.open();
+        return;
+      } catch (err) {
+        console.error('Razorpay launch error:', err);
+        toast.error('Payment gateway error. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
+    }
+
+    // Flow 2: Cash On Delivery (COD Only)
+    try {
+      const res = await placeCustomerOrder(payload);
+      if (res.success && res.order) {
+        showOrderSuccess(res.order, selectedAddr);
       } else {
         toast.error(res.message || 'Failed to place order. Please check details.');
       }
@@ -1027,153 +1254,184 @@ export default function CheckoutPage() {
               <div className="space-y-3">
                 
                 {/* 1. UPI Payment */}
-                <div className={`border transition-all ${
-                  paymentMethod === 'upi' ? 'border-neutral-900 bg-neutral-50/50 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white'
+                <div className={`border transition-all rounded-xs overflow-hidden ${
+                  paymentMethod === 'upi' ? 'border-neutral-900 bg-neutral-50/40 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white hover:border-neutral-300'
                 }`}>
                   <div
                     onClick={() => setPaymentMethod('upi')}
-                    className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer"
+                    className="p-4 flex items-center justify-between cursor-pointer"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`grid h-4 w-4 place-items-center rounded-full border ${
+                    <div className="flex items-center gap-3.5">
+                      <div className={`grid h-4 w-4 place-items-center rounded-full border shrink-0 ${
                         paymentMethod === 'upi' ? 'border-neutral-900 bg-neutral-900' : 'border-neutral-300 bg-white'
                       }`}>
-                        {paymentMethod === 'upi' && <Check className="h-2.5 w-2.5 text-white" />}
+                        {paymentMethod === 'upi' && <Check className="h-2.5 w-2.5 text-white stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-neutral-900 flex items-center gap-2">
-                          <span>UPI (Instant QR / Google Pay / PhonePe)</span>
-                          <span className="bg-emerald-600 text-white text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
-                            EXTRA 10% SAVINGS
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">UPI Instant 1-Tap & QR</span>
+                          <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider">
+                            EXTRA 10% OFF
                           </span>
                         </div>
-                        <p className="text-[11px] text-neutral-500 font-normal">
-                          Instant verification with zero transaction charges.
+                        <p className="text-[11px] text-neutral-500 font-normal mt-0.5">
+                          Direct App launch on mobile or live dynamic QR scan.
                         </p>
                       </div>
                     </div>
-                    <QrCode className="h-4 w-4 text-neutral-600" />
+
+                    <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                      <GooglePayLogo />
+                      <PhonePeLogo />
+                      <PaytmLogo />
+                      <BhimUpiLogo />
+                    </div>
                   </div>
 
                   {paymentMethod === 'upi' && (
-                    <div className="border-t border-neutral-200 p-4 bg-white space-y-3 text-xs">
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="border-t border-neutral-200 p-4 bg-white space-y-3.5 text-xs">
+                      <span className="text-[11px] font-medium text-neutral-700 block">
+                        Choose your preferred UPI method:
+                      </span>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                         {[
-                          { id: 'gpay', name: 'Google Pay' },
-                          { id: 'phonepe', name: 'PhonePe' },
-                          { id: 'paytm', name: 'Paytm UPI' },
-                          { id: 'custom', name: 'Any UPI ID' },
-                        ].map((app) => (
+                          { id: 'phonepe', name: 'PhonePe', Logo: PhonePeLogo, desc: '1-Tap Mobile' },
+                          { id: 'gpay', name: 'Google Pay', Logo: GooglePayLogo, desc: '1-Tap Mobile' },
+                          { id: 'paytm', name: 'Paytm UPI', Logo: PaytmLogo, desc: '1-Tap Mobile' },
+                          { id: 'qr', name: 'Instant QR', Logo: BhimUpiLogo, desc: 'Scan & Pay' },
+                        ].map(({ id, name, Logo, desc }) => (
                           <button
-                            key={app.id}
+                            key={id}
                             type="button"
-                            onClick={() => setSelectedUpiApp(app.id)}
-                            className={`p-2.5 border text-center transition-all ${
-                              selectedUpiApp === app.id
-                                ? 'border-neutral-900 bg-neutral-900 text-white font-medium'
-                                : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400'
+                            onClick={() => setSelectedUpiApp(id)}
+                            className={`p-3 border rounded-xs flex flex-col items-center text-center gap-1.5 transition-all cursor-pointer ${
+                              selectedUpiApp === id
+                                ? 'border-neutral-900 bg-neutral-900 text-white shadow-xs'
+                                : 'border-neutral-200 bg-white text-neutral-800 hover:border-neutral-400 hover:bg-neutral-50'
                             }`}
                           >
-                            {app.name}
+                            <Logo />
+                            <span className="font-semibold text-xs leading-none mt-1">{name}</span>
+                            <span className={`text-[9px] ${selectedUpiApp === id ? 'text-neutral-300' : 'text-neutral-400'}`}>{desc}</span>
                           </button>
                         ))}
                       </div>
 
-                      {selectedUpiApp === 'custom' && (
-                        <div>
-                          <input
-                            type="text"
-                            value={customUpiId}
-                            onChange={(e) => setCustomUpiId(e.target.value)}
-                            placeholder="username@okhdfcbank / yourname@upi"
-                            className="h-10 w-full border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900"
-                          />
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xs">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span>Zero payment gateway fee. Protected by 256-Bit NPCI Unified Payments security.</span>
+                      </div>
                     </div>
                   )}
                 </div>
 
                 {/* 2. Credit / Debit Cards */}
-                <div className={`border transition-all ${
-                  paymentMethod === 'card' ? 'border-neutral-900 bg-neutral-50/50 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white'
+                <div className={`border transition-all rounded-xs overflow-hidden ${
+                  paymentMethod === 'card' ? 'border-neutral-900 bg-neutral-50/40 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white hover:border-neutral-300'
                 }`}>
                   <div
                     onClick={() => setPaymentMethod('card')}
-                    className="p-3.5 sm:p-4 flex items-center justify-between cursor-pointer"
+                    className="p-4 flex items-center justify-between cursor-pointer"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`grid h-4 w-4 place-items-center rounded-full border ${
+                    <div className="flex items-center gap-3.5">
+                      <div className={`grid h-4 w-4 place-items-center rounded-full border shrink-0 ${
                         paymentMethod === 'card' ? 'border-neutral-900 bg-neutral-900' : 'border-neutral-300 bg-white'
                       }`}>
-                        {paymentMethod === 'card' && <Check className="h-2.5 w-2.5 text-white" />}
+                        {paymentMethod === 'card' && <Check className="h-2.5 w-2.5 text-white stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-neutral-900">
-                          Credit / Debit Cards
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">Credit / Debit Cards</span>
+                          <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider">
+                            EXTRA 10% OFF
+                          </span>
                         </div>
-                        <p className="text-[11px] text-neutral-500 font-normal">
-                          Visa, MasterCard, RuPay, Amex with 3D Secure OTP
+                        <p className="text-[11px] text-neutral-500 font-normal mt-0.5">
+                          All Indian & International cards with 3D Secure OTP.
                         </p>
                       </div>
                     </div>
-                    <CreditCard className="h-4 w-4 text-neutral-600" />
+
+                    <div className="flex items-center gap-1 shrink-0 pl-2">
+                      <VisaCardLogo />
+                      <MastercardCardLogo />
+                      <RupayCardLogo />
+                      <AmexCardLogo />
+                    </div>
                   </div>
 
                   {paymentMethod === 'card' && (
                     <div className="border-t border-neutral-200 p-4 bg-white space-y-3 text-xs">
-                      <div>
-                        <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          maxLength={19}
-                          placeholder="4532 •••• •••• 8821"
-                          value={cardData.number}
-                          onChange={(e) => setCardData((prev) => ({ ...prev, number: e.target.value }))}
-                          className="h-10 w-full border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900 font-mono"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
-                            Expiry (MM/YY)
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={5}
-                            placeholder="12/28"
-                            value={cardData.expiry}
-                            onChange={(e) => setCardData((prev) => ({ ...prev, expiry: e.target.value }))}
-                            className="h-10 w-full border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900"
-                          />
+                      <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xs flex items-center justify-between">
+                        <div className="space-y-1">
+                          <span className="font-semibold text-neutral-900 block text-xs">Direct Bank Card Gateway</span>
+                          <p className="text-[11px] text-neutral-600">Enter card details securely via 100% RBI & PCI-DSS compliant checkout window with instant bank OTP.</p>
                         </div>
-                        <div>
-                          <label className="block text-[11px] font-medium uppercase tracking-wider text-neutral-700 mb-1">
-                            CVV
-                          </label>
-                          <input
-                            type="password"
-                            maxLength={4}
-                            placeholder="•••"
-                            value={cardData.cvv}
-                            onChange={(e) => setCardData((prev) => ({ ...prev, cvv: e.target.value }))}
-                            className="h-10 w-full border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900 font-mono"
-                          />
-                        </div>
+                        <CreditCard className="h-8 w-8 text-neutral-400 shrink-0 ml-3" />
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* 3. Cash on Delivery (COD) */}
-                <div className={`border transition-all ${
+                {/* 3. NetBanking */}
+                <div className={`border transition-all rounded-xs overflow-hidden ${
+                  paymentMethod === 'netbanking' ? 'border-neutral-900 bg-neutral-50/40 ring-1 ring-neutral-900' : 'border-neutral-200 bg-white hover:border-neutral-300'
+                }`}>
+                  <div
+                    onClick={() => setPaymentMethod('netbanking')}
+                    className="p-4 flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className={`grid h-4 w-4 place-items-center rounded-full border shrink-0 ${
+                        paymentMethod === 'netbanking' ? 'border-neutral-900 bg-neutral-900' : 'border-neutral-300 bg-white'
+                      }`}>
+                        {paymentMethod === 'netbanking' && <Check className="h-2.5 w-2.5 text-white stroke-[3]" />}
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">NetBanking</span>
+                          <span className="bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider">
+                            EXTRA 10% OFF
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 font-normal mt-0.5">
+                          SBI, HDFC, ICICI, Axis, Kotak, PNB & 50+ other Indian Banks.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-neutral-500">
+                      <span className="hidden sm:inline">50+ Banks</span>
+                      <ShieldCheck className="h-4 w-4 text-neutral-700" />
+                    </div>
+                  </div>
+
+                  {paymentMethod === 'netbanking' && (
+                    <div className="border-t border-neutral-200 p-4 bg-white space-y-3 text-xs">
+                      <span className="text-[11px] font-medium text-neutral-700 block">Popular Banks:</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <BankBadge name="HDFC Bank" code="HDFC" bg="bg-blue-800" />
+                        <BankBadge name="State Bank of India" code="SBI" bg="bg-sky-600" />
+                        <BankBadge name="ICICI Bank" code="ICICI" bg="bg-amber-700" />
+                        <BankBadge name="Axis Bank" code="AXIS" bg="bg-rose-800" />
+                        <BankBadge name="Kotak Mahindra" code="KOTAK" bg="bg-red-600" />
+                        <BankBadge name="Punjab National Bank" code="PNB" bg="bg-yellow-700" />
+                      </div>
+                      <p className="text-[10px] text-neutral-500 pt-1">
+                        Select any bank during the secure payment authorization.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Cash on Delivery (COD) */}
+                <div className={`border transition-all rounded-xs overflow-hidden ${
                   !isCodAllowedForCart
                     ? 'opacity-60 bg-neutral-100 border-neutral-200 cursor-not-allowed'
                     : paymentMethod === 'cod'
-                    ? 'border-neutral-900 bg-neutral-50/50 ring-1 ring-neutral-900 cursor-pointer'
-                    : 'border-neutral-200 bg-white cursor-pointer hover:border-neutral-400'
+                    ? 'border-neutral-900 bg-neutral-50/40 ring-1 ring-neutral-900 cursor-pointer'
+                    : 'border-neutral-200 bg-white cursor-pointer hover:border-neutral-300'
                 }`}>
                   <div
                     onClick={() => {
@@ -1187,32 +1445,32 @@ export default function CheckoutPage() {
                         toast.error(`COD is not available for orders above ₹${codMaxLimit}. Please pay online.`);
                       }
                     }}
-                    className="p-3.5 sm:p-4 flex items-center justify-between"
+                    className="p-4 flex items-center justify-between"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`grid h-4 w-4 place-items-center rounded-full border ${
+                    <div className="flex items-center gap-3.5">
+                      <div className={`grid h-4 w-4 place-items-center rounded-full border shrink-0 ${
                         paymentMethod === 'cod' && isCodAllowedForCart ? 'border-neutral-900 bg-neutral-900' : 'border-neutral-300 bg-white'
                       }`}>
-                        {paymentMethod === 'cod' && isCodAllowedForCart && <Check className="h-2.5 w-2.5 text-white" />}
+                        {paymentMethod === 'cod' && isCodAllowedForCart && <Check className="h-2.5 w-2.5 text-white stroke-[3]" />}
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-neutral-900 flex items-center gap-2">
-                          <span>Cash on Delivery (COD)</span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-neutral-900">Cash on Delivery (COD)</span>
                           {!isCodAllowedForCart ? (
-                            <span className="bg-neutral-200 text-neutral-700 text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
-                              {!isCodGloballyEnabled ? 'DISABLED' : `CART LIMIT EXCEEDED`}
+                            <span className="bg-neutral-200 text-neutral-700 text-[9px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider">
+                              {!isCodGloballyEnabled ? 'DISABLED' : `CART LIMIT`}
                             </span>
                           ) : Number(shippingConfig?.cod_extra_charge) > 0 ? (
-                            <span className="bg-amber-100 text-amber-800 text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider">
                               +₹{shippingConfig.cod_extra_charge} COD FEE
                             </span>
                           ) : (
-                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-medium px-1.5 py-0.2 rounded-xs">
+                            <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider">
                               FREE COD
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-neutral-500 font-normal">
+                        <p className="text-[11px] text-neutral-500 font-normal mt-0.5">
                           {!isCodAllowedForCart
                             ? !isCodGloballyEnabled
                               ? 'COD is temporarily disabled. Please choose UPI or Card.'
@@ -1223,7 +1481,7 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     </div>
-                    <Wallet className="h-4 w-4 text-neutral-600" />
+                    <Wallet className="h-5 w-5 text-neutral-600 shrink-0" />
                   </div>
                 </div>
 

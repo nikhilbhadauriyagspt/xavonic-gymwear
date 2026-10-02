@@ -22,12 +22,26 @@ import {
   CheckCircle2,
   Box,
   Globe,
+  CreditCard,
+  QrCode,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
 
 export default function GatewaySettingsTab() {
-  const [activeSubTab, setActiveSubTab] = useState('whatsapp'); // 'whatsapp' | 'email' | 'cloudinary' | 'maps' | 'logistics'
+  const [activeSubTab, setActiveSubTab] = useState('razorpay'); // 'razorpay' | 'whatsapp' | 'email' | 'cloudinary' | 'maps' | 'logistics'
+
+  // Razorpay Gateway Config State
+  const [razorpayConfig, setRazorpayConfig] = useState({
+    enabled: true,
+    mode: 'test',
+    key_id: '',
+    key_secret: '',
+    webhook_secret: '',
+    account_name: 'Guidelya Activewear',
+    theme_color: '#09090b',
+  });
 
   // WhatsApp Config State
   const [waConfig, setWaConfig] = useState({
@@ -85,6 +99,8 @@ export default function GatewaySettingsTab() {
   const [isTesting, setIsTesting] = useState(false);
   const [isTestingShiprocket, setIsTestingShiprocket] = useState(false);
   const [isTestingNimbus, setIsTestingNimbus] = useState(false);
+  const [isTestingRazorpay, setIsTestingRazorpay] = useState(false);
+  const [showRazorpaySecret, setShowRazorpaySecret] = useState(false);
   const [showWaToken, setShowWaToken] = useState(false);
   const [showSmtpPass, setShowSmtpPass] = useState(false);
   const [showCloudSecret, setShowCloudSecret] = useState(false);
@@ -104,7 +120,7 @@ export default function GatewaySettingsTab() {
       setIsLoading(true);
       const token = localStorage.getItem('xavonic_admin_token');
 
-      const [waRes, smtpRes, cloudRes, mapsRes, logRes] = await Promise.all([
+      const [waRes, smtpRes, cloudRes, mapsRes, logRes, rzpRes] = await Promise.all([
         fetch(`${ADMIN_API_BASE}/settings/whatsapp`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -120,6 +136,9 @@ export default function GatewaySettingsTab() {
         fetch(`${ADMIN_API_BASE}/settings/logistics`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch(`${ADMIN_API_BASE}/settings/razorpay`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       const waData = await waRes.json();
@@ -127,16 +146,76 @@ export default function GatewaySettingsTab() {
       const cloudData = await cloudRes.json();
       const mapsData = await mapsRes.json();
       const logData = await logRes.json();
+      const rzpData = await rzpRes.json();
 
       if (waData.success && waData.config) setWaConfig(waData.config);
       if (smtpData.success && smtpData.config) setSmtpConfig(smtpData.config);
       if (cloudData.success && cloudData.config) setCloudinaryConfig(cloudData.config);
       if (mapsData.success && mapsData.config) setMapsConfig(mapsData.config);
       if (logData.success && logData.config) setLogisticsConfig((prev) => ({ ...prev, ...logData.config }));
+      if (rzpData.success && rzpData.config) setRazorpayConfig(rzpData.config);
     } catch (err) {
       console.warn('Failed to fetch gateway configs:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveRazorpay = async (e) => {
+    e.preventDefault();
+    try {
+      setIsSaving(true);
+      const token = localStorage.getItem('xavonic_admin_token');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/razorpay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(razorpayConfig),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Razorpay Payment Gateway settings saved successfully!');
+      } else {
+        toast.error(data.message || 'Failed to save Razorpay settings.');
+      }
+    } catch (err) {
+      toast.error('Network error saving Razorpay configuration.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestRazorpay = async () => {
+    if (!razorpayConfig.key_id || !razorpayConfig.key_secret) {
+      toast.error('Please enter both Razorpay Key ID and Key Secret.');
+      return;
+    }
+    try {
+      setIsTestingRazorpay(true);
+      const token = localStorage.getItem('xavonic_admin_token');
+      const res = await fetch(`${ADMIN_API_BASE}/settings/razorpay/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          key_id: razorpayConfig.key_id,
+          key_secret: razorpayConfig.key_secret,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || 'Razorpay API credentials verified successfully!');
+      } else {
+        toast.error(data.message || 'Razorpay authentication failed.');
+      }
+    } catch (err) {
+      toast.error('Failed to test Razorpay connection.');
+    } finally {
+      setIsTestingRazorpay(false);
     }
   };
 
@@ -433,6 +512,19 @@ export default function GatewaySettingsTab() {
         <div className="flex items-center flex-wrap gap-1 p-0.5 bg-neutral-100 rounded-sm border border-neutral-200 text-xs">
           <button
             type="button"
+            onClick={() => setActiveSubTab('razorpay')}
+            className={`px-3 py-1.5 font-medium rounded-sm flex items-center gap-1.5 transition-colors cursor-pointer ${
+              activeSubTab === 'razorpay'
+                ? 'bg-white text-neutral-900 shadow-xs'
+                : 'text-neutral-500 hover:text-neutral-900'
+            }`}
+          >
+            <CreditCard className="h-3.5 w-3.5 text-blue-600" />
+            <span>Razorpay Payments</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveSubTab('whatsapp')}
             className={`px-3 py-1.5 font-medium rounded-sm flex items-center gap-1.5 transition-colors cursor-pointer ${
               activeSubTab === 'whatsapp'
@@ -497,6 +589,230 @@ export default function GatewaySettingsTab() {
           </button>
         </div>
       </div>
+
+      {/* ======================================================== */}
+      {/* 0. RAZORPAY PAYMENT GATEWAY CONFIGURATION TAB            */}
+      {/* ======================================================== */}
+      {activeSubTab === 'razorpay' && (
+        <form onSubmit={handleSaveRazorpay} className="space-y-4">
+          
+          {/* Status Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white border border-neutral-200 rounded-sm text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-neutral-600">Gateway Status:</span>
+              {razorpayConfig.enabled ? (
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-xs border border-emerald-200">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                  Active / Enabled
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 font-semibold text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-xs border border-neutral-200">
+                  Disabled
+                </span>
+              )}
+              <span className="text-neutral-400">•</span>
+              <span className="text-neutral-600">Mode:</span>
+              <span className={`font-mono uppercase font-bold text-[10px] px-1.5 py-0.5 rounded-xs border ${
+                razorpayConfig.mode === 'live'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                  : 'bg-amber-50 text-amber-700 border-amber-300'
+              }`}>
+                {razorpayConfig.mode === 'live' ? 'Live Production' : 'Sandbox Test'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <a
+                href="https://dashboard.razorpay.com/#/access/api-keys"
+                target="_blank"
+                rel="noreferrer"
+                className="text-neutral-500 hover:text-neutral-900 flex items-center gap-1 text-[11px]"
+              >
+                <span>Razorpay Dashboard</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+
+          <div className="bg-white border border-neutral-200 p-5 rounded-sm space-y-5">
+            
+            {/* Mode & Enable Toggles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-neutral-100">
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                  Payment Environment Mode
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRazorpayConfig({ ...razorpayConfig, mode: 'test' })}
+                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-sm border transition-colors cursor-pointer ${
+                      razorpayConfig.mode === 'test'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
+                    }`}
+                  >
+                    Sandbox / Test (rzp_test_...)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRazorpayConfig({ ...razorpayConfig, mode: 'live' })}
+                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-sm border transition-colors cursor-pointer ${
+                      razorpayConfig.mode === 'live'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
+                    }`}
+                  >
+                    Live Production (rzp_live_...)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                  Gateway Enable / Disable
+                </label>
+                <label className="flex items-center gap-3 p-2 border border-neutral-200 rounded-sm bg-neutral-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={razorpayConfig.enabled}
+                    onChange={(e) => setRazorpayConfig({ ...razorpayConfig, enabled: e.target.checked })}
+                    className="h-4 w-4 accent-neutral-900"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-neutral-900 block">Enable Razorpay Native Checkout</span>
+                    <span className="text-[10px] text-neutral-500">Allows customer to pay via PhonePe, GPay, Paytm, Cards & UPI QR</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* API Credentials Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                  Razorpay Key ID *
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                  <input
+                    type="text"
+                    required
+                    value={razorpayConfig.key_id}
+                    onChange={(e) => setRazorpayConfig({ ...razorpayConfig, key_id: e.target.value })}
+                    placeholder="e.g. rzp_test_88f9xY1z or rzp_live_..."
+                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm pl-8 pr-3 text-xs text-neutral-900 font-mono outline-none focus:bg-white focus:border-neutral-900"
+                  />
+                </div>
+                <span className="text-[10px] text-neutral-400 mt-1 block">
+                  Found in Razorpay Dashboard &gt; Settings &gt; API Keys
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                  Razorpay Key Secret *
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
+                  <input
+                    type={showRazorpaySecret ? 'text' : 'password'}
+                    required
+                    value={razorpayConfig.key_secret}
+                    onChange={(e) => setRazorpayConfig({ ...razorpayConfig, key_secret: e.target.value })}
+                    placeholder="e.g. kLx9aB02pZx..."
+                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm pl-8 pr-8 text-xs text-neutral-900 font-mono outline-none focus:bg-white focus:border-neutral-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRazorpaySecret(!showRazorpaySecret)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700"
+                  >
+                    {showRazorpaySecret ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+                <span className="text-[10px] text-neutral-400 mt-1 block">
+                  Secret key used for HMAC-SHA256 signature verification
+                </span>
+              </div>
+            </div>
+
+            {/* Account Name & Theme Color */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                  Display Store Name
+                </label>
+                <input
+                  type="text"
+                  value={razorpayConfig.account_name}
+                  onChange={(e) => setRazorpayConfig({ ...razorpayConfig, account_name: e.target.value })}
+                  placeholder="Guidelya Activewear"
+                  className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-neutral-700 block mb-1">
+                  Brand Theme Color (Hex)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={razorpayConfig.theme_color || '#09090b'}
+                    onChange={(e) => setRazorpayConfig({ ...razorpayConfig, theme_color: e.target.value })}
+                    className="h-8.5 w-10 border border-neutral-200 rounded-sm p-0.5 cursor-pointer bg-white"
+                  />
+                  <input
+                    type="text"
+                    value={razorpayConfig.theme_color}
+                    onChange={(e) => setRazorpayConfig({ ...razorpayConfig, theme_color: e.target.value })}
+                    placeholder="#09090b"
+                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none focus:bg-white focus:border-neutral-900"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Webhook Endpoint Info Box */}
+            <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-sm text-xs space-y-1.5">
+              <div className="font-bold text-blue-900 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-blue-700" />
+                <span>Asynchronous Webhook Callback Endpoint</span>
+              </div>
+              <p className="text-blue-800 text-[11px] leading-relaxed">
+                Add this Webhook URL in your Razorpay Dashboard (Settings &gt; Webhooks) for <code>payment.captured</code> and <code>order.paid</code>:
+              </p>
+              <div className="p-2 bg-white border border-blue-200 rounded-xs font-mono text-[11px] text-neutral-800 select-all">
+                https://xavonic-gymwear.onrender.com/api/payment/webhook
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
+              <button
+                type="button"
+                onClick={handleTestRazorpay}
+                disabled={isTestingRazorpay}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-neutral-300 hover:bg-neutral-100 text-neutral-800 text-xs font-semibold rounded-sm transition-colors cursor-pointer disabled:opacity-60"
+              >
+                {isTestingRazorpay ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5 text-amber-600" />}
+                <span>Test API Connection</span>
+              </button>
+
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="inline-flex items-center gap-1.5 px-5 py-2 bg-neutral-900 hover:bg-black text-white text-xs font-semibold rounded-sm transition-colors cursor-pointer disabled:opacity-60 shadow-xs"
+              >
+                {isSaving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                <span>Save Razorpay Settings</span>
+              </button>
+            </div>
+
+          </div>
+        </form>
+      )}
 
       {/* ======================================================== */}
       {/* 1. WHATSAPP GATEWAY CONFIGURATION TAB                   */}

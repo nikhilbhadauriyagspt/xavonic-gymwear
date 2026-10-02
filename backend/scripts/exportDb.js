@@ -1,60 +1,84 @@
-const db = require('../config/db');
 const fs = require('fs');
 const path = require('path');
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 
-async function exportDatabase() {
-  try {
-    const tables = ['admins', 'users', 'otp_verifications', 'store_settings', 'categories', 'products', 'orders'];
-    let sql = `-- ================================================\n-- GUIDELYA / XAVONIC FULL DATABASE BACKUP\n-- Generated: ${new Date().toISOString()}\n-- ================================================\n\nCREATE DATABASE IF NOT EXISTS \`guidelya_db\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\nUSE \`guidelya_db\`;\n\nSET FOREIGN_KEY_CHECKS = 0;\n\n`;
+async function runExport() {
+  const connection = await mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'guidelya_db',
+    port: Number(process.env.DB_PORT) || 3306,
+  });
 
-    for (const table of tables) {
-      try {
-        const [createRes] = await db.query(`SHOW CREATE TABLE \`${table}\``);
-        sql += `-- ------------------------------------------------\n-- Structure for table \`${table}\`\n-- ------------------------------------------------\n`;
-        sql += `DROP TABLE IF EXISTS \`${table}\`;\n`;
-        sql += `${createRes[0]['Create Table']};\n\n`;
+  const tables = [
+    'store_settings',
+    'admins',
+    'users',
+    'categories',
+    'products',
+    'orders',
+    'banners',
+    'reviews',
+    'stock_notifications',
+    'admin_notifications',
+    'otp_verifications',
+  ];
 
-        const [rows] = await db.query(`SELECT * FROM \`${table}\``);
-        if (rows.length > 0) {
-          sql += `-- Dumping data for table \`${table}\` (${rows.length} rows)\n`;
-          for (const row of rows) {
-            const keys = Object.keys(row).map(k => `\`${k}\``);
-            const values = Object.values(row).map(v => {
-              if (v === null) return 'NULL';
-              if (typeof v === 'number') return v;
-              if (typeof v === 'boolean') return v ? 1 : 0;
-              if (v instanceof Date) return `'${v.toISOString().slice(0, 19).replace('T', ' ')}'`;
-              const escaped = String(v)
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/\n/g, '\\n')
-                .replace(/\r/g, '\\r');
-              return `'${escaped}'`;
-            });
-            sql += `INSERT INTO \`${table}\` (${keys.join(', ')}) VALUES (${values.join(', ')});\n`;
-          }
-          sql += '\n';
-        }
-      } catch (err) {
-        console.warn(`Skipping table ${table}:`, err.message);
+  let dump = `-- GUIDELYA COMPLETE DATABASE BACKUP
+-- Created at: ${new Date().toISOString()}
+
+CREATE DATABASE IF NOT EXISTS \`guidelya_db\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE \`guidelya_db\`;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+`;
+
+  for (const table of tables) {
+    try {
+      const [createRows] = await connection.query(`SHOW CREATE TABLE \`${table}\``);
+      if (createRows && createRows[0]) {
+        dump += `DROP TABLE IF EXISTS \`${table}\`;\n`;
+        dump += `${createRows[0]['Create Table']};\n\n`;
       }
+
+      const [rows] = await connection.query(`SELECT * FROM \`${table}\``);
+      if (rows && rows.length > 0) {
+        for (const row of rows) {
+          const cols = Object.keys(row).map((c) => `\`${c}\``).join(', ');
+          const vals = Object.values(row)
+            .map((val) => {
+              if (val === null || val === undefined) return 'NULL';
+              if (typeof val === 'object' && !(val instanceof Date)) {
+                return connection.escape(JSON.stringify(val));
+              }
+              return connection.escape(val);
+            })
+            .join(', ');
+          dump += `INSERT INTO \`${table}\` (${cols}) VALUES (${vals});\n`;
+        }
+        dump += '\n';
+      }
+    } catch (err) {
+      console.warn(`Notice on table ${table}:`, err.message);
     }
-
-    sql += `SET FOREIGN_KEY_CHECKS = 1;\n`;
-
-    const outDir = path.join(__dirname, '..', 'database');
-    if (!fs.existsSync(outDir)) {
-      fs.mkdirSync(outDir, { recursive: true });
-    }
-    const outFile = path.join(outDir, 'guidelya_db.sql');
-    fs.writeFileSync(outFile, sql, 'utf8');
-
-    console.log(`✅ Database successfully exported to: ${outFile}`);
-  } catch (err) {
-    console.error('Error exporting database:', err);
-  } finally {
-    process.exit(0);
   }
+
+  dump += `SET FOREIGN_KEY_CHECKS = 1;\n`;
+
+  const outDir = path.join(__dirname, '../database');
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+  const outFile = path.join(outDir, 'guidelya_db_backup.sql');
+  fs.writeFileSync(outFile, dump, 'utf8');
+
+  console.log(`✅ SQL Backup generated at: ${outFile} (${(dump.length / 1024).toFixed(2)} KB)`);
+  await connection.end();
 }
 
-exportDatabase();
+runExport().catch((err) => {
+  console.error('Export error:', err);
+  process.exit(1);
+});

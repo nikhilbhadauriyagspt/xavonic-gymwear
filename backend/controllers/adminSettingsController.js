@@ -619,6 +619,86 @@ exports.shipAdminOrder = async (req, res) => {
   }
 };
 
+// 23. Get Razorpay Gateway Settings (Admin Protected)
+exports.getRazorpayGatewayConfig = async (req, res) => {
+  try {
+    const { getRazorpayConfig } = require('../services/razorpayService');
+    const config = await getRazorpayConfig(true);
+
+    return res.status(200).json({
+      success: true,
+      config,
+    });
+  } catch (err) {
+    console.error('Error in getRazorpayGatewayConfig:', err);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve Razorpay configuration.' });
+  }
+};
+
+// 24. Save Razorpay Gateway Settings (Admin Protected)
+exports.saveRazorpayGatewayConfig = async (req, res) => {
+  try {
+    const {
+      enabled,
+      mode,
+      key_id,
+      key_secret,
+      webhook_secret,
+      account_name,
+      theme_color,
+    } = req.body;
+
+    const updates = [
+      { key: 'razorpay_enabled', value: enabled !== false ? 'true' : 'false' },
+      { key: 'razorpay_mode', value: mode || 'test' },
+      { key: 'razorpay_key_id', value: (key_id || '').trim() },
+      { key: 'razorpay_key_secret', value: (key_secret || '').trim() },
+      { key: 'razorpay_webhook_secret', value: (webhook_secret || '').trim() },
+      { key: 'razorpay_account_name', value: (account_name || 'Guidelya Activewear').trim() },
+      { key: 'razorpay_theme_color', value: (theme_color || '#09090b').trim() },
+    ];
+
+    for (const item of updates) {
+      await db.query(
+        'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+        [item.key, item.value, item.value]
+      );
+    }
+
+    const { clearRazorpayCache } = require('../services/razorpayService');
+    clearRazorpayCache();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Razorpay payment gateway configuration saved successfully!',
+    });
+  } catch (err) {
+    console.error('Error saving Razorpay configuration:', err);
+    return res.status(500).json({ success: false, message: 'Failed to save Razorpay configuration.' });
+  }
+};
+
+// 25. Test Razorpay API Connection (Admin Protected)
+exports.testRazorpayGateway = async (req, res) => {
+  try {
+    const { key_id, key_secret } = req.body;
+    if (!key_id || !key_secret) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both Razorpay Key ID and Key Secret to test connection.',
+      });
+    }
+
+    const { testRazorpayAuth } = require('../services/razorpayService');
+    const result = await testRazorpayAuth(key_id, key_secret);
+
+    return res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error('Error testing Razorpay gateway:', err);
+    return res.status(500).json({ success: false, message: 'Razorpay connection test request failed.' });
+  }
+};
+
 
 
 

@@ -32,6 +32,9 @@ const {
   testShiprocketGateway,
   testNimbusPostGateway,
   shipAdminOrder,
+  getRazorpayGatewayConfig,
+  saveRazorpayGatewayConfig,
+  testRazorpayGateway,
 } = require('../controllers/adminSettingsController');
 const { verifyAdminToken } = require('../middleware/authMiddleware');
 
@@ -167,6 +170,11 @@ router.post('/settings/logistics/test-nimbuspost', verifyAdminToken, testNimbusP
 
 // Protected: 1-Click Ship Order & Dispatch (Shiprocket / NimbusPost / Manual)
 router.post('/orders/:orderId/ship', verifyAdminToken, shipAdminOrder);
+
+// Protected: Razorpay Payment Gateway Settings
+router.get('/settings/razorpay', verifyAdminToken, getRazorpayGatewayConfig);
+router.post('/settings/razorpay', verifyAdminToken, saveRazorpayGatewayConfig);
+router.post('/settings/razorpay/test', verifyAdminToken, testRazorpayGateway);
 
 // Protected: Admin Live System Notifications
 const {

@@ -1,4 +1,4 @@
-import { ORDERS_API_BASE, ADMIN_API_BASE } from '../config/api';
+import { ORDERS_API_BASE, ADMIN_API_BASE, API_BASE } from '../config/api';
 
 /**
  * Place a new customer order
@@ -265,5 +265,118 @@ export async function shipAdminOrder(orderId, payload) {
   } catch (error) {
     console.error('Error dispatching order:', error);
     return { success: false, message: 'Network error dispatching order.' };
+  }
+}
+
+/**
+ * Admin: Fetch Razorpay Gateway Settings
+ */
+export async function fetchAdminRazorpayConfig() {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/razorpay`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching Razorpay config:', error);
+    return { success: false, message: 'Network error fetching Razorpay config.' };
+  }
+}
+
+/**
+ * Admin: Save Razorpay Gateway Settings
+ */
+export async function saveAdminRazorpayConfig(payload) {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/razorpay`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error saving Razorpay config:', error);
+    return { success: false, message: 'Network error saving Razorpay config.' };
+  }
+}
+
+/**
+ * Admin: Test Razorpay Connection
+ */
+export async function testAdminRazorpayGateway(payload) {
+  try {
+    const token = localStorage.getItem('xavonic_admin_token');
+    const res = await fetch(`${ADMIN_API_BASE}/settings/razorpay/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error testing Razorpay:', error);
+    return { success: false, message: 'Network error connecting to Razorpay.' };
+  }
+}
+
+/**
+ * Client: Fetch Public Payment / Razorpay Config
+ */
+export async function fetchPublicPaymentConfig() {
+  try {
+    const res = await fetch(`${API_BASE}/payment/config`);
+    return await res.json();
+  } catch (error) {
+    console.error('Error fetching public payment config:', error);
+    return { success: false, message: 'Network error fetching payment config.' };
+  }
+}
+
+/**
+ * Client: Create Razorpay Order
+ */
+export async function createClientPaymentOrder(amount, receipt, notes = {}) {
+  try {
+    const res = await fetch(`${API_BASE}/payment/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amount, receipt, notes }),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error creating payment order:', error);
+    return { success: false, message: 'Network error creating payment order.' };
+  }
+}
+
+/**
+ * Client: Verify Payment Signature & Place Order
+ */
+export async function verifyClientPaymentAndPlaceOrder(payload) {
+  try {
+    const token = localStorage.getItem('xavonic_user_token');
+    const res = await fetch(`${API_BASE}/payment/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    return { success: false, message: 'Network error verifying payment.' };
   }
 }
