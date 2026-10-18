@@ -71,7 +71,7 @@ exports.createOrder = async (req, res) => {
       [
         orderNumber,
         user_id,
-        customer_id || (user_id ? `GDL-${String(user_id).padStart(5, '0')}` : null),
+        customer_id || (user_id ? `RGX-${String(user_id).padStart(5, '0')}` : null),
         customer_name.trim(),
         customer_email.trim(),
         customer_phone.trim(),
@@ -686,13 +686,13 @@ exports.getOrderInvoice = async (req, res) => {
       orderNumber: order.orderNumber,
       orderDate: invoiceDate,
       seller: {
-        companyName: 'XAVONIC ATHLETICS (GUIDELYA SPORTS PVT LTD)',
+        companyName: 'RAGEX ATHLETICS (RAGEX SPORTS PVT LTD)',
         gstin: '06AAECX9821L1Z4',
         pan: 'AAECX9821L',
         state: 'Haryana',
         stateCode: '06',
         address: 'Plot 42, DLF Phase 4, Gurugram, Haryana - 122002',
-        email: 'billing@guidelya.com',
+        email: 'billing@ragex.com',
         phone: '+91 98765 43210',
         cin: 'U17120HR2023PTC109842',
       },
@@ -795,7 +795,7 @@ function generateInvoiceHtml(inv) {
     </div>
     <div class="header">
       <div>
-        <div class="brand">XAVONIC GYMWEAR</div>
+        <div class="brand">RAGEX GYMWEAR</div>
         <div class="badge">Original Tax Invoice / Bill of Supply</div>
         <div style="font-size: 10px; color: #666; margin-top: 4px;">GSTIN: ${seller.gstin} | PAN: ${seller.pan}</div>
       </div>
@@ -888,7 +888,7 @@ function generateInvoiceHtml(inv) {
 
     <div class="footer">
       <div>Tax invoice issued under Section 31 of CGST Act 2017. All athletic wear certified 4-way performance blend.</div>
-      <div style="margin-top: 4px;">Thank you for training with Xavonic Athletics • www.guidelya.com</div>
+      <div style="margin-top: 4px;">Thank you for training with RageX Athletics • www.ragex.com</div>
       <div style="margin-top: 2px; font-style: italic;">This is a computer-generated tax invoice and requires no physical signature.</div>
     </div>
   </div>
@@ -916,7 +916,7 @@ function formatOrderRow(row) {
     id: row.id,
     orderNumber: row.order_number,
     userId: row.user_id,
-    customerId: row.customer_id || (row.user_id ? `GDL-${String(row.user_id).padStart(5, '0')}` : 'GUEST'),
+    customerId: row.customer_id || (row.user_id ? `RGX-${String(row.user_id).padStart(5, '0')}` : 'GUEST'),
     customerName: row.customer_name,
     customerEmail: row.customer_email || '',
     customerPhone: row.customer_phone,
@@ -1139,7 +1139,7 @@ exports.sendAbandonedCartWhatsAppRecovery = async (req, res) => {
     const firstProduct = items[0]?.title || 'Athlete Gear';
     const cleanPhone = `91${checkout.customer_phone.replace(/\D/g, '').slice(-10)}`;
 
-    const messageText = `Hey ${checkout.customer_name || 'Athlete'}! 💪\n\nYour *${firstProduct}* is still reserved in your bag at Guidelya.\n\nUse VIP code *${customCoupon}* for an extra 5% OFF on checkout today!\n\n👉 Complete Order: https://guidelya.com/checkout?recover=${checkout.recovery_token}&coupon=${customCoupon}`;
+    const messageText = `Hey ${checkout.customer_name || 'Athlete'}! 💪\n\nYour *${firstProduct}* is still reserved in your bag at RageX.\n\nUse VIP code *${customCoupon}* for an extra 5% OFF on checkout today!\n\n👉 Complete Order: https://ragex.com/checkout?recover=${checkout.recovery_token}&coupon=${customCoupon}`;
 
     // Update status in DB
     await db.query(

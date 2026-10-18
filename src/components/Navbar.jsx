@@ -32,7 +32,7 @@ export default function Navbar() {
             <Compass className="w-5 h-5" />
           </div>
           <span className="font-bold text-xl tracking-tight text-white group-hover:text-indigo-400 transition-colors">
-            Guidelya<span className="text-indigo-500">.</span>
+            RageX<span className="text-indigo-500">.</span>
           </span>
         </Link>
 

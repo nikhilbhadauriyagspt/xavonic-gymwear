@@ -139,7 +139,7 @@ exports.submitProductReview = async (req, res) => {
         if (userRows.length > 0) {
           const u = userRows[0];
           user_id = u.id;
-          customer_id = u.customer_id || `GDL-${String(u.id).padStart(5, '0')}`;
+          customer_id = u.customer_id || `RGX-${String(u.id).padStart(5, '0')}`;
           if (!author_name || author_name === 'Athlete') author_name = u.name || `Athlete #${u.id}`;
           if (!author_email) author_email = u.email || '';
           if (!author_phone) author_phone = u.phone || '';
@@ -334,7 +334,7 @@ exports.getAdminReviews = async (req, res) => {
       productTitle: r.current_product_title || r.product_title || `Product #${r.product_id}`,
       productSlug: r.product_slug || '',
       userId: r.user_id,
-      customerId: r.customer_id || (r.user_id ? `GDL-${String(r.user_id).padStart(5, '0')}` : 'GUEST-ATHLETE'),
+      customerId: r.customer_id || (r.user_id ? `RGX-${String(r.user_id).padStart(5, '0')}` : 'GUEST-ATHLETE'),
       authorName: r.registered_user_name || r.author_name,
       authorEmail: r.author_email || '',
       authorPhone: r.registered_user_phone || r.author_phone || '',

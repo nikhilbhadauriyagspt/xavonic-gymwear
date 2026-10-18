@@ -6,7 +6,7 @@ import { getPublicBanners } from '../services/bannerService';
 export default function LastMidBanner() {
   const [banner, setBanner] = useState({
     image_url: lastMidImg,
-    title: 'Xavonic Aesthetics Activewear Banner',
+    title: 'RageX Activewear Activewear Banner',
     link_url: '/collections',
   });
 
@@ -27,7 +27,7 @@ export default function LastMidBanner() {
       <Link to={banner.link_url || '/collections'} className="relative w-full block">
         <img
           src={banner.image_url || lastMidImg}
-          alt={banner.title || 'Xavonic Aesthetics Activewear Banner'}
+          alt={banner.title || 'RageX Activewear Activewear Banner'}
           className="w-full h-auto object-cover object-center block"
         />
       </Link>

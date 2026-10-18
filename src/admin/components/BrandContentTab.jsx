@@ -179,7 +179,7 @@ export default function BrandContentTab() {
   const [data, setData] = useState({
     logo_white: '',
     logo_black: '',
-    brand_name: 'Xavonic Aesthetics',
+    brand_name: 'RageX Activewear',
     brand_tagline: 'Engineered for Aesthetics & Relentless Performance',
 
     instagram_url: 'https://instagram.com',
@@ -187,10 +187,10 @@ export default function BrandContentTab() {
     youtube_url: 'https://youtube.com',
     twitter_url: 'https://twitter.com',
     whatsapp_number: '919876543210',
-    support_email: 'support@xavonic.com',
+    support_email: 'support@ragex.com',
     support_phone: '+91 98765 43210',
-    office_address: 'Xavonic Performance Apparel Pvt Ltd, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002',
-    copyright_text: `© ${new Date().getFullYear()} Xavonic Aesthetics Inc. All rights reserved. Designed for active lifestyles.`,
+    office_address: 'RageX Performance Apparel Pvt Ltd, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002',
+    copyright_text: `© ${new Date().getFullYear()} RageX Activewear Inc. All rights reserved. Designed for active lifestyles.`,
 
     about_heading: 'Gym Wear for Men & Women',
     about_badge: 'Brand Story & Training Guide',
@@ -693,7 +693,7 @@ export default function BrandContentTab() {
                     type="email"
                     value={data.support_email}
                     onChange={(e) => setData({ ...data, support_email: e.target.value })}
-                    placeholder="support@xavonic.com"
+                    placeholder="support@ragex.com"
                     className="w-full border border-neutral-300 rounded-xs px-3 py-2 text-xs text-neutral-900 outline-none"
                   />
                 </div>
@@ -838,7 +838,7 @@ export default function BrandContentTab() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Question (e.g. Does Xavonic make gym wear for both men and women?)"
+                  placeholder="Question (e.g. Does RageX make gym wear for both men and women?)"
                   value={newFaq.q}
                   onChange={(e) => setNewFaq({ ...newFaq, q: e.target.value })}
                   className="w-full bg-white border border-neutral-200 px-3 py-1.5 text-xs text-neutral-900 outline-none rounded-xs"

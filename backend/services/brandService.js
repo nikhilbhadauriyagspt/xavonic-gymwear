@@ -12,14 +12,14 @@ async function getBrandSettings(forceRefresh = false) {
   }
 
   const defaultBrand = {
-    brand_name: 'Guidelya Activewear',
+    brand_name: 'RageX Activewear',
     brand_tagline: 'Engineered for Performance. Cut for Aesthetics.',
     logo_white: '',
     logo_black: '',
-    support_email: 'support@guidelya.com',
+    support_email: 'support@ragex.com',
     support_phone: '+91 98765 43210',
-    office_address: 'Guidelya Performance Apparel Pvt Ltd, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002',
-    copyright_text: `© ${new Date().getFullYear()} Guidelya Activewear. All rights reserved.`,
+    office_address: 'RageX Performance Apparel Pvt Ltd, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002',
+    copyright_text: `© ${new Date().getFullYear()} RageX Activewear. All rights reserved.`,
   };
 
   try {

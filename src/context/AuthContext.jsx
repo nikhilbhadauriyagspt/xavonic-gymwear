@@ -31,7 +31,7 @@ export function createFullUserPayload(apiUser = {}) {
   const customerId =
     apiUser.customerId ||
     apiUser.customer_id ||
-    `GDL-${String(apiUser.id || '9842').padStart(5, '0')}`;
+    `RGX-${String(apiUser.id || '9842').padStart(5, '0')}`;
 
   let parsedAddresses = [];
   if (Array.isArray(apiUser.addresses)) {
@@ -181,7 +181,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('xavonic_user_token', data.token);
         const fullUser = createFullUserPayload(data.user);
         setUser(fullUser);
-        toast.success(`Mobile verified! Welcome to Guidelya.`);
+        toast.success(`Mobile verified! Welcome to RageX.`);
         closeAuth();
         return { success: true };
       } else {
@@ -241,7 +241,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('xavonic_user_token', data.token);
         const fullUser = createFullUserPayload(data.user);
         setUser(fullUser);
-        toast.success(`Email verified! Welcome to Guidelya.`);
+        toast.success(`Email verified! Welcome to RageX.`);
         closeAuth();
         return { success: true };
       } else {
@@ -605,7 +605,7 @@ export function AuthProvider({ children }) {
           const u = createFullUserPayload({
             id: 999,
             name: googleUser?.name || 'Nikhil Sharma',
-            email: googleUser?.email || 'nikhil.google@guidelya.com',
+            email: googleUser?.email || 'nikhil.google@ragex.com',
             emailVerified: true,
             phone: '',
             phoneVerified: false,

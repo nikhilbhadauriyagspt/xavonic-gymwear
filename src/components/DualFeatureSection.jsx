@@ -225,7 +225,7 @@ function CategoryProductSliderRow({
 
 export default function DualFeatureSection() {
   const { addToCart, openCart } = useCart();
-  const [allLiveProducts, setAllLiveProducts] = useState(fallbackProducts);
+  const [allLiveProducts, setAllLiveProducts] = useState([]);
   const [featuredCategories, setFeaturedCategories] = useState([]);
 
   const [quickViewProduct, setQuickViewProduct] = useState(null);
@@ -242,16 +242,8 @@ export default function DualFeatureSection() {
           fetchDualFeaturedCategories(),
         ]);
         if (isMounted) {
-          if (liveProds && liveProds.length > 0) setAllLiveProducts(liveProds);
-          if (dualCats && dualCats.length > 0) {
-            setFeaturedCategories(dualCats);
-          } else {
-            // Default 2 categories if none marked
-            setFeaturedCategories([
-              { name: '5" Training Shorts', slug: 'shorts', kicker_title: 'Bottomwear Line' },
-              { name: 'Oversized T-Shirts', slug: 'oversized', kicker_title: 'Heavyweight Fits' },
-            ]);
-          }
+          setAllLiveProducts(Array.isArray(liveProds) ? liveProds : []);
+          setFeaturedCategories(Array.isArray(dualCats) ? dualCats : []);
         }
       } catch (err) {
         console.warn('Could not load dynamic DualFeatureSection data:', err);
@@ -279,21 +271,26 @@ export default function DualFeatureSection() {
 
   // Group products for each featured category
   const categoriesWithProducts = useMemo(() => {
-    const list = featuredCategories.length > 0 ? featuredCategories : [
-      { name: '5" Training Shorts', slug: 'shorts', kicker_title: 'Bottomwear Line' },
-      { name: 'Oversized T-Shirts', slug: 'oversized', kicker_title: 'Heavyweight Fits' },
-    ];
+    if (!featuredCategories || featuredCategories.length === 0 || allLiveProducts.length === 0) {
+      return [];
+    }
 
-    return list.map((cat) => {
-      const prods = allLiveProducts.filter(
-        (p) => p.category === cat.slug || p.category_slug === cat.slug
-      );
-      return {
-        category: cat,
-        products: prods.length > 0 ? prods : allLiveProducts.slice(0, 5),
-      };
-    });
+    return featuredCategories
+      .map((cat) => {
+        const prods = allLiveProducts.filter(
+          (p) => p.category === cat.slug || p.category_slug === cat.slug
+        );
+        return {
+          category: cat,
+          products: prods,
+        };
+      })
+      .filter((item) => item.products.length > 0);
   }, [featuredCategories, allLiveProducts]);
+
+  if (categoriesWithProducts.length === 0) {
+    return null;
+  }
 
   return (
     <section className="w-full bg-white text-zinc-950 py-14 sm:py-20 px-4 sm:px-8 lg:px-12 border-b border-zinc-200">

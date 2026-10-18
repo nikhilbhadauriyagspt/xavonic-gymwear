@@ -24,7 +24,7 @@ async function getCloudinaryClient() {
 }
 
 // Upload buffer directly to Cloudinary
-exports.uploadToCloudinary = async (buffer, folder = 'guidelya/categories') => {
+exports.uploadToCloudinary = async (buffer, folder = 'ragex/categories') => {
   const client = await getCloudinaryClient();
 
   return new Promise((resolve, reject) => {

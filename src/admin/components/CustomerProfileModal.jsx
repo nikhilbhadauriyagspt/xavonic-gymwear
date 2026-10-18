@@ -82,7 +82,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
                   {customerData?.name || 'Registered Customer'}
                 </h3>
                 <span className="font-mono text-[10px] font-semibold bg-neutral-200/80 text-neutral-800 px-1.5 py-0.2 rounded-xs">
-                  {customerData?.customer_id || `GDL-${String(customerData?.id || '').padStart(5, '0')}`}
+                  {customerData?.customer_id || `RGX-${String(customerData?.id || '').padStart(5, '0')}`}
                 </span>
               </div>
               <p className="text-xs text-neutral-500">
@@ -437,7 +437,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
         {/* Modal Footer */}
         <div className="px-5 py-3 border-t border-neutral-200 bg-neutral-50/70 flex items-center justify-between text-xs">
           <div className="text-neutral-500 font-mono text-[11px]">
-            Customer ID: {customerData?.customer_id || `GDL-${String(customerData?.id || '').padStart(5, '0')}`}
+            Customer ID: {customerData?.customer_id || `RGX-${String(customerData?.id || '').padStart(5, '0')}`}
           </div>
           <button
             onClick={onClose}

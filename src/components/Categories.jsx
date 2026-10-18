@@ -13,31 +13,28 @@ import catShorts from '../assets/cat_shorts.jpg';
 import { ADMIN_API_BASE } from '../config/api';
 
 export default function Categories() {
-  const fallbackCategories = [
-    { id: 1, name: 'Oversized T-Shirts', slug: 'oversized', image_url: heroOversized, show_title_overlay: 1 },
-    { id: 2, name: 'Compression T-Shirts', slug: 'compression', image_url: heroCompression, show_title_overlay: 1 },
-    { id: 3, name: 'Drop Cut T-Shirts', slug: 'drop-cut', image_url: catDropcut, show_title_overlay: 1 },
-    { id: 4, name: 'Stringers & Tanks', slug: 'tanks', image_url: catStringers, show_title_overlay: 1 },
-    { id: 5, name: 'Gym Lowers & Joggers', slug: 'lowers', image_url: heroJoggers, show_title_overlay: 1 },
-    { id: 6, name: 'Athletic Trackpants', slug: 'trackpants', image_url: catTrackpants, show_title_overlay: 1 },
-    { id: 7, name: '5" Gym Shorts', slug: 'shorts', image_url: catShorts, show_title_overlay: 1 },
-    { id: 8, name: 'Cargo Gym Lowers', slug: 'cargo-lowers', image_url: catTrackpants, show_title_overlay: 1 },
-  ];
-
-  const [categories, setCategories] = useState(fallbackCategories);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     fetch(`${ADMIN_API_BASE}/categories`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.categories && data.categories.length > 0) {
+        if (data.success && Array.isArray(data.categories)) {
           // Filter active item_type drops or subcategories with images
           const displayCats = data.categories.filter((c) => c.image_url && c.status === 'active');
-          if (displayCats.length > 0) setCategories(displayCats);
+          setCategories(displayCats);
+        } else {
+          setCategories([]);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setCategories([]);
+      });
   }, []);
+
+  if (categories.length === 0) {
+    return null;
+  }
 
   return (
     <section 

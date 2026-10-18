@@ -20,7 +20,7 @@ const formatUserResponse = (user) => {
 
   return {
     id: user.id,
-    customerId: user.customer_id || `GDL-${String(user.id).padStart(5, '0')}`,
+    customerId: user.customer_id || `RGX-${String(user.id).padStart(5, '0')}`,
     name: user.name || '',
     phone: user.phone || '',
     phoneVerified: Boolean(user.phone_verified),
@@ -119,7 +119,7 @@ exports.verifyOtp = async (req, res) => {
     if (existingUsers && existingUsers.length > 0) {
       user = existingUsers[0];
       if (!user.customer_id) {
-        const generatedCid = `GDL-${String(user.id).padStart(5, '0')}`;
+        const generatedCid = `RGX-${String(user.id).padStart(5, '0')}`;
         await db.query('UPDATE users SET customer_id = ? WHERE id = ?', [generatedCid, user.id]);
         user.customer_id = generatedCid;
       }
@@ -135,7 +135,7 @@ exports.verifyOtp = async (req, res) => {
         ['', formattedPhone, 'VIP Athlete Club', 100, 'Male']
       );
 
-      const generatedCid = `GDL-${String(insertResult.insertId).padStart(5, '0')}`;
+      const generatedCid = `RGX-${String(insertResult.insertId).padStart(5, '0')}`;
       await db.query('UPDATE users SET customer_id = ? WHERE id = ?', [generatedCid, insertResult.insertId]);
 
       const [newCreated] = await db.query('SELECT * FROM users WHERE id = ?', [insertResult.insertId]);
@@ -145,7 +145,7 @@ exports.verifyOtp = async (req, res) => {
       createNotification({
         type: 'customer',
         title: `👤 New Customer Joined`,
-        description: `Customer with phone +${formattedPhone} (ID: ${generatedCid}) registered on Guidelya.`,
+        description: `Customer with phone +${formattedPhone} (ID: ${generatedCid}) registered on RageX.`,
         reference_id: String(user.id),
         link_url: '/admin',
       });
@@ -159,7 +159,7 @@ exports.verifyOtp = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Mobile verified! Welcome to Guidelya.',
+      message: 'Mobile verified! Welcome to RageX.',
       token,
       user: formatUserResponse(user),
     });
@@ -263,7 +263,7 @@ exports.verifyEmailOtpHandler = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Email verified! Welcome to Guidelya.',
+      message: 'Email verified! Welcome to RageX.',
       token,
       user: formatUserResponse(user),
     });

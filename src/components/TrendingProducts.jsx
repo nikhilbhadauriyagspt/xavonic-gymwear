@@ -11,8 +11,8 @@ import { allProducts as defaultLocalProducts, allCategories as defaultLocalCateg
 export default function TrendingProducts() {
   const [activeTab, setActiveTab] = useState('all');
   const { isWishlisted, toggleWishlist } = useWishlist();
-  const [productsList, setProductsList] = useState(defaultLocalProducts);
-  const [categoriesList, setCategoriesList] = useState(defaultLocalCategories);
+  const [productsList, setProductsList] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [quickViewProduct, setQuickViewProduct] = useState(null);
@@ -35,8 +35,8 @@ export default function TrendingProducts() {
           fetchLiveCategories(),
         ]);
         if (isMounted) {
-          if (liveProds && liveProds.length > 0) setProductsList(liveProds);
-          if (liveCats && liveCats.length > 0) setCategoriesList(liveCats);
+          setProductsList(Array.isArray(liveProds) ? liveProds : []);
+          setCategoriesList(Array.isArray(liveCats) ? liveCats : []);
         }
       } catch (err) {
         console.warn('Could not load dynamic products in TrendingProducts:', err);
@@ -150,6 +150,10 @@ export default function TrendingProducts() {
   const closeQuickView = () => {
     setQuickViewProduct(null);
   };
+
+  if (productsList.length === 0) {
+    return null;
+  }
 
   return (
     <section className="group/section relative w-full bg-white text-zinc-950 py-14 sm:py-20 px-4 sm:px-8 lg:px-12 select-none font-sans border-b border-zinc-200 overflow-hidden">

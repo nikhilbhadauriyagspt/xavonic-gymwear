@@ -57,7 +57,7 @@ export default function AdminLogin({ onLoginSuccess }) {
           <Link to="/" className="inline-block">
             <img
               src={logoBlack}
-              alt="Guidelya Xavonic Athletics"
+              alt="RageX RageX Athletics"
               className="h-10 sm:h-12 w-auto mx-auto object-contain"
             />
           </Link>
@@ -160,7 +160,7 @@ export default function AdminLogin({ onLoginSuccess }) {
 
         {/* Footer info */}
         <p className="text-center text-[10px] text-neutral-400 uppercase tracking-wider">
-          Xavonic Aesthetics • HQ Console v2.4
+          RageX Activewear • HQ Console v2.4
         </p>
       </div>
     </div>

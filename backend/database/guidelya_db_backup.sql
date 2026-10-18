@@ -1,8 +1,8 @@
 -- GUIDELYA COMPLETE DATABASE BACKUP
 -- Created at: 2026-10-02T22:23:51.087Z
 
-CREATE DATABASE IF NOT EXISTS `guidelya_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `guidelya_db`;
+CREATE DATABASE IF NOT EXISTS `ragex_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `ragex_db`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 

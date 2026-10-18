@@ -209,7 +209,7 @@ export default function AllProductsTab({ onNavigateToAdd }) {
                             {prod.title}
                           </div>
                           <div className="text-[10px] font-mono text-neutral-400">
-                            SKU: {prod.sku || `GDL-${prod.id}`}
+                            SKU: {prod.sku || `RGX-${prod.id}`}
                           </div>
                           <div className="text-[10px] text-neutral-500">
                             Sizes: {prod.sizes?.join(', ')}

@@ -10,21 +10,21 @@ import heroJoggers from '../assets/hero_joggers.jpg';
 const defaultSlides = [
   {
     image: heroCompression,
-    alt: 'Guidelya Xtreme Compression Gymwear',
-    title: 'Guidelya Xtreme Compression',
+    alt: 'RageX Xtreme Compression Gymwear',
+    title: 'RageX Xtreme Compression',
     subtitle: 'Second-Skin Ultra Flex Performance',
     link: '/collections',
   },
   {
     image: heroOversized,
-    alt: 'Guidelya Heavyweight Oversized Tees',
+    alt: 'RageX Heavyweight Oversized Tees',
     title: 'Heavyweight Aesthetic Drop',
     subtitle: '260 GSM French Terry Cotton',
     link: '/collections',
   },
   {
     image: heroJoggers,
-    alt: 'Guidelya Tapered Gym Joggers and Lowers',
+    alt: 'RageX Tapered Gym Joggers and Lowers',
     title: 'Performance Tapered Joggers',
     subtitle: 'Engineered For Elite Aesthetics',
     link: '/collections',

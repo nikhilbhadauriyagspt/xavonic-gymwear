@@ -4,11 +4,11 @@
 -- ========================================================
 
 -- 1. Create Database
-CREATE DATABASE IF NOT EXISTS `guidelya_db` 
+CREATE DATABASE IF NOT EXISTS `ragex_db` 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
 
-USE `guidelya_db`;
+USE `ragex_db`;
 
 -- 2. Create Admins Table
 CREATE TABLE IF NOT EXISTS `admins` (

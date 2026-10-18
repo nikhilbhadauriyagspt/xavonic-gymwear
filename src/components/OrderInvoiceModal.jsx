@@ -137,7 +137,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
               <p className="text-neutral-600 text-[11px] leading-relaxed">
                 {brand.office_address || 'Plot 42, DLF Phase 4, Gurugram, Haryana - 122002'}<br />
                 State: Haryana (Code 06) • CIN: U17120HR2023PTC109842<br />
-                Support: {brand.support_email || 'support@guidelya.com'}
+                Support: {brand.support_email || 'support@ragex.com'}
               </p>
             </div>
 
@@ -272,7 +272,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
           <div className="border-t border-neutral-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-neutral-500">
             <div>
               <p>Issued under Section 31 of CGST Act 2017. All athletic wear certified 4-way performance stretch.</p>
-              <p className="mt-0.5">This is a computer-generated tax invoice verified by Xavonic Logistics System.</p>
+              <p className="mt-0.5">This is a computer-generated tax invoice verified by RageX Logistics System.</p>
             </div>
             <div className="border border-neutral-300 px-3 py-1.5 text-center bg-neutral-50 shrink-0">
               <span className="block font-bold text-[9px] uppercase tracking-wider text-neutral-800">
@@ -286,7 +286,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
         {/* Footer Actions */}
         <div className="bg-neutral-50 px-5 py-3 border-t border-neutral-200 flex justify-between items-center shrink-0">
           <span className="text-[11px] text-neutral-500 font-mono">
-            Support: support@guidelya.com
+            Support: support@ragex.com
           </span>
           <button
             type="button"

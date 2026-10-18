@@ -106,7 +106,7 @@ export default function Home() {
 
           <button
             onClick={() => {
-              const promise = () => new Promise((resolve) => setTimeout(() => resolve({ name: 'Guidelya' }), 2000));
+              const promise = () => new Promise((resolve) => setTimeout(() => resolve({ name: 'RageX' }), 2000));
               toast.promise(promise, {
                 loading: 'Loading data...',
                 success: (data) => `${data.name} loaded successfully!`,

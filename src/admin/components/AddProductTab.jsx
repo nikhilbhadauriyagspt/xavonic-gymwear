@@ -124,7 +124,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
     setSlug(genSlug);
     if (!sku) {
       const code = val.slice(0, 3).toUpperCase() || 'GDL';
-      setSku(`GDL-${code}-${Math.floor(100 + Math.random() * 900)}`);
+      setSku(`RGX-${code}-${Math.floor(100 + Math.random() * 900)}`);
     }
   };
 
@@ -386,7 +386,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                 type="text"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
-                placeholder="e.g. GDL-CMP-001"
+                placeholder="e.g. RGX-CMP-001"
                 className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none font-mono"
               />
             </div>

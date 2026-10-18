@@ -4,7 +4,10 @@ const path = require('path');
 
 async function restoreDatabase() {
   try {
-    const sqlPath = path.join(__dirname, '..', 'database', 'guidelya_db.sql');
+    let sqlPath = path.join(__dirname, '..', 'database', 'ragex_db.sql');
+    if (!fs.existsSync(sqlPath)) {
+      sqlPath = path.join(__dirname, '..', 'database', 'guidelya_db.sql');
+    }
     if (!fs.existsSync(sqlPath)) {
       console.error(`❌ SQL dump file not found at: ${sqlPath}`);
       process.exit(1);
@@ -26,7 +29,7 @@ async function restoreDatabase() {
       }
     }
 
-    console.log('✅ Full database restored successfully into guidelya_db!');
+    console.log('✅ Full database restored successfully into ragex_db!');
   } catch (err) {
     console.error('❌ Error restoring database:', err);
   } finally {

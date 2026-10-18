@@ -176,7 +176,7 @@ exports.createProduct = async (req, res) => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)+/g, '');
 
-    const autoSku = sku || `GDL-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const autoSku = sku || `RGX-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     // Process Color Variants & Upload Files to Cloudinary if attached
     let parsedColors = [];
@@ -194,7 +194,7 @@ exports.createProduct = async (req, res) => {
         if (match) {
           const colorIndex = parseInt(match[1], 10);
           if (parsedColors[colorIndex]) {
-            const uploadRes = await uploadToCloudinary(file.buffer, 'guidelya/products');
+            const uploadRes = await uploadToCloudinary(file.buffer, 'ragex/products');
             if (!parsedColors[colorIndex].gallery) parsedColors[colorIndex].gallery = [];
             parsedColors[colorIndex].gallery.push(uploadRes.secure_url);
             if (!parsedColors[colorIndex].image) {
@@ -320,7 +320,7 @@ exports.updateProduct = async (req, res) => {
         if (match) {
           const colorIndex = parseInt(match[1], 10);
           if (parsedColors[colorIndex]) {
-            const uploadRes = await uploadToCloudinary(file.buffer, 'guidelya/products');
+            const uploadRes = await uploadToCloudinary(file.buffer, 'ragex/products');
             if (!parsedColors[colorIndex].gallery) parsedColors[colorIndex].gallery = [];
             parsedColors[colorIndex].gallery.push(uploadRes.secure_url);
             if (!parsedColors[colorIndex].image) {

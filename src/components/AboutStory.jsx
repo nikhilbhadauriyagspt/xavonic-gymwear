@@ -24,27 +24,27 @@ export default function AboutStory() {
 
   const heading = brandContent?.about_heading || brandContent?.content_about_heading || 'Gym Wear for Men & Women';
   const badge = brandContent?.about_badge || brandContent?.content_about_badge || 'Brand Story & Training Guide';
-  const tagline = brandContent?.about_tagline || brandContent?.content_about_tagline || 'Xavonic — The Indian Gym Wear Brand Built for Real Training';
+  const tagline = brandContent?.about_tagline || brandContent?.content_about_tagline || 'RageX — The Indian Gym Wear Brand Built for Real Training';
   
   const faqs = brandContent?.about_faqs || [
     {
-      q: 'What makes Xavonic an affordable gym wear brand in India?',
-      a: 'Xavonic cuts out unnecessary markups by focusing on direct, performance-first design. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at a price built for regular training, not occasional wear.'
+      q: 'What makes RageX an affordable gym wear brand in India?',
+      a: 'RageX cuts out unnecessary markups by focusing on direct, performance-first design. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at a price built for regular training, not occasional wear.'
     },
     {
-      q: 'Does Xavonic make gym wear for both men and women?',
-      a: 'Yes. Xavonic offers dedicated gym wear for men and gym wear for women, including compression fits, tops, bottoms, and outerwear designed around each training style.'
+      q: 'Does RageX make gym wear for both men and women?',
+      a: 'Yes. RageX offers dedicated gym wear for men and gym wear for women, including compression fits, tops, bottoms, and outerwear designed around each training style.'
     },
     {
       q: "What's the difference between activewear and performance gym wear?",
       a: 'Active wear is a broader term covering comfortable, athletic-style clothing for daily life and light activity. Performance gym wear is built specifically for training — with features like compression support, moisture-wicking fabric, and stretch built for lifting, running, or HIIT.'
     },
     {
-      q: 'Is Xavonic gym wear suitable for daily use, not just workouts?',
+      q: 'Is RageX gym wear suitable for daily use, not just workouts?',
       a: 'Yes. Most of our sports clothing — from T-shirts and joggers to tanks and shorts — is designed to move easily from a gym session into everyday wear, without feeling like training gear.'
     },
     {
-      q: 'What fabric technology does Xavonic use in its gym clothing?',
+      q: 'What fabric technology does RageX use in its gym clothing?',
       a: 'Our gym wear uses breathable cotton-polyester blends, stretch fabrics for compression pieces, and moisture-wicking finishes depending on the product, all selected to hold up through repeated training and washing.'
     },
     {
@@ -103,7 +103,7 @@ export default function AboutStory() {
             ) : (
               <>
                 <p>
-                  Xavonic is an Indian gym wear brand making performance apparel for people who actually train — not just people who want to look like they do. From compression fits to everyday active wear, every piece is designed to move with you through lifting, running, HIIT, or a regular gym session, without cutting corners on comfort or price. We believe good gym wear shouldn't cost a compromise. That's why Xavonic exists: affordable gym wear in India that performs like premium sports clothing, without the premium markup.
+                  RageX is an Indian gym wear brand making performance apparel for people who actually train — not just people who want to look like they do. From compression fits to everyday active wear, every piece is designed to move with you through lifting, running, HIIT, or a regular gym session, without cutting corners on comfort or price. We believe good gym wear shouldn't cost a compromise. That's why Xavonic exists: affordable gym wear in India that performs like premium sports clothing, without the premium markup.
                 </p>
 
                 <div className="space-y-2">
@@ -111,16 +111,16 @@ export default function AboutStory() {
                     Shop Smarter with an Affordable Gym Wear Brand from India
                   </h3>
                   <p>
-                    Finding the right gym wear shouldn't mean choosing between quality and price. As an Indian gym wear brand, Xavonic is built around that exact problem — sourcing performance fabrics, testing real fits, and pricing them for the everyday athlete, not just the top 1%. Whether you're stepping into the gym for the first time or you've been training for years, our sports clothing is made to keep up.
+                    Finding the right gym wear shouldn't mean choosing between quality and price. As an Indian gym wear brand, RageX is built around that exact problem — sourcing performance fabrics, testing real fits, and pricing them for the everyday athlete, not just the top 1%. Whether you're stepping into the gym for the first time or you've been training for years, our sports clothing is made to keep up.
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <h3 className="text-sm sm:text-base font-semibold text-zinc-950">
-                    Why Choose Xavonic Over Other Gym Clothing Brands
+                    Why Choose RageX Over Other Gym Clothing Brands
                   </h3>
                   <p>
-                    We're not trying to be everything. As a gym clothing brand, Xavonic focuses on one thing: apparel that survives real training. That means: Fabric that's actually tested in the gym, not just on a lookbook — breathable blends, stretch-ready construction, and moisture-wicking finishes across our active wear range. Fits built for movement, from compression to relaxed, so your training style decides the cut, not the other way around. Pricing that respects your budget, because performance gym wear shouldn't be a luxury purchase.
+                    We're not trying to be everything. As a gym clothing brand, RageX focuses on one thing: apparel that survives real training. That means: Fabric that's actually tested in the gym, not just on a lookbook — breathable blends, stretch-ready construction, and moisture-wicking finishes across our active wear range. Fits built for movement, from compression to relaxed, so your training style decides the cut, not the other way around. Pricing that respects your budget, because performance gym wear shouldn't be a luxury purchase.
                   </p>
                 </div>
               </>

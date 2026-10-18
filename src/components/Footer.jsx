@@ -52,7 +52,7 @@ export default function Footer() {
     {
       title: 'Our Company',
       links: [
-        { label: 'About Xavonic Aesthetics', to: '/about' },
+        { label: 'About RageX Activewear', to: '/about' },
         { label: 'Fabric Technology & GSM', to: '/fabric-guide' },
         { label: 'Athlete Sponsorships', to: '/athletes' },
         { label: 'Terms of Service', to: '/terms' },
@@ -110,7 +110,7 @@ export default function Footer() {
             <Link to="/" className="inline-block">
               <img
                 src={brandContent.logo_white || logoWhite}
-                alt={brandContent.brand_name || "Xavonic Aesthetics"}
+                alt={brandContent.brand_name || "RageX Activewear"}
                 className="h-10 sm:h-12 w-auto object-contain brightness-110"
               />
             </Link>
@@ -233,7 +233,7 @@ export default function Footer() {
       <div className="border-t border-zinc-900 py-6 px-4 sm:px-8 lg:px-12 bg-black">
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-[11px] text-zinc-500">
-            {brandContent.copyright_text || `© ${new Date().getFullYear()} Xavonic Aesthetics Inc. All rights reserved. Designed for active lifestyles.`}
+            {brandContent.copyright_text || `© ${new Date().getFullYear()} RageX Activewear Inc. All rights reserved. Designed for active lifestyles.`}
           </p>
 
           {/* Clean Payment Tags */}

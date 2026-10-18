@@ -4,7 +4,10 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function runImport() {
-  const sqlFile = path.join(__dirname, '../database/guidelya_db_backup.sql');
+  let sqlFile = path.join(__dirname, '../database/ragex_db_backup.sql');
+  if (!fs.existsSync(sqlFile)) {
+    sqlFile = path.join(__dirname, '../database/guidelya_db_backup.sql');
+  }
   if (!fs.existsSync(sqlFile)) {
     console.error(`❌ Backup file not found at ${sqlFile}`);
     process.exit(1);

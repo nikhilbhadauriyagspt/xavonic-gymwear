@@ -94,7 +94,7 @@ exports.createCategory = async (req, res) => {
 
     // If file was uploaded via multer, send to Cloudinary
     if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer, 'guidelya/categories');
+      const uploadResult = await uploadToCloudinary(req.file.buffer, 'ragex/categories');
       finalImageUrl = uploadResult.secure_url;
     }
 
@@ -156,7 +156,7 @@ exports.updateCategory = async (req, res) => {
     let finalImageUrl = customImageUrl;
 
     if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer, 'guidelya/categories');
+      const uploadResult = await uploadToCloudinary(req.file.buffer, 'ragex/categories');
       finalImageUrl = uploadResult.secure_url;
     }
 

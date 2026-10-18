@@ -1,4 +1,4 @@
-# 🏠 Home Laptop Quick Setup Guide (Guidelya / Xavonic)
+# 🏠 Home Laptop Quick Setup Guide (RageX / Xavonic)
 
 Is guide ko follow karke aap ghar ke laptop par 2 minute me poori website (Frontend + Backend + Database with all Products) chala sakte hain.
 

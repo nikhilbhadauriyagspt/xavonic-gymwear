@@ -55,7 +55,7 @@ export default function ProductDetailPage() {
   const { user, openAuth } = useAuth();
 
   const [liveProduct, setLiveProduct] = useState(null);
-  const [allLiveProducts, setAllLiveProducts] = useState(allProducts);
+  const [allLiveProducts, setAllLiveProducts] = useState([]);
 
 
   useEffect(() => {
@@ -67,8 +67,8 @@ export default function ProductDetailPage() {
           fetchLiveProducts(),
         ]);
         if (isMounted) {
-          if (fetched) setLiveProduct(fetched);
-          if (all && all.length > 0) setAllLiveProducts(all);
+          setLiveProduct(fetched || null);
+          setAllLiveProducts(Array.isArray(all) ? all : []);
         }
       } catch (err) {
         console.warn('Error loading dynamic product detail:', err);
@@ -80,8 +80,8 @@ export default function ProductDetailPage() {
 
   const product = useMemo(() => {
     if (liveProduct) return liveProduct;
-    return allProducts.find((p) => String(p.id) === String(productId) || p.slug === productId) || allProducts[0];
-  }, [liveProduct, productId]);
+    return allLiveProducts.find((p) => String(p.id) === String(productId) || p.slug === productId) || null;
+  }, [liveProduct, allLiveProducts, productId]);
 
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState(
@@ -323,7 +323,7 @@ export default function ProductDetailPage() {
       navigator
         .share({
           title: product.title,
-          text: `Check out ${product.title} on Xavonic Gymwear:`,
+          text: `Check out ${product.title} on RageX Gymwear:`,
           url: window.location.href,
         })
         .catch(() => {});
@@ -467,7 +467,7 @@ export default function ProductDetailPage() {
     try {
       const payload = {
         user_id: user?.dbId || (typeof user?.id === 'number' ? user.id : null),
-        customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `GDL-${user?.dbId || '9842'}`),
+        customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `RGX-${user?.dbId || '9842'}`),
         author_name: user?.name || user?.displayName || 'Verified Athlete',
         author_email: user?.email || '',
         author_phone: user?.phone || '',
@@ -560,6 +560,17 @@ export default function ProductDetailPage() {
     }
     return reviewsList;
   }, [reviewsList, reviewFilter]);
+
+  if (!product) {
+    return (
+      <div className="min-h-[60vh] bg-white text-neutral-950 font-sans flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <p className="text-sm text-neutral-500">Product not found.</p>
+        <Link to="/" className="px-6 py-2.5 bg-black text-white text-xs font-semibold uppercase tracking-wider">
+          Back to Home
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white text-neutral-950 font-sans selection:bg-neutral-900 selection:text-white pb-16 lg:pb-0">
@@ -1101,7 +1112,7 @@ export default function ProductDetailPage() {
                     <Share2 className="h-3 w-3" /> Share Options
                   </button>
                   <a
-                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product.title} on Xavonic: ${window.location.href}`)}`}
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product.title} on RageX: ${window.location.href}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-medium transition-colors cursor-pointer border border-emerald-200"
@@ -2283,7 +2294,7 @@ export default function ProductDetailPage() {
             {/* Social Share Grid */}
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product.title} on Xavonic Gymwear: ${window.location.href}`)}`}
+                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ${product.title} on RageX Gymwear: ${window.location.href}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-xs transition-colors"
@@ -2312,7 +2323,7 @@ export default function ProductDetailPage() {
               </a>
 
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${product.title} on Xavonic: ${window.location.href}`)}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${product.title} on RageX: ${window.location.href}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 p-2.5 bg-neutral-900 hover:bg-black text-white text-xs font-semibold rounded-xs transition-colors"

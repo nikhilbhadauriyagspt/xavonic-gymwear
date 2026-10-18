@@ -1,5 +1,5 @@
 // High-Precision GST Compliant Order Tax Invoice Generator
-// For Xavonic Athletics / Guidelya Sports
+// For RageX Athletics / RageX Sports
 
 export function generateInvoiceHTML(order, customBrand = null) {
   if (!order) return '';
@@ -7,13 +7,13 @@ export function generateInvoiceHTML(order, customBrand = null) {
   let brandInfo = customBrand;
   if (!brandInfo) {
     try {
-      const cached = localStorage.getItem('guidelya_cached_brand');
+      const cached = localStorage.getItem('ragex_cached_brand');
       if (cached) brandInfo = JSON.parse(cached);
     } catch (_) {}
   }
-  const brandName = brandInfo?.brand_name || 'Guidelya Activewear';
+  const brandName = brandInfo?.brand_name || 'RageX Activewear';
   const brandTagline = brandInfo?.brand_tagline || 'Performance Athletic Apparel & Streetwear';
-  const supportEmail = brandInfo?.support_email || 'support@guidelya.com';
+  const supportEmail = brandInfo?.support_email || 'support@ragex.com';
   const officeAddress = brandInfo?.office_address || 'Plot 42, DLF Phase 4, Gurugram, Haryana - 122002';
 
   const orderNumber = order.orderNumber || order.id || 'ORD-9842';
@@ -485,10 +485,10 @@ export function generateInvoiceHTML(order, customBrand = null) {
     <div class="footer-bar">
       <div>
         <div><strong>Tax Declaration:</strong> Issued under Section 31 of Central Goods and Services Tax Act 2017.</div>
-        <div style="margin-top: 2px;">This is an electronically generated tax invoice verified by Xavonic Logistics System.</div>
+        <div style="margin-top: 2px;">This is an electronically generated tax invoice verified by RageX Logistics System.</div>
       </div>
       <div class="stamp-box">
-        <div class="stamp-seal">XAVONIC ATHLETICS<br>DIGITALLY SIGNED</div>
+        <div class="stamp-seal">RAGEX ATHLETICS<br>DIGITALLY SIGNED</div>
         <div>Authorised Signatory</div>
       </div>
     </div>

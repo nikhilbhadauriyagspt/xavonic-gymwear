@@ -12,7 +12,7 @@ async function getWhatsAppSettings() {
       meta_token: '',
       phone_number_id: '',
       waba_id: '',
-      template_name: 'guidelya_otp_auth',
+      template_name: 'ragex_otp_auth',
     };
 
     rows.forEach((r) => {
@@ -45,7 +45,7 @@ async function sendWhatsAppOtp(phone, otp) {
     try {
       const { getBrandSettings } = require('./brandService');
       const brand = await getBrandSettings();
-      const brandName = brand.brand_name || 'Guidelya Activewear';
+      const brandName = brand.brand_name || 'RageX Activewear';
 
       console.log(`🚀 Dispatching real WhatsApp message via Meta Cloud API...`);
       const metaUrl = `https://graph.facebook.com/v19.0/${settings.phone_number_id}/messages`;
@@ -123,7 +123,7 @@ async function sendOrderWhatsAppNotification(orderData) {
 
   const { getBrandSettings } = require('./brandService');
   const brand = await getBrandSettings();
-  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandName = brand.brand_name || 'RageX Activewear';
 
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;
@@ -172,7 +172,7 @@ async function sendOrderDispatchNotification(orderData) {
 
   const { getBrandSettings } = require('./brandService');
   const brand = await getBrandSettings();
-  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandName = brand.brand_name || 'RageX Activewear';
 
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const orderNum = orderData.order_number || orderData.orderNumber || orderData.id;

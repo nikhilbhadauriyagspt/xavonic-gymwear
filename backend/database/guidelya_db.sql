@@ -3,8 +3,8 @@
 -- Generated: 2026-09-30T22:13:11.429Z
 -- ================================================
 
-CREATE DATABASE IF NOT EXISTS `guidelya_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `guidelya_db`;
+CREATE DATABASE IF NOT EXISTS `ragex_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `ragex_db`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 

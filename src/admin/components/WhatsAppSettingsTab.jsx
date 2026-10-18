@@ -39,7 +39,7 @@ export default function GatewaySettingsTab() {
     key_id: '',
     key_secret: '',
     webhook_secret: '',
-    account_name: 'Guidelya Activewear',
+    account_name: 'RageX Activewear',
     theme_color: '#09090b',
   });
 
@@ -49,7 +49,7 @@ export default function GatewaySettingsTab() {
     meta_token: '',
     phone_number_id: '',
     waba_id: '',
-    template_name: 'guidelya_otp_auth',
+    template_name: 'ragex_otp_auth',
   });
 
   // Nodemailer SMTP Email Config State
@@ -60,7 +60,7 @@ export default function GatewaySettingsTab() {
     secure: 'true',
     user: '',
     pass: '',
-    sender_name: 'Guidelya Athletics',
+    sender_name: 'RageX Athletics',
   });
 
   // Cloudinary Storage Config State
@@ -747,7 +747,7 @@ export default function GatewaySettingsTab() {
                   type="text"
                   value={razorpayConfig.account_name}
                   onChange={(e) => setRazorpayConfig({ ...razorpayConfig, account_name: e.target.value })}
-                  placeholder="Guidelya Activewear"
+                  placeholder="RageX Activewear"
                   className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 outline-none focus:bg-white focus:border-neutral-900"
                 />
               </div>
@@ -1107,7 +1107,7 @@ export default function GatewaySettingsTab() {
                     type="email"
                     value={smtpConfig.user}
                     onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
-                    placeholder="support@guidelya.com or yourname@gmail.com"
+                    placeholder="support@ragex.com or yourname@gmail.com"
                     className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 outline-none"
                   />
                 </div>
@@ -1141,7 +1141,7 @@ export default function GatewaySettingsTab() {
                     type="text"
                     value={smtpConfig.sender_name}
                     onChange={(e) => setSmtpConfig({ ...smtpConfig, sender_name: e.target.value })}
-                    placeholder="Guidelya Athletics"
+                    placeholder="RageX Athletics"
                     className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 outline-none"
                   />
                 </div>
@@ -1580,7 +1580,7 @@ export default function GatewaySettingsTab() {
                     type="email"
                     value={logisticsConfig.shiprocket_email}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_email: e.target.value })}
-                    placeholder="logistics@guidelya.com"
+                    placeholder="logistics@ragex.com"
                     className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
                   />
                 </div>
@@ -1683,7 +1683,7 @@ export default function GatewaySettingsTab() {
                     type="email"
                     value={logisticsConfig.nimbuspost_email}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, nimbuspost_email: e.target.value })}
-                    placeholder="shipping@guidelya.com"
+                    placeholder="shipping@ragex.com"
                     className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
                   />
                 </div>

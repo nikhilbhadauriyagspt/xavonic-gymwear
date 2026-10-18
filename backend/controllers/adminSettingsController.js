@@ -14,7 +14,7 @@ exports.getWhatsAppConfig = async (req, res) => {
       meta_token: '',
       phone_number_id: '',
       waba_id: '',
-      template_name: 'guidelya_otp_auth',
+      template_name: 'ragex_otp_auth',
     };
 
     rows.forEach((r) => {
@@ -48,7 +48,7 @@ exports.saveWhatsAppConfig = async (req, res) => {
       { key: 'whatsapp_meta_token', value: meta_token || '' },
       { key: 'whatsapp_phone_number_id', value: phone_number_id || '' },
       { key: 'whatsapp_waba_id', value: waba_id || '' },
-      { key: 'whatsapp_template_name', value: template_name || 'guidelya_otp_auth' },
+      { key: 'whatsapp_template_name', value: template_name || 'ragex_otp_auth' },
     ];
 
     for (const item of updates) {
@@ -115,7 +115,7 @@ exports.getSmtpConfig = async (req, res) => {
       secure: 'true',
       user: '',
       pass: '',
-      sender_name: 'Guidelya Athletics',
+      sender_name: 'RageX Athletics',
     };
 
     rows.forEach((r) => {
@@ -153,7 +153,7 @@ exports.saveSmtpConfig = async (req, res) => {
       { key: 'smtp_secure', value: secure !== undefined ? String(secure) : 'true' },
       { key: 'smtp_user', value: user || '' },
       { key: 'smtp_pass', value: pass || '' },
-      { key: 'smtp_sender_name', value: sender_name || 'Guidelya Athletics' },
+      { key: 'smtp_sender_name', value: sender_name || 'RageX Athletics' },
     ];
 
     for (const item of updates) {
@@ -526,7 +526,7 @@ exports.uploadBrandLogo = async (req, res) => {
     }
 
     const { logo_type } = req.body; // 'logo_white' or 'logo_black'
-    const result = await uploadToCloudinary(req.file.buffer, 'guidelya/brand');
+    const result = await uploadToCloudinary(req.file.buffer, 'ragex/brand');
     const secureUrl = result.secure_url;
 
     if (logo_type === 'logo_white' || logo_type === 'logo_black') {
@@ -654,7 +654,7 @@ exports.saveRazorpayGatewayConfig = async (req, res) => {
       { key: 'razorpay_key_id', value: (key_id || '').trim() },
       { key: 'razorpay_key_secret', value: (key_secret || '').trim() },
       { key: 'razorpay_webhook_secret', value: (webhook_secret || '').trim() },
-      { key: 'razorpay_account_name', value: (account_name || 'Guidelya Activewear').trim() },
+      { key: 'razorpay_account_name', value: (account_name || 'RageX Activewear').trim() },
       { key: 'razorpay_theme_color', value: (theme_color || '#09090b').trim() },
     ];
 

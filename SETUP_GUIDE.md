@@ -1,4 +1,4 @@
-# 🚀 Guidelya / Xavonic Activewear - Multi-Device & Deployment Guide
+# 🚀 RageX / Xavonic Activewear - Multi-Device & Deployment Guide
 
 This guide explains how to pull and run the complete project on any laptop/computer, restore the database with one click, and connect it with GitHub and Netlify.
 
@@ -9,7 +9,7 @@ This guide explains how to pull and run the complete project on any laptop/compu
 ### Step 1: Clone or Pull the Repository
 ```bash
 git clone <YOUR_GITHUB_REPO_URL>
-cd guidelya.com
+cd ragex.com
 ```
 
 ### Step 2: Install Dependencies
@@ -29,7 +29,7 @@ cd ..
 ```bash
 npm run db:setup
 ```
-*(Yeh script automatically `guidelya_db` database create karega aur saare 14+ real photoshoot products, categories hierarchy, admins, settings restore kar dega!)*
+*(Yeh script automatically `ragex_db` database create karega aur saare 14+ real photoshoot products, categories hierarchy, admins, settings restore kar dega!)*
 
 ### Step 4: Start Frontend & Backend
 Open 2 terminals:
@@ -77,7 +77,7 @@ Is repository me `netlify.toml` already configure kar diya gaya hai.
 
 1. **Netlify Dashboard** ([https://app.netlify.com](https://app.netlify.com)) par login karein.
 2. **Add new site** -> **Import an existing project** -> **GitHub** select karein.
-3. Apna repository (`guidelya.com`) select karein.
+3. Apna repository (`ragex.com`) select karein.
 4. Netlify automatically settings detect karega:
    - **Build command**: `npm run build`
    - **Publish directory**: `dist`

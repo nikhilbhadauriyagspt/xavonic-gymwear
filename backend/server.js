@@ -30,11 +30,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check & Root Welcome
-app.get('/', (req, res) => {
+// API Root & Health check
+app.get('/api', (req, res) => {
   res.json({
     success: true,
-    name: 'Guidelya Activewear API Server',
+    name: 'RageX Activewear API Server',
     status: 'online',
     message: 'Backend server is running smoothly.',
     healthCheck: '/api/health',
@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    message: 'Guidelya / Xavonic Athletics Backend API is running with WhatsApp & MySQL integration.',
+    message: 'RageX Athletics Backend API is running with WhatsApp & MySQL integration.',
     timestamp: new Date().toISOString(),
   });
 });
@@ -58,9 +58,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/payment', paymentRoutes);
 
-
-
-// Serve frontend static assets if built (for unified Render deployment)
+// Serve frontend static assets if built (for unified Hostinger / Render deployment)
 const path = require('path');
 const fs = require('fs');
 const distPath = path.join(__dirname, '../dist');
@@ -71,6 +69,17 @@ if (fs.existsSync(distPath)) {
       return res.sendFile(path.join(distPath, 'index.html'));
     }
     next();
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({
+      success: true,
+      name: 'RageX Activewear API Server',
+      status: 'online',
+      message: 'Backend server is running smoothly.',
+      healthCheck: '/api/health',
+      timestamp: new Date().toISOString(),
+    });
   });
 }
 
@@ -85,7 +94,7 @@ app.use((req, res) => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`===========================================`);
-  console.log(`🚀 Guidelya Backend Server listening on port ${PORT}`);
+  console.log(`🚀 RageX Backend Server listening on port ${PORT}`);
   console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
   console.log(`📱 Customer WhatsApp Auth: http://localhost:${PORT}/api/auth/send-whatsapp-otp`);
   console.log(`🔒 Admin Login Endpoint: http://localhost:${PORT}/api/admin/login`);

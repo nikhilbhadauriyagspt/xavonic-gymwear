@@ -15,11 +15,11 @@ Render web servers stateless hote hain, isliye 24/7 active online database ke li
    * **Port:** `12345` (or `3306`)
    * **User:** `avnadmin` (or `root`)
    * **Password:** `your_password`
-   * **Database:** `defaultdb` (or `guidelya_db`)
+   * **Database:** `defaultdb` (or `ragex_db`)
 4. **Database restore karein:**
    * Apne laptop par terminal me:
    ```bash
-   # Ek baar dump ko cloud database me run karein ya phpMyAdmin / DBeaver me guidelya_db.sql run karein
+   # Ek baar dump ko cloud database me run karein ya phpMyAdmin / DBeaver me ragex_db.sql run karein
    ```
 
 ---

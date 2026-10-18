@@ -1426,7 +1426,7 @@ export default function OrdersTab() {
                     <span>Automated Direct API Dispatch</span>
                   </div>
                   <p className="text-blue-800 text-[11px] leading-relaxed">
-                    Guidelya server will authenticate with <strong>{shipForm.gateway === 'shiprocket' ? 'Shiprocket' : 'NimbusPost'}</strong>, push customer shipping details, book a pickup, generate an AWB number, and store live tracking links.
+                    RageX server will authenticate with <strong>{shipForm.gateway === 'shiprocket' ? 'Shiprocket' : 'NimbusPost'}</strong>, push customer shipping details, book a pickup, generate an AWB number, and store live tracking links.
                   </p>
                   <p className="text-neutral-500 text-[10px]">
                     Make sure your API credentials and pickup location are configured under <em>Settings &gt; Courier & Logistics</em>.

@@ -6,7 +6,7 @@ import { getPublicBanners } from '../services/bannerService';
 export default function MidFeatureBanner() {
   const [banner, setBanner] = useState({
     image_url: mainMidBannerImg,
-    title: 'Xavonic Performance Aesthetics',
+    title: 'RageX Performance Aesthetics',
     link_url: '/collections',
   });
 
@@ -27,7 +27,7 @@ export default function MidFeatureBanner() {
       <Link to={banner.link_url || '/collections'} className="relative w-full block">
         <img
           src={banner.image_url || mainMidBannerImg}
-          alt={banner.title || 'Xavonic Performance Aesthetics'}
+          alt={banner.title || 'RageX Performance Aesthetics'}
           className="w-full h-auto object-cover object-center block"
         />
       </Link>

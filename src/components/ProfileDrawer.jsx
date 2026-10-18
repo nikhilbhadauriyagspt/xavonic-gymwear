@@ -1178,7 +1178,7 @@ export default function ProfileDrawer() {
                           setProfileForm({ ...profileForm, email: e.target.value });
                           setIsEmailOtpSent(false);
                         }}
-                        placeholder="Enter email (e.g. athlete@guidelya.com)"
+                        placeholder="Enter email (e.g. athlete@ragex.com)"
                         className={`w-full border px-3 py-1.5 text-xs rounded-sm focus:outline-none ${
                           user.emailVerified
                             ? 'bg-zinc-100/80 border-zinc-200 text-zinc-800 cursor-not-allowed'

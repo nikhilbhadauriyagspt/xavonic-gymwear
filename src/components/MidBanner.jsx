@@ -6,7 +6,7 @@ import { getPublicBanners } from '../services/bannerService';
 export default function MidBanner() {
   const [banner, setBanner] = useState({
     image_url: midBannerImg,
-    title: 'Nothing Fits Like Xavonic - Gear That Moves With You',
+    title: 'Nothing Fits Like RageX - Gear That Moves With You',
     link_url: '/collections',
   });
 
@@ -27,7 +27,7 @@ export default function MidBanner() {
       <Link to={banner.link_url || '/collections'} className="relative w-full block">
         <img
           src={banner.image_url || midBannerImg}
-          alt={banner.title || 'Nothing Fits Like Xavonic - Gear That Moves With You'}
+          alt={banner.title || 'Nothing Fits Like RageX - Gear That Moves With You'}
           className="w-full h-auto object-cover sm:object-contain object-center block"
         />
 

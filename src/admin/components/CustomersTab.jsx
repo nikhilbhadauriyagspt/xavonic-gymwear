@@ -181,7 +181,7 @@ export default function CustomersTab() {
                       {/* ID */}
                       <td className="py-3 px-3.5 font-mono text-[11px]">
                         <span className="font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded-xs border border-neutral-200">
-                          {c.customer_id || `GDL-${String(c.id).padStart(5, '0')}`}
+                          {c.customer_id || `RGX-${String(c.id).padStart(5, '0')}`}
                         </span>
                       </td>
 

@@ -145,7 +145,7 @@ export default function AuthDrawer() {
             <div className="hidden md:flex md:col-span-5 bg-black text-white flex-col justify-between p-8 sm:p-10 select-none border-r border-zinc-900">
               {/* Top: Logo */}
               <div>
-                <img src={logoWhite} alt="Guidelya" className="h-8 w-auto object-contain" />
+                <img src={logoWhite} alt="RageX" className="h-8 w-auto object-contain" />
               </div>
 
               {/* Bottom: Understated Brand Ethos */}
@@ -180,7 +180,7 @@ export default function AuthDrawer() {
 
                 {/* Mobile Header Logo */}
                 <div className="md:hidden mb-4 flex items-center justify-between pb-2 border-b border-zinc-100">
-                  <img src={logoBlack} alt="Guidelya" className="h-5 w-auto" />
+                  <img src={logoBlack} alt="RageX" className="h-5 w-auto" />
                   <span className="text-[10px] uppercase tracking-widest text-zinc-400">Account Access</span>
                 </div>
 
@@ -382,7 +382,7 @@ export default function AuthDrawer() {
 
                 {/* Discreet Footer Note */}
                 <div className="pt-4 text-center text-[10px] text-zinc-400 font-light">
-                  <span>By continuing, you agree to Guidelya's <a href="#" className="underline text-zinc-500 hover:text-black">Terms</a> & <a href="#" className="underline text-zinc-500 hover:text-black">Privacy</a>.</span>
+                  <span>By continuing, you agree to RageX's <a href="#" className="underline text-zinc-500 hover:text-black">Terms</a> & <a href="#" className="underline text-zinc-500 hover:text-black">Privacy</a>.</span>
                 </div>
 
               </div>

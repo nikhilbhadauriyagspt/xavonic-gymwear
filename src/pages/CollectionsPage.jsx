@@ -45,8 +45,8 @@ export default function CollectionsPage() {
   const location = useLocation();
   const { addToCart, openCart } = useCart();
 
-  const [allProductsList, setAllProductsList] = useState(fallbackProducts);
-  const [categoriesList, setCategoriesList] = useState(fallbackCategories);
+  const [allProductsList, setAllProductsList] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,8 +58,8 @@ export default function CollectionsPage() {
           fetchLiveCategories(),
         ]);
         if (isMounted) {
-          if (prods && prods.length > 0) setAllProductsList(prods);
-          if (cats && cats.length > 0) setCategoriesList(cats);
+          setAllProductsList(Array.isArray(prods) ? prods : []);
+          setCategoriesList(Array.isArray(cats) ? cats : []);
         }
       } catch (err) {
         console.warn('Could not fetch live collections data:', err);
@@ -92,7 +92,7 @@ export default function CollectionsPage() {
 
   // Clean list of display categories on main /collections page
   const displayCategories = useMemo(() => {
-    if (!categoriesList || categoriesList.length === 0) return fallbackCategories;
+    if (!categoriesList || categoriesList.length === 0) return [];
     
     // Filter out root containers 'men' and 'women' if item_types exist, so each grid card is a specific fit category
     const itemTypes = categoriesList.filter(c => c.slug !== 'men' && c.slug !== 'women');
@@ -104,7 +104,7 @@ export default function CollectionsPage() {
     return categoriesList.find(c => c.slug === effectiveSlug) || {
       slug: effectiveSlug,
       title: effectiveSlug.replace(/-/g, ' ').toUpperCase(),
-      subtitle: 'Xavonic Activewear Collection',
+      subtitle: 'RageX Activewear Collection',
       itemCount: 'Available Fits',
       desc: 'Engineered activewear collection for athletic performance and aesthetics.'
     };
@@ -120,7 +120,7 @@ export default function CollectionsPage() {
         (p.category && p.category.toLowerCase() === effectiveSlug) ||
         (p.category_slug && p.category_slug.toLowerCase() === effectiveSlug)
       );
-      if (filtered.length > 0) return sortList(filtered, sortBy);
+      return sortList(filtered, sortBy);
     }
 
     // Check if effectiveSlug is a subcategory (e.g. 'men-t-shirts' or 'men-lowers-bottoms')
@@ -135,15 +135,10 @@ export default function CollectionsPage() {
       targetSlugs = [...targetSlugs, ...childSlugs];
     }
 
-    let list = allProductsList.filter(p => 
+    const list = allProductsList.filter(p => 
       targetSlugs.includes(p.category) || 
       targetSlugs.includes(p.category_slug)
     );
-    
-    // Fallback if specific category has no products
-    if (list.length === 0) {
-      list = allProductsList.slice(0, 8);
-    }
 
     return sortList(list, sortBy);
   }, [effectiveSlug, sortBy, allProductsList, categoriesList]);

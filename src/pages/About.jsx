@@ -9,19 +9,19 @@ export default function About() {
 
   const faqs = content?.about_faqs || [
     {
-      q: 'What makes Xavonic an affordable gym wear brand in India?',
-      a: 'Xavonic cuts out unnecessary retail markups by focusing on direct, performance-first manufacturing. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at an honest price.'
+      q: 'What makes RageX an affordable gym wear brand in India?',
+      a: 'RageX cuts out unnecessary retail markups by focusing on direct, performance-first manufacturing. You get gym wear with real fabric technology — breathable blends, stretch, moisture-wicking — at an honest price.'
     },
     {
-      q: 'Does Xavonic make gym wear for both men and women?',
-      a: 'Yes. Xavonic offers dedicated athletic wear for both men and women, including compression fits, oversized drops, stringers, and seamless leggings.'
+      q: 'Does RageX make gym wear for both men and women?',
+      a: 'Yes. RageX offers dedicated athletic wear for both men and women, including compression fits, oversized drops, stringers, and seamless leggings.'
     },
     {
       q: "What's the difference between activewear and performance gym wear?",
       a: 'Performance gym wear is built specifically for heavy training — with high-tensile compression support, sweat-wicking capillary knit, and squat-proof flexibility.'
     },
     {
-      q: 'Is Xavonic gym wear suitable for daily streetwear use?',
+      q: 'Is RageX gym wear suitable for daily streetwear use?',
       a: 'Yes. Our drop-cut tops, heavyweight oversized tees, and tactical joggers transition seamlessly into everyday streetwear.'
     }
   ];

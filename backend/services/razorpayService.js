@@ -22,7 +22,7 @@ async function getRazorpayConfig(forceRefresh = false) {
     key_id: process.env.RAZORPAY_KEY_ID || '',
     key_secret: process.env.RAZORPAY_KEY_SECRET || '',
     webhook_secret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
-    account_name: 'Guidelya Activewear',
+    account_name: 'RageX Activewear',
     theme_color: '#09090b',
   };
 
@@ -90,7 +90,7 @@ async function createRazorpayOrder(amountInRupees, receiptId, notes = {}) {
     payment_capture: 1, // Auto-capture payment on success
     notes: {
       ...notes,
-      source: 'guidelya_native_checkout',
+      source: 'ragex_native_checkout',
     },
   };
 

@@ -23,7 +23,7 @@ exports.getPaymentConfig = async (req, res) => {
         enabled: config.enabled !== false,
         key_id: config.key_id || '',
         mode: config.mode || 'test',
-        account_name: brand.brand_name || config.account_name || 'Guidelya Activewear',
+        account_name: brand.brand_name || config.account_name || 'RageX Activewear',
         theme_color: config.theme_color || '#09090b',
       },
     });
@@ -115,7 +115,7 @@ exports.verifyPaymentAndPlaceOrder = async (req, res) => {
       const paymentMethod = orderInfo.paymentMethod || orderInfo.payment_method || 'Prepaid Online (Razorpay)';
       const notes = orderInfo.notes || '';
 
-      const orderNumber = `GDL-${Math.floor(100000 + Math.random() * 900000)}`;
+      const orderNumber = `RGX-${Math.floor(100000 + Math.random() * 900000)}`;
       const trackingNumber = `DEL-${Math.floor(100000000 + Math.random() * 900000000)}`;
       const courierPartner = 'Delhivery';
 

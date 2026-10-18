@@ -206,7 +206,7 @@ export default function Header() {
     menus['Men'] = {
       name: 'Men',
       slug: 'men',
-      categories: menSubs.length > 0 ? menSubs.map(sub => ({
+      categories: menSubs.map(sub => ({
         id: sub.id,
         title: sub.name,
         slug: sub.slug,
@@ -217,29 +217,7 @@ export default function Header() {
             slug: item.slug,
             path: `/collections/${item.slug}`
           }))
-      })) : [
-        {
-          title: 'Gym T-Shirts & Tops',
-          slug: 'men-t-shirts',
-          items: [
-            { name: 'Compression T-Shirts', slug: 'compression', path: '/collections/compression' },
-            { name: 'Oversized T-Shirts', slug: 'oversized', path: '/collections/oversized' },
-            { name: 'Drop Cut T-Shirts', slug: 'drop-cut', path: '/collections/drop-cut' },
-            { name: 'Tanks & Stringers', slug: 'tanks', path: '/collections/tanks' },
-            { name: 'Acid Wash Collection', slug: 'acid-wash', path: '/collections/acid-wash' },
-          ]
-        },
-        {
-          title: 'Gym Lowers & Bottoms',
-          slug: 'men-lowers-bottoms',
-          items: [
-            { name: 'Gym Lowers & Joggers', slug: 'lowers', path: '/collections/lowers' },
-            { name: 'Athletic Trackpants', slug: 'trackpants', path: '/collections/trackpants' },
-            { name: '5" Training Shorts', slug: 'shorts', path: '/collections/shorts' },
-            { name: 'Cargo Gym Lowers', slug: 'cargo-lowers', path: '/collections/cargo-lowers' },
-          ]
-        }
-      ],
+      })),
       featuredCard: {
         title: 'Acid Wash Drop',
         desc: 'Heavyweight pump cover essentials engineered for performance.',
@@ -256,7 +234,7 @@ export default function Header() {
     menus['Women'] = {
       name: 'Women',
       slug: 'women',
-      categories: womenSubs.length > 0 ? womenSubs.map(sub => ({
+      categories: womenSubs.map(sub => ({
         id: sub.id,
         title: sub.name,
         slug: sub.slug,
@@ -267,35 +245,7 @@ export default function Header() {
             slug: item.slug,
             path: `/collections/${item.slug}`
           }))
-      })) : [
-        {
-          title: 'Activewear Tops',
-          slug: 'women-tops',
-          items: [
-            { name: 'High Impact Sports Bras', slug: 'sports-bras', path: '/collections/sports-bras' },
-            { name: 'Seamless Ribbed Tanks', slug: 'ribbed-tanks', path: '/collections/ribbed-tanks' },
-            { name: 'Oversized Pump Covers', slug: 'women-oversized', path: '/collections/women-oversized' },
-          ]
-        },
-        {
-          title: 'Bottoms & Leggings',
-          slug: 'women-bottoms',
-          items: [
-            { name: 'Seamless Squat Leggings', slug: 'squat-leggings', path: '/collections/squat-leggings' },
-            { name: 'Contour Sculpt Shorts', slug: 'contour-shorts', path: '/collections/contour-shorts' },
-            { name: 'Aesthetic Flared Pants', slug: 'flared-pants', path: '/collections/flared-pants' },
-          ]
-        },
-        {
-          title: 'Co-ords & Outerwear',
-          slug: 'women-outerwear',
-          items: [
-            { name: 'Matching Gym Co-ord Sets', slug: 'coord-sets', path: '/collections/coord-sets' },
-            { name: 'Zip-up Gym Jackets', slug: 'gym-jackets', path: '/collections/gym-jackets' },
-            { name: 'Cropped Fleece Hoodies', slug: 'cropped-hoodies', path: '/collections/cropped-hoodies' },
-          ]
-        }
-      ],
+      })),
       featuredCard: {
         title: 'Seamless Sculpt',
         desc: 'Zero distraction, 100% squat-proof aesthetic activewear.',
@@ -390,7 +340,7 @@ export default function Header() {
             <Link to="/" className="flex items-center shrink-0 py-1">
               <img 
                 src={isScrolled ? (customLogos.black || logoBlack) : (customLogos.white || logoWhite)} 
-                alt={customLogos.name || "Xavonic Athletics"} 
+                alt={customLogos.name || "RageX Athletics"} 
                 className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-all duration-300"
               />
             </Link>

@@ -14,7 +14,7 @@ async function syncToRailway() {
   });
   console.log('✅ Connected to Railway MySQL successfully!');
 
-  const sqlPath = path.join(__dirname, '..', 'database', 'guidelya_db.sql');
+  const sqlPath = path.join(__dirname, '..', 'database', 'ragex_db.sql');
   const rawSql = fs.readFileSync(sqlPath, 'utf8');
 
   // Split queries by semicolon outside comments

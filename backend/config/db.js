@@ -2,10 +2,12 @@ const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_USER = process.env.DB_USER || 'root';
-const DB_PASSWORD = process.env.DB_PASSWORD || '';
-const DB_NAME = process.env.DB_NAME || 'guidelya_db';
+const isLocalWindows = process.platform === 'win32';
+
+const DB_HOST = process.env.DB_HOST || (isLocalWindows ? 'localhost' : '127.0.0.1');
+const DB_USER = process.env.DB_USER || (isLocalWindows ? 'root' : 'u972191545_ragex_user');
+const DB_PASSWORD = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (isLocalWindows ? '' : 'dG~iLqh6#H');
+const DB_NAME = process.env.DB_NAME || (isLocalWindows ? 'ragex_db' : 'u972191545_ragex_db');
 const DB_PORT = Number(process.env.DB_PORT) || 3306;
 const DB_SSL = process.env.DB_SSL === 'true' || (DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1');
 
@@ -27,8 +29,8 @@ const poolConfig = {
 // 2. MySQL Connection Pool for the application
 const pool = mysql.createPool(poolConfig);
 
-// 3. Initial connection to create database if on localhost
-if (DB_HOST === 'localhost' || DB_HOST === '127.0.0.1') {
+// 3. Initial connection to create database if on localhost root, otherwise directly initialize tables
+if ((DB_HOST === 'localhost' || DB_HOST === '127.0.0.1') && DB_USER === 'root') {
   const initialConnection = mysql.createConnection({
     host: DB_HOST,
     user: DB_USER,
@@ -51,15 +53,15 @@ if (DB_HOST === 'localhost' || DB_HOST === '127.0.0.1') {
           console.error(`❌ Error creating database ${DB_NAME}:`, dbErr.message);
         } else {
           console.log(`📦 phpMyAdmin Database verified/created: [ ${DB_NAME} ]`);
-          initDatabaseTables();
         }
+        initDatabaseTables();
         initialConnection.end();
       }
     );
   });
 } else {
-  // Remote Cloud Database (Render / Aiven / Railway)
-  console.log(`🌐 Connecting to Cloud MySQL Database: ${DB_HOST}:${DB_PORT} [${DB_NAME}] (SSL: ${DB_SSL ? 'Active' : 'Off'})...`);
+  // Hostinger / Remote Cloud Database (database already exists in hPanel)
+  console.log(`🌐 Connecting to MySQL Database: ${DB_HOST}:${DB_PORT} [${DB_NAME}] (User: ${DB_USER})...`);
   initDatabaseTables();
 }
 
@@ -139,6 +141,8 @@ function initDatabaseTables() {
       subtitle VARCHAR(255) NULL,
       sort_order INT DEFAULT 0,
       status ENUM('active', 'inactive') DEFAULT 'active',
+      show_in_dual_section TINYINT(1) DEFAULT 0,
+      kicker_title VARCHAR(150) DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -475,9 +479,18 @@ function initDatabaseTables() {
         await promisePool.query('ALTER TABLE products ADD COLUMN size_stock_json JSON NULL AFTER stock');
       } catch (_) {}
 
+      // Auto-migrate categories table for dual section and kicker title
+      try {
+        await promisePool.query('ALTER TABLE categories ADD COLUMN show_in_dual_section TINYINT(1) DEFAULT 0 AFTER status');
+      } catch (_) {}
+
+      try {
+        await promisePool.query('ALTER TABLE categories ADD COLUMN kicker_title VARCHAR(150) DEFAULT NULL AFTER show_in_dual_section');
+      } catch (_) {}
+
       seedDefaultAdmin(promisePool);
       seedDefaultSettings(promisePool);
-      seedDefaultCategories(promisePool);
+      // seedDefaultCategories(promisePool);
       seedDefaultBanners(promisePool);
     })
     .catch((tableErr) => {
@@ -520,7 +533,7 @@ async function seedDefaultSettings(promisePool) {
       { key: 'whatsapp_meta_token', value: '' },
       { key: 'whatsapp_phone_number_id', value: '' },
       { key: 'whatsapp_waba_id', value: '' },
-      { key: 'whatsapp_template_name', value: 'guidelya_otp_auth' },
+      { key: 'whatsapp_template_name', value: 'ragex_otp_auth' },
 
       // Nodemailer SMTP Email Settings
       { key: 'smtp_mode', value: 'test' }, // 'test' | 'live'
@@ -529,7 +542,7 @@ async function seedDefaultSettings(promisePool) {
       { key: 'smtp_secure', value: 'true' },
       { key: 'smtp_user', value: '' },
       { key: 'smtp_pass', value: '' },
-      { key: 'smtp_sender_name', value: 'Guidelya Athletics' },
+      { key: 'smtp_sender_name', value: 'RageX Athletics' },
     ];
 
     for (const item of defaultSettings) {
@@ -615,7 +628,7 @@ async function seedDefaultBanners(promisePool) {
 
     const defaultBanners = [
       {
-        title: 'Guidelya Xtreme Compression Gymwear',
+        title: 'RageX Xtreme Compression Gymwear',
         subtitle: 'Second-Skin Ultra Flex Performance',
         slot: 'hero',
         image_url: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=1600&q=85',
@@ -648,7 +661,7 @@ async function seedDefaultBanners(promisePool) {
         status: 'active',
       },
       {
-        title: 'Nothing Fits Like Xavonic',
+        title: 'Nothing Fits Like RageX',
         subtitle: 'Gear That Moves With You',
         slot: 'mid_banner',
         image_url: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=85',

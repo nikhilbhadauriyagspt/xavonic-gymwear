@@ -15,7 +15,7 @@ async function getSmtpSettings() {
       secure: 'true',
       user: '',
       pass: '',
-      sender_name: 'Guidelya Athletics',
+      sender_name: 'RageX Athletics',
     };
 
     rows.forEach((r) => {
@@ -40,7 +40,7 @@ async function sendEmailOtp(toEmail, otp) {
   const settings = await getSmtpSettings();
   const { getBrandSettings } = require('./brandService');
   const brand = await getBrandSettings();
-  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandName = brand.brand_name || 'RageX Activewear';
   const brandTagline = brand.brand_tagline || 'Engineered for Performance. Cut for Aesthetics.';
 
   console.log(`\n======================================================`);
@@ -89,7 +89,7 @@ async function sendEmailOtp(toEmail, otp) {
             </p>
           </div>
           <div style="background-color: #fafafa; border-top: 1px solid #f0f0f0; padding: 16px; text-align: center; font-size: 10px; color: #a3a3a3;">
-            ${brandName} • ${brand.support_email || 'support@guidelya.com'}
+            ${brandName} • ${brand.support_email || 'support@ragex.com'}
           </div>
         </div>
       `;
@@ -142,7 +142,7 @@ async function sendOrderInvoiceEmail(orderData) {
   const settings = await getSmtpSettings();
   const { getBrandSettings } = require('./brandService');
   const brand = await getBrandSettings();
-  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandName = brand.brand_name || 'RageX Activewear';
   const brandTagline = brand.brand_tagline || 'Official Order Confirmation & Tax Invoice';
 
   const toEmail = orderData.customer_email || orderData.customerEmail;
@@ -232,7 +232,7 @@ async function sendOrderInvoiceEmail(orderData) {
       </div>
 
       <div style="background-color: #fafafa; border-top: 1px solid #f0f0f0; padding: 16px; text-align: center; font-size: 11px; color: #a3a3a3;">
-        ${brandName} • High Performance Activewear • ${brand.support_email || 'support@guidelya.com'}
+        ${brandName} • High Performance Activewear • ${brand.support_email || 'support@ragex.com'}
       </div>
     </div>
   `;
@@ -271,7 +271,7 @@ async function sendOrderDispatchEmail(orderData) {
   const settings = await getSmtpSettings();
   const { getBrandSettings } = require('./brandService');
   const brand = await getBrandSettings();
-  const brandName = brand.brand_name || 'Guidelya Activewear';
+  const brandName = brand.brand_name || 'RageX Activewear';
 
   const toEmail = orderData.customer_email || orderData.customerEmail;
   if (!toEmail) return { success: false, message: 'No email provided' };
@@ -322,7 +322,7 @@ async function sendOrderDispatchEmail(orderData) {
       </div>
 
       <div style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px; text-align: center; font-size: 11px; color: #94a3b8;">
-        ${brandName} • ${brand.support_email || 'support@guidelya.com'}
+        ${brandName} • ${brand.support_email || 'support@ragex.com'}
       </div>
     </div>
   `;

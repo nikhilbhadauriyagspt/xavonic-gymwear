@@ -10,7 +10,7 @@ import { allProducts as fallbackProducts } from '../data/productsData';
 export default function MostLovedProducts() {
   const { addToCart, openCart } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
-  const [productsList, setProductsList] = useState(fallbackProducts);
+  const [productsList, setProductsList] = useState([]);
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [quickViewSize, setQuickViewSize] = useState('L');
   const [quickViewQty, setQuickViewQty] = useState(1);
@@ -25,7 +25,7 @@ export default function MostLovedProducts() {
     async function loadData() {
       try {
         const live = await fetchLiveProducts();
-        if (isMounted && live && live.length > 0) {
+        if (isMounted && Array.isArray(live)) {
           // Sort by highest rating and reviews
           const sorted = [...live].sort((a, b) => (b.rating * 100 + (b.reviewsCount || 0)) - (a.rating * 100 + (a.reviewsCount || 0)));
           setProductsList(sorted);
@@ -73,6 +73,10 @@ export default function MostLovedProducts() {
   const closeQuickView = () => {
     setQuickViewProduct(null);
   };
+
+  if (productsList.length === 0) {
+    return null;
+  }
 
   return (
     <section className="w-full bg-white text-zinc-950 py-14 sm:py-20 px-4 sm:px-8 lg:px-12 border-b border-zinc-200 select-none font-sans">

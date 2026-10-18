@@ -113,14 +113,14 @@ export async function fetchLiveProducts() {
     if (res.ok) {
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.products || data.data || []);
-      if (Array.isArray(list) && list.length > 0) {
+      if (Array.isArray(list)) {
         return list.map(normalizeProduct);
       }
     }
   } catch (err) {
-    console.warn('Backend products fetch warning (using fallback data):', err.message);
+    console.warn('Backend products fetch warning:', err.message);
   }
-  return fallbackProducts.map(normalizeProduct);
+  return [];
 }
 
 export const getAllProducts = fetchLiveProducts;
@@ -138,12 +138,8 @@ export async function fetchLiveProductBySlugOrId(slugOrId) {
   } catch (err) {
     console.warn(`Backend product ${slugOrId} fetch warning:`, err.message);
   }
-  
-  // Fallback to local
-  const found = fallbackProducts.find(
-    (p) => String(p.id) === String(slugOrId) || p.slug === slugOrId
-  );
-  return found ? normalizeProduct(found) : normalizeProduct(fallbackProducts[0]);
+
+  return null;
 }
 
 export async function fetchLiveCategories(params = '') {
@@ -153,14 +149,14 @@ export async function fetchLiveCategories(params = '') {
     if (res.ok) {
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.categories || data.data || []);
-      if (Array.isArray(list) && list.length > 0) {
+      if (Array.isArray(list)) {
         return list;
       }
     }
   } catch (err) {
     console.warn('Backend categories fetch warning:', err.message);
   }
-  return fallbackCategories;
+  return [];
 }
 
 export async function fetchDualFeaturedCategories() {
@@ -169,7 +165,7 @@ export async function fetchDualFeaturedCategories() {
     if (res.ok) {
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.categories || data.data || []);
-      if (Array.isArray(list) && list.length > 0) {
+      if (Array.isArray(list)) {
         return list;
       }
     }
@@ -177,7 +173,5 @@ export async function fetchDualFeaturedCategories() {
     console.warn('Dual featured categories fetch warning:', err.message);
   }
 
-  // Fallback to categories marked with show_in_dual_section or top 2
-  const fallback = fallbackCategories.slice(0, 2);
-  return fallback;
+  return [];
 }

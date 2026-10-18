@@ -6,7 +6,7 @@ async function cleanDatabase() {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'guidelya_db',
+    database: process.env.DB_NAME || 'ragex_db',
     port: process.env.DB_PORT || 3306,
   });
 
@@ -14,7 +14,7 @@ async function cleanDatabase() {
 
   // Delete all users and reset auto-increment
   await connection.query('TRUNCATE TABLE users;');
-  console.log('✅ Cleared table: [ users ] (Fresh IDs will start from 1: GDL-00001)');
+  console.log('✅ Cleared table: [ users ] (Fresh IDs will start from 1: RGX-00001)');
 
   // Clear all OTP records
   await connection.query('TRUNCATE TABLE otp_verifications;');

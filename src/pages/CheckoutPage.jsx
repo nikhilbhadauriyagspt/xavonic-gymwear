@@ -138,7 +138,7 @@ export default function CheckoutPage() {
   const [razorpayConfig, setRazorpayConfig] = useState({
     enabled: true,
     key_id: '',
-    brand_name: 'Guidelya Activewear',
+    brand_name: 'RageX Activewear',
     theme_color: '#171717',
   });
 
@@ -607,7 +607,7 @@ export default function CheckoutPage() {
 
     const payload = {
       user_id: user?.dbId || (typeof user?.id === 'number' ? user.id : null),
-      customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `GDL-${user?.dbId || '9842'}`),
+      customer_id: user?.customerId || (typeof user?.id === 'string' ? user.id : `RGX-${user?.dbId || '9842'}`),
       customer_name: selectedAddr.name || user?.name || 'Customer',
       customer_email: contactEmail || user?.email || '',
       customer_phone: selectedAddr.phone || contactPhone || user?.phone || '',
@@ -679,7 +679,7 @@ export default function CheckoutPage() {
           key: razorpayConfig.key_id,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency || 'INR',
-          name: razorpayConfig.brand_name || brand?.brand_name || 'Guidelya Activewear',
+          name: razorpayConfig.brand_name || brand?.brand_name || 'RageX Activewear',
           description: `Checkout Order (${cartItems.length} items)`,
           image: brand?.logo_black || '/logo.png',
           order_id: razorpayOrder.id,
@@ -857,7 +857,7 @@ export default function CheckoutPage() {
           {/* Action Buttons */}
           <div className="pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-[11px] text-neutral-400">
-              Need help with this order? Email us at <span className="text-neutral-800 font-medium">support@guidelya.com</span>
+              Need help with this order? Email us at <span className="text-neutral-800 font-medium">support@ragex.com</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -918,7 +918,7 @@ export default function CheckoutPage() {
             </button>
             <span className="text-neutral-300">|</span>
             <Link to="/" className="text-sm font-semibold tracking-tighter uppercase text-neutral-950">
-              XAVONIC <span className="text-[10px] font-normal text-neutral-400">CHECKOUT</span>
+              RAGEX <span className="text-[10px] font-normal text-neutral-400">CHECKOUT</span>
             </Link>
           </div>
 
@@ -1025,7 +1025,7 @@ export default function CheckoutPage() {
                     type="email"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    placeholder="athlete@xavonic.com"
+                    placeholder="athlete@ragex.com"
                     className="h-10 w-full border border-neutral-300 px-3 text-xs outline-none focus:border-neutral-900"
                   />
                 </div>

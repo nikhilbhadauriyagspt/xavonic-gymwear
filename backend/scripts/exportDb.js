@@ -8,7 +8,7 @@ async function runExport() {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'guidelya_db',
+    database: process.env.DB_NAME || 'ragex_db',
     port: Number(process.env.DB_PORT) || 3306,
   });
 
@@ -26,11 +26,11 @@ async function runExport() {
     'otp_verifications',
   ];
 
-  let dump = `-- GUIDELYA COMPLETE DATABASE BACKUP
+  let dump = `-- RAGEX COMPLETE DATABASE BACKUP
 -- Created at: ${new Date().toISOString()}
 
-CREATE DATABASE IF NOT EXISTS \`guidelya_db\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE \`guidelya_db\`;
+CREATE DATABASE IF NOT EXISTS \`ragex_db\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE \`ragex_db\`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -71,7 +71,7 @@ SET FOREIGN_KEY_CHECKS = 0;
   const outDir = path.join(__dirname, '../database');
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 
-  const outFile = path.join(outDir, 'guidelya_db_backup.sql');
+  const outFile = path.join(outDir, 'ragex_db_backup.sql');
   fs.writeFileSync(outFile, dump, 'utf8');
 
   console.log(`✅ SQL Backup generated at: ${outFile} (${(dump.length / 1024).toFixed(2)} KB)`);

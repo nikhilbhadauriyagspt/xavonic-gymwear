@@ -6,7 +6,7 @@ async function directMigrate() {
     host: 'localhost',
     user: 'root',
     password: '',
-    database: 'guidelya_db',
+    database: 'ragex_db',
   });
 
   console.log('⏳ Connecting to Railway Cloud MySQL (Target)...');
