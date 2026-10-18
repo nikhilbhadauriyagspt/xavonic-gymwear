@@ -136,7 +136,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
         <div className="flex items-center gap-2">
           {/* Gender Filter */}
           <div className="flex items-center border border-neutral-200 rounded-sm p-0.5 bg-neutral-50 text-[11px]">
-            {['ALL', 'Men', 'Women'].map((g) => (
+            {['ALL', 'Men', 'Women', 'Unisex'].map((g) => (
               <button
                 key={g}
                 onClick={() => setGenderFilter(g)}
@@ -148,18 +148,6 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
               </button>
             ))}
           </div>
-
-          {/* Level Filter */}
-          <select
-            value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value)}
-            className="bg-neutral-50 border border-neutral-200 rounded-sm px-2.5 py-1.5 text-[11px] text-neutral-800 outline-none"
-          >
-            <option value="ALL">All Levels</option>
-            <option value="main">Main (Root)</option>
-            <option value="sub">Sub Category</option>
-            <option value="item_type">Item Type (Drop)</option>
-          </select>
         </div>
       </div>
 
@@ -168,14 +156,14 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
         {loading ? (
           <div className="p-12 flex flex-col items-center justify-center gap-2 text-neutral-400">
             <RefreshCw className="w-5 h-5 animate-spin text-neutral-900" />
-            <span className="text-xs font-medium">Loading Cloudinary & MySQL categories...</span>
+            <span className="text-xs font-medium">Loading categories...</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center space-y-2">
             <Layers className="w-8 h-8 text-neutral-300 mx-auto" />
             <h4 className="text-xs font-semibold text-neutral-800">No Categories Found</h4>
             <p className="text-[11px] text-neutral-400">
-              Create your first category hierarchy using the "Add Category" button.
+              Create your first category using the &ldquo;Add Category&rdquo; button above.
             </p>
           </div>
         ) : (
@@ -184,11 +172,11 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
               <thead>
                 <tr className="border-b border-neutral-200 bg-neutral-50/70 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
                   <th className="py-2.5 px-3.5">Banner Image</th>
-                  <th className="py-2.5 px-3.5">Category Name & Hierarchy</th>
-                  <th className="py-2.5 px-3.5">Slug</th>
-                  <th className="py-2.5 px-3.5">Level</th>
+                  <th className="py-2.5 px-3.5">Category Name</th>
+                  <th className="py-2.5 px-3.5">URL Slug</th>
+                  <th className="py-2.5 px-3.5">Menu Group</th>
                   <th className="py-2.5 px-3.5">Gender</th>
-                  <th className="py-2.5 px-3.5">Home Dual Slider</th>
+                  <th className="py-2.5 px-3.5">Home Product Slider</th>
                   <th className="py-2.5 px-3.5">Title Overlay</th>
                   <th className="py-2.5 px-3.5">Status</th>
                   <th className="py-2.5 px-3.5 text-right">Actions</th>
@@ -212,7 +200,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
                             target="_blank"
                             rel="noreferrer"
                             className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
-                            title="View full Cloudinary image"
+                            title="View full image"
                           >
                             <ExternalLink className="w-3 h-3" />
                           </a>
@@ -224,21 +212,15 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
                       )}
                     </td>
 
-                    {/* Name & Hierarchy Path */}
+                    {/* Name & Subtitle */}
                     <td className="py-2.5 px-3.5">
                       <div className="space-y-0.5">
                         <div className="font-semibold text-neutral-900 text-xs flex items-center gap-1.5">
                           <span>{cat.name}</span>
                         </div>
-                        {cat.parent_name && (
-                          <div className="text-[10px] text-neutral-400 flex items-center gap-1">
-                            <span>Under:</span>
-                            <span className="font-medium text-neutral-700">{cat.parent_name}</span>
-                          </div>
-                        )}
                         {cat.subtitle && (
                           <div className="text-[10px] text-neutral-400 italic">
-                            "{cat.subtitle}"
+                            &ldquo;{cat.subtitle}&rdquo;
                           </div>
                         )}
                       </div>
@@ -249,22 +231,16 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
                       /{cat.slug}
                     </td>
 
-                    {/* Level */}
+                    {/* Menu Group */}
                     <td className="py-2.5 px-3.5">
-                      <span className={`inline-flex px-1.5 py-0.2 rounded-xs text-[10px] font-semibold uppercase tracking-wider border ${
-                        cat.level === 'main'
-                          ? 'bg-purple-50 text-purple-700 border-purple-200'
-                          : cat.level === 'sub'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : 'bg-neutral-100 text-neutral-700 border-neutral-200'
-                      }`}>
-                        {cat.level === 'item_type' ? 'Item Drop' : cat.level}
+                      <span className="inline-flex px-2 py-0.5 rounded-xs text-[10px] font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200">
+                        {cat.kicker_title || 'Collections'}
                       </span>
                     </td>
 
                     {/* Gender */}
                     <td className="py-2.5 px-3.5">
-                      <span className="font-medium text-neutral-700 text-xs">
+                      <span className="font-semibold text-neutral-800 text-xs">
                         {cat.gender_target}
                       </span>
                     </td>

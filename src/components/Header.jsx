@@ -188,81 +188,82 @@ export default function Header() {
 
   // 3. Build Dynamic Mega Menu & Navigation Structure from Live Categories Tree
   const { navLinks, megaMenus } = useMemo(() => {
-    const mainCats = categoriesList.filter(c => c.level === 'main' || !c.parent_id);
-    const subCats = categoriesList.filter(c => c.level === 'sub');
-    const itemTypes = categoriesList.filter(c => c.level === 'item_type');
+    const activeCats = categoriesList.filter(
+      (c) => (!c.status || c.status === 'active') && c.level !== 'main' && c.level !== 'sub'
+    );
 
-    const menus = {};
-    const links = [];
+    const buildGenderGroups = (gender) => {
+      const genderCats = activeCats.filter(
+        (c) => c.gender_target === gender || c.gender_target === 'Unisex'
+      );
+      const groupsMap = new Map();
 
-    // Fallback data if categories haven't loaded yet
-    const menImage = categoriesList.find(c => c.slug === 'men')?.image_url || 'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805028/guidelya/products/fytbuv7tb2t6q5lkfukh.jpg';
-    const womenImage = categoriesList.find(c => c.slug === 'women')?.image_url || 'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805017/guidelya/products/jar1kslgtpww9gjudcro.jpg';
+      genderCats.forEach((cat) => {
+        const groupTitle = (cat.kicker_title || cat.parent_name || 'Collections').trim();
+        if (!groupsMap.has(groupTitle)) {
+          groupsMap.set(groupTitle, []);
+        }
+        groupsMap.get(groupTitle).push({
+          name: cat.name,
+          slug: cat.slug,
+          path: `/collections/${cat.slug}`,
+        });
+      });
 
-    // Populate Men mega menu
-    const menMain = mainCats.find(c => c.slug === 'men') || { id: 1, name: 'Men', slug: 'men' };
-    const menSubs = subCats.filter(c => c.parent_id === menMain.id || c.gender_target === 'Men');
-    
-    menus['Men'] = {
-      name: 'Men',
-      slug: 'men',
-      categories: menSubs.map(sub => ({
-        id: sub.id,
-        title: sub.name,
-        slug: sub.slug,
-        items: itemTypes
-          .filter(item => item.parent_id === sub.id)
-          .map(item => ({
-            name: item.name,
-            slug: item.slug,
-            path: `/collections/${item.slug}`
-          }))
-      })),
-      featuredCard: {
-        title: 'Acid Wash Drop',
-        desc: 'Heavyweight pump cover essentials engineered for performance.',
-        cta: 'Explore Men Collection',
-        path: '/collections/men',
-        image: menImage
-      }
+      return Array.from(groupsMap.entries()).map(([title, items], idx) => ({
+        id: `${gender.toLowerCase()}-grp-${idx}`,
+        title,
+        slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        items,
+      }));
     };
 
-    // Populate Women mega menu
-    const womenMain = mainCats.find(c => c.slug === 'women') || { id: 2, name: 'Women', slug: 'women' };
-    const womenSubs = subCats.filter(c => c.parent_id === womenMain.id || c.gender_target === 'Women');
+    const menGroups = buildGenderGroups('Men');
+    const womenGroups = buildGenderGroups('Women');
 
-    menus['Women'] = {
-      name: 'Women',
-      slug: 'women',
-      categories: womenSubs.map(sub => ({
-        id: sub.id,
-        title: sub.name,
-        slug: sub.slug,
-        items: itemTypes
-          .filter(item => item.parent_id === sub.id)
-          .map(item => ({
-            name: item.name,
-            slug: item.slug,
-            path: `/collections/${item.slug}`
-          }))
-      })),
-      featuredCard: {
-        title: 'Seamless Sculpt',
-        desc: 'Zero distraction, 100% squat-proof aesthetic activewear.',
-        cta: 'Shop Women Collection',
-        path: '/collections/women',
-        image: womenImage
-      }
+    const menImage =
+      activeCats.find((c) => (c.gender_target === 'Men' || c.gender_target === 'Unisex') && c.image_url)?.image_url ||
+      categoriesList.find((c) => c.slug === 'men')?.image_url ||
+      'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805028/guidelya/products/fytbuv7tb2t6q5lkfukh.jpg';
+    const womenImage =
+      activeCats.find((c) => (c.gender_target === 'Women' || c.gender_target === 'Unisex') && c.image_url)?.image_url ||
+      categoriesList.find((c) => c.slug === 'women')?.image_url ||
+      'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805017/guidelya/products/jar1kslgtpww9gjudcro.jpg';
+
+    const menus = {
+      Men: {
+        name: 'Men',
+        slug: 'men',
+        categories: menGroups,
+        featuredCard: {
+          title: 'Men Performance Line',
+          desc: 'Heavyweight pump cover & compression essentials engineered for performance.',
+          cta: 'Explore Men Collection',
+          path: '/collections/men',
+          image: menImage,
+        },
+      },
+      Women: {
+        name: 'Women',
+        slug: 'women',
+        categories: womenGroups,
+        featuredCard: {
+          title: 'Women Active Line',
+          desc: 'Zero distraction, 100% squat-proof aesthetic activewear.',
+          cta: 'Shop Women Collection',
+          path: '/collections/women',
+          image: womenImage,
+        },
+      },
     };
 
-    // Primary Navigation items list
-    links.push({ name: 'Men', type: 'mega', key: 'Men', path: '/collections/men' });
-    links.push({ name: 'Women', type: 'mega', key: 'Women', path: '/collections/women' });
-    links.push({ name: 'Oversized', type: 'link', path: '/collections/oversized' });
-    links.push({ name: 'Tanks & Stringers', type: 'link', path: '/collections/tanks' });
-    links.push({ name: 'Bestsellers', type: 'link', path: '/bestsellers', isHighlight: true });
-    links.push({ name: 'New Drops', type: 'link', path: '/new-drops' });
-    links.push({ name: 'Collections', type: 'link', path: '/collections' });
+    const links = [
+      { name: 'Men', type: 'mega', key: 'Men', path: '/collections/men' },
+      { name: 'Women', type: 'mega', key: 'Women', path: '/collections/women' },
+      { name: 'Bestsellers', type: 'link', path: '/bestsellers', isHighlight: true },
+      { name: 'New Drops', type: 'link', path: '/new-drops' },
+      { name: 'Collections', type: 'link', path: '/collections' },
+    ];
 
     return { navLinks: links, megaMenus: menus };
   }, [categoriesList]);

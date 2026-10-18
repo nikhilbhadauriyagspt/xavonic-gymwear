@@ -291,62 +291,52 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
               </div>
             </div>
 
-            {/* Hierarchical Dropdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            {/* Gender & Category Selector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700">Main Root (e.g. Men / Women)</label>
-                <select
-                  value={selectedMainCat}
-                  onChange={(e) => {
-                    setSelectedMainCat(e.target.value);
-                    setSelectedSubCat('');
-                    setSelectedItemDrop('');
-                  }}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs"
-                >
-                  <option value="">-- Select Main --</option>
-                  {categories.filter(c => c.level === 'main').map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                <label className="text-[11px] font-medium text-neutral-700">Gender Section</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['Men', 'Women', 'Unisex'].map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGenderTarget(g)}
+                      className={`py-1.5 text-xs font-medium rounded-sm border transition-colors cursor-pointer ${
+                        genderTarget === g
+                          ? 'bg-neutral-900 text-white border-neutral-900'
+                          : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                      }`}
+                    >
+                      {g}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700">Sub-Category (e.g. T-Shirts)</label>
+                <label className="text-[11px] font-medium text-neutral-700">Select Category *</label>
                 <select
-                  value={selectedSubCat}
-                  onChange={(e) => {
-                    setSelectedSubCat(e.target.value);
-                    setSelectedItemDrop('');
-                  }}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs"
-                >
-                  <option value="">-- Select Sub Category --</option>
-                  {categories.filter(c => c.level === 'sub' && (!selectedMainCat || String(c.parent_id) === String(selectedMainCat))).map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700">Sub-Sub Item Type (e.g. Compression)</label>
-                <select
-                  value={selectedItemDrop}
+                  value={selectedItemDrop || categoryId}
                   onChange={(e) => {
                     const selId = e.target.value;
                     setSelectedItemDrop(selId);
-                    const catObj = categories.find(c => String(c.id) === selId);
+                    setCategoryId(selId);
+                    const catObj = categories.find((c) => String(c.id) === selId);
                     if (catObj) {
                       setCategoryName(catObj.name);
                       setCategorySlug(catObj.slug);
                     }
                   }}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-neutral-900"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-neutral-900 outline-none"
                 >
-                  <option value="">-- Select Specific Fit --</option>
-                  {categories.filter(c => c.level === 'item_type' && (!selectedSubCat || String(c.parent_id) === String(selectedSubCat))).map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  <option value="">-- Choose Category --</option>
+                  {categories
+                    .filter((c) => c.level !== 'main')
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.gender_target}{c.kicker_title ? ` • ${c.kicker_title}` : ''})
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>

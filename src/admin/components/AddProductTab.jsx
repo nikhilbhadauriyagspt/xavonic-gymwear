@@ -414,115 +414,42 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
               </div>
             </div>
 
-            {/* 3-Tier Cascading Category Selector */}
-            <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-neutral-50/80 border border-neutral-200 rounded-sm">
-              {/* Main Category */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700 block">
-                  1. Main Category (Root)
-                </label>
-                <select
-                  value={selectedMainCat}
-                  onChange={(e) => {
-                    setSelectedMainCat(e.target.value);
-                    setSelectedSubCat('');
-                    setSelectedItemDrop('');
-                  }}
-                  className="w-full bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-2.5 py-1.5 text-xs text-neutral-900 outline-none"
-                >
-                  <option value="">-- Select Main Category --</option>
-                  {categories.filter(c => c.level === 'main').map((c) => (
+            {/* Single Direct Category Selector (Filtered by Gender) */}
+            <div className="md:col-span-2 space-y-1">
+              <label className="text-[11px] font-medium text-neutral-700 uppercase tracking-wider block">
+                Select Category *
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => {
+                  const sel = categories.find((c) => String(c.id) === e.target.value);
+                  if (sel) {
+                    setCategoryId(sel.id);
+                    setCategoryName(sel.name);
+                    setCategorySlug(sel.slug);
+                    setSelectedItemDrop(sel.id);
+                  }
+                }}
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs font-semibold text-neutral-900 outline-none"
+              >
+                <option value="">-- Choose Category --</option>
+                {categories
+                  .filter(
+                    (c) =>
+                      c.level !== 'main' &&
+                      (c.gender_target === genderTarget || c.gender_target === 'Unisex' || genderTarget === 'Unisex')
+                  )
+                  .map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.gender_target})
+                      {c.name} ({c.gender_target}{c.kicker_title ? ` • ${c.kicker_title}` : ''})
                     </option>
                   ))}
-                </select>
-              </div>
-
-              {/* Sub Category */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700 block">
-                  2. Sub-Category
-                </label>
-                <select
-                  value={selectedSubCat}
-                  onChange={(e) => {
-                    setSelectedSubCat(e.target.value);
-                    setSelectedItemDrop('');
-                  }}
-                  className="w-full bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-2.5 py-1.5 text-xs text-neutral-900 outline-none"
-                >
-                  <option value="">-- Select Sub-Category --</option>
-                  {categories
-                    .filter(c => c.level === 'sub' && (!selectedMainCat || String(c.parent_id) === String(selectedMainCat)))
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              {/* Sub-Sub Item Type */}
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-neutral-700 block">
-                  3. Sub-Sub Item Type (Fit / Drop)
-                </label>
-                <select
-                  value={selectedItemDrop}
-                  onChange={(e) => {
-                    const selId = e.target.value;
-                    setSelectedItemDrop(selId);
-                    const catObj = categories.find(c => String(c.id) === selId);
-                    if (catObj) {
-                      setCategoryId(catObj.id);
-                      setCategoryName(catObj.name);
-                      setCategorySlug(catObj.slug);
-                    }
-                  }}
-                  className="w-full bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-neutral-900 outline-none"
-                >
-                  <option value="">-- Select Specific Fit Drop --</option>
-                  {categories
-                    .filter(c => c.level === 'item_type' && (!selectedSubCat || String(c.parent_id) === String(selectedSubCat)))
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              {/* Or Quick Category Search Selector */}
-              <div className="sm:col-span-3 pt-2 border-t border-neutral-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-[11px] text-neutral-500">
-                  Selected Category: <strong className="text-neutral-900">{categoryName || 'None'}</strong>
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-neutral-400">Search & Select All:</span>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => {
-                      const sel = categories.find(c => String(c.id) === e.target.value);
-                      if (sel) {
-                        setCategoryId(sel.id);
-                        setCategoryName(sel.name);
-                        setCategorySlug(sel.slug);
-                        setSelectedItemDrop(sel.id);
-                      }
-                    }}
-                    className="bg-white border border-neutral-200 rounded-sm px-2 py-1 text-xs text-neutral-800 outline-none"
-                  >
-                    <option value="">-- All Categories List --</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        [{c.gender_target}] {c.level.toUpperCase()} : {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              </select>
+              {categories.length === 0 && (
+                <p className="text-[10px] text-amber-600">
+                  No categories created yet. First add a category in &ldquo;Add Category&rdquo; tab.
+                </p>
+              )}
             </div>
 
             {/* Slug */}
