@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"
@@ -21,7 +21,6 @@
     "mysql2": "^3.24.5",
     "nodemailer": "^10.0.13",
     "razorpay": "^2.9.8",
-    "sqlite3": "^6.0.1",
     "streamifier": "^0.1.1"
   }
 }
