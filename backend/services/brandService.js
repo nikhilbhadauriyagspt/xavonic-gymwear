@@ -16,6 +16,7 @@ async function getBrandSettings(forceRefresh = false) {
     brand_tagline: 'Engineered for Performance. Cut for Aesthetics.',
     logo_white: '',
     logo_black: '',
+    favicon: '',
     support_email: 'support@ragex.com',
     support_phone: '+91 98765 43210',
     office_address: 'RageX Performance Apparel Pvt Ltd, DLF Cyber City, Sector 24, Gurugram, Haryana - 122002',

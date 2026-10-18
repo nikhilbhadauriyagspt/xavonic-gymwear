@@ -517,29 +517,39 @@ exports.saveBrandContent = async (req, res) => {
   }
 };
 
-// 17. Upload Brand Logo directly to Cloudinary & update settings (Admin Protected)
+// 17. Upload Brand Logo or Favicon directly to Cloudinary (with base64 fallback) & update settings (Admin Protected)
 exports.uploadBrandLogo = async (req, res) => {
   try {
     const { uploadToCloudinary } = require('../services/cloudinaryService');
+    const { clearBrandCache } = require('../services/brandService');
     if (!req.file || !req.file.buffer) {
       return res.status(400).json({ success: false, message: 'No image file uploaded.' });
     }
 
-    const { logo_type } = req.body; // 'logo_white' or 'logo_black'
-    const result = await uploadToCloudinary(req.file.buffer, 'ragex/brand');
-    const secureUrl = result.secure_url;
+    const { logo_type } = req.body; // 'logo_white' | 'logo_black' | 'favicon'
+    let secureUrl = '';
 
-    if (logo_type === 'logo_white' || logo_type === 'logo_black') {
+    try {
+      const result = await uploadToCloudinary(req.file.buffer, 'ragex/brand');
+      secureUrl = result.secure_url;
+    } catch (cloudErr) {
+      console.warn('Cloudinary upload fallback to data URL:', cloudErr.message);
+      const mimeType = req.file.mimetype || 'image/png';
+      secureUrl = `data:${mimeType};base64,${req.file.buffer.toString('base64')}`;
+    }
+
+    if (logo_type === 'logo_white' || logo_type === 'logo_black' || logo_type === 'favicon') {
       const settingKey = `brand_${logo_type}`;
       await db.query(
         'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
         [settingKey, secureUrl, secureUrl]
       );
+      clearBrandCache();
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Logo uploaded successfully to cloud storage!',
+      message: logo_type === 'favicon' ? 'Favicon uploaded and updated!' : 'Logo uploaded successfully!',
       url: secureUrl,
       logo_type,
     });
@@ -547,7 +557,7 @@ exports.uploadBrandLogo = async (req, res) => {
     console.error('Error in uploadBrandLogo:', err);
     return res.status(500).json({
       success: false,
-      message: 'Failed to upload logo to cloud storage.',
+      message: 'Failed to upload brand asset.',
       error: err.message,
     });
   }

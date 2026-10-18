@@ -496,6 +496,10 @@ function initDatabaseTables() {
         await promisePool.query('ALTER TABLE categories ADD COLUMN kicker_title VARCHAR(150) DEFAULT NULL AFTER show_in_dual_section');
       } catch (_) {}
 
+      try {
+        await promisePool.query('ALTER TABLE store_settings MODIFY COLUMN setting_value LONGTEXT NOT NULL');
+      } catch (_) {}
+
       seedDefaultAdmin(promisePool);
       seedDefaultSettings(promisePool);
       // seedDefaultCategories(promisePool);
@@ -509,18 +513,21 @@ function initDatabaseTables() {
 // Seed default master admin in phpMyAdmin DB
 async function seedDefaultAdmin(promisePool) {
   try {
-    const defaultEmail = 'admin@xavonic.com';
-    const defaultPass = 'admin123';
+    const defaultAdmins = [
+      { name: 'RageX Admin', email: 'admin@ragex.com', pass: 'admin123' },
+      { name: 'Master Admin', email: 'admin@xavonic.com', pass: 'admin123' },
+    ];
 
-    const [rows] = await promisePool.query('SELECT * FROM admins WHERE email = ?', [defaultEmail]);
-
-    if (rows.length === 0) {
-      const hashedPassword = bcrypt.hashSync(defaultPass, 10);
-      await promisePool.query(
-        'INSERT INTO admins (name, email, password, role) VALUES (?, ?, ?, ?)',
-        ['Master Admin', defaultEmail, hashedPassword, 'Super Admin']
-      );
-      console.log(`🔑 Default Admin seeded in phpMyAdmin: ${defaultEmail} (Password: ${defaultPass})`);
+    for (const admin of defaultAdmins) {
+      const [rows] = await promisePool.query('SELECT * FROM admins WHERE email = ?', [admin.email]);
+      if (rows.length === 0) {
+        const hashedPassword = bcrypt.hashSync(admin.pass, 10);
+        await promisePool.query(
+          'INSERT INTO admins (name, email, password, role) VALUES (?, ?, ?, ?)',
+          [admin.name, admin.email, hashedPassword, 'Super Admin']
+        );
+        console.log(`🔑 Default Admin seeded in MySQL: ${admin.email} (Password: ${admin.pass})`);
+      }
     }
   } catch (err) {
     console.error('❌ Error seeding admin user:', err.message);
@@ -555,7 +562,7 @@ async function seedDefaultSettings(promisePool) {
 
     for (const item of defaultSettings) {
       await promisePool.query(
-        'INSERT INTO store_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)',
+        'INSERT IGNORE INTO store_settings (setting_key, setting_value) VALUES (?, ?)',
         [item.key, item.value]
       );
     }

@@ -179,6 +179,7 @@ export default function BrandContentTab() {
   const [data, setData] = useState({
     logo_white: '',
     logo_black: '',
+    favicon: '',
     brand_name: 'RageX Activewear',
     brand_tagline: 'Engineered for Aesthetics & Relentless Performance',
 
@@ -207,7 +208,7 @@ export default function BrandContentTab() {
 
   const [newFaq, setNewFaq] = useState({ q: '', a: '' });
   const [newSearchTag, setNewSearchTag] = useState('');
-  const [uploadingLogo, setUploadingLogo] = useState(null); // 'logo_white' | 'logo_black' | null
+  const [uploadingLogo, setUploadingLogo] = useState(null); // 'logo_white' | 'logo_black' | 'favicon' | null
 
   const { refreshBrand } = useBrand();
 
@@ -230,7 +231,13 @@ export default function BrandContentTab() {
       const resData = await res.json();
       if (resData.success && resData.url) {
         setData((prev) => ({ ...prev, [logoType]: resData.url }));
-        toast.success(`${logoType === 'logo_white' ? 'White Logo' : 'Black Logo'} uploaded and updated!`);
+        const label =
+          logoType === 'favicon'
+            ? 'Website Favicon'
+            : logoType === 'logo_white'
+              ? 'White Logo'
+              : 'Black Logo';
+        toast.success(`${label} uploaded and updated!`);
         refreshBrand();
       } else {
         toast.error(resData.message || 'Failed to upload logo');
@@ -277,7 +284,7 @@ export default function BrandContentTab() {
       });
       const resData = await res.json();
       if (resData.success) {
-        toast.success('Brand identity, About Story & Policy pages saved to database!');
+        toast.success('Brand identity, Favicon, About Story & Policy pages saved to database!');
         refreshBrand();
       } else {
         toast.error(resData.message || 'Failed to save');
@@ -348,7 +355,7 @@ export default function BrandContentTab() {
             </span>
           </div>
           <p className="text-xs text-neutral-500 mt-0.5">
-            Centrally customize Brand Logos, Social Handles, About Us Story, FAQs, and Rich Legal Policy Pages.
+            Centrally customize Brand Logos, Website Favicon, Social Handles, About Us Story, FAQs, and Rich Legal Policy Pages.
           </p>
         </div>
 
@@ -374,7 +381,7 @@ export default function BrandContentTab() {
           }`}
         >
           <ImageIcon className="w-4 h-4" />
-          <span>Brand & Logos</span>
+          <span>Brand, Logos & Favicon</span>
         </button>
 
         <button
@@ -428,7 +435,7 @@ export default function BrandContentTab() {
               <div className="flex items-center gap-2 pb-2 border-b border-neutral-100">
                 <ImageIcon className="w-4 h-4 text-neutral-900" />
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-900">
-                  Brand Name & Logos (Upload Directly from Computer or Paste URL)
+                  Brand Name, Logos & Favicon (Upload Directly from Computer or Paste URL)
                 </h3>
               </div>
 
@@ -454,14 +461,14 @@ export default function BrandContentTab() {
                 </div>
               </div>
 
-              {/* Logo Uploads / URLs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+              {/* Logo & Favicon Uploads / URLs */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 pt-2">
                 
                 {/* White Logo (For Dark Header) */}
                 <div className="p-4 border border-neutral-200 rounded-xs bg-neutral-950 text-white space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-300">
-                      1. White Logo (For Dark Header / Black Background)
+                      1. White Logo (Dark Header)
                     </span>
                     {data.logo_white && (
                       <button
@@ -524,7 +531,7 @@ export default function BrandContentTab() {
                 <div className="p-4 border border-neutral-200 rounded-xs bg-neutral-50 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-700">
-                      2. Black Logo (For Light Header, Invoices & Mobile Drawer)
+                      2. Black Logo (Light Header & Invoices)
                     </span>
                     {data.logo_black && (
                       <button
@@ -583,6 +590,77 @@ export default function BrandContentTab() {
                   </div>
                 </div>
 
+                {/* 3. Website Favicon (Browser Tab Icon) */}
+                <div className="p-4 border border-neutral-200 rounded-xs bg-white space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-800">
+                      3. Website Favicon (Browser Tab Icon)
+                    </span>
+                    {data.favicon && (
+                      <button
+                        type="button"
+                        onClick={() => setData({ ...data, favicon: '' })}
+                        className="text-[10px] text-red-600 hover:text-red-700 underline cursor-pointer"
+                      >
+                        Reset to Default
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="h-24 bg-neutral-100 border border-neutral-200 rounded-xs flex flex-col items-center justify-center p-3 relative group">
+                    <div className="flex items-center gap-2.5 bg-white border border-neutral-200 rounded-sm px-3.5 py-2 shadow-xs max-w-full">
+                      <img
+                        src={data.favicon || '/favicon.svg'}
+                        alt="Favicon Preview"
+                        className="w-6 h-6 object-contain shrink-0 rounded-xs"
+                      />
+                      <span className="text-xs font-semibold text-neutral-800 truncate">
+                        {data.brand_name || 'RageX Activewear'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-neutral-400 mt-1.5">
+                      {data.favicon ? 'Custom favicon active' : 'Default favicon (/favicon.svg)'}
+                    </span>
+
+                    {uploadingLogo === 'favicon' && (
+                      <div className="absolute inset-0 bg-white/90 flex items-center justify-center gap-2 text-xs font-semibold text-neutral-900">
+                        <RefreshCw className="w-4 h-4 animate-spin text-red-600" />
+                        <span>Uploading Favicon...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    {/* Direct File Upload Button */}
+                    <div className="flex items-center gap-2">
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/png, image/jpeg, image/webp, image/svg+xml, image/x-icon, .ico"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) handleLogoUpload(e.target.files[0], 'favicon');
+                          }}
+                        />
+                        <span className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-neutral-900 hover:bg-red-600 text-white text-xs font-medium rounded-xs transition-colors shadow-xs">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload Favicon from PC</span>
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-neutral-500 block font-mono">Or paste Favicon URL (.png / .svg / .ico):</span>
+                      <input
+                        type="text"
+                        placeholder="https://res.cloudinary.com/.../favicon.png"
+                        value={data.favicon || ''}
+                        onChange={(e) => setData({ ...data, favicon: e.target.value })}
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ const DEFAULT_BRAND = {
   brand_tagline: 'Engineered for Performance. Cut for Aesthetics.',
   logo_white: '',
   logo_black: '',
+  favicon: '',
   instagram_url: 'https://instagram.com',
   facebook_url: 'https://facebook.com',
   youtube_url: 'https://youtube.com',
@@ -21,6 +22,22 @@ const DEFAULT_BRAND = {
   about_badge: 'Brand Story & Training Guide',
   about_tagline: 'Engineered for Performance. Cut for Aesthetics.',
 };
+
+function applyFavicon(faviconUrl) {
+  if (typeof document === 'undefined') return;
+  const href = faviconUrl && faviconUrl.trim() ? faviconUrl.trim() : '/favicon.svg';
+  const rels = ['icon', 'shortcut icon', 'apple-touch-icon'];
+  rels.forEach((rel) => {
+    let link = document.querySelector(`link[rel="${rel}"]`);
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', rel);
+      document.head.appendChild(link);
+    }
+    link.removeAttribute('type');
+    link.setAttribute('href', href);
+  });
+}
 
 export const BrandProvider = ({ children }) => {
   const [brand, setBrand] = useState(() => {
@@ -45,6 +62,7 @@ export const BrandProvider = ({ children }) => {
           brand_name: data.content.brand_name || data.content.name || DEFAULT_BRAND.brand_name,
         };
         setBrand(normalized);
+        applyFavicon(normalized.favicon);
         try {
           localStorage.setItem('ragex_cached_brand', JSON.stringify(normalized));
         } catch (_) {}
@@ -60,6 +78,10 @@ export const BrandProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    applyFavicon(brand?.favicon);
+  }, [brand?.favicon]);
 
   useEffect(() => {
     fetchBrand();
