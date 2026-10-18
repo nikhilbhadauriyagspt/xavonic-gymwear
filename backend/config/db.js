@@ -6,7 +6,15 @@ const isLocalWindows = process.platform === 'win32';
 
 const DB_HOST = process.env.DB_HOST || (isLocalWindows ? 'localhost' : '127.0.0.1');
 const DB_USER = process.env.DB_USER || (isLocalWindows ? 'root' : 'u972191545_ragex_user');
-const DB_PASSWORD = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (isLocalWindows ? '' : 'dG~iLqh6#H');
+const rawPassword = process.env.DB_PASSWORD;
+const DB_PASSWORD =
+  rawPassword === 'dG~iLqh6'
+    ? 'dG~iLqh6#H'
+    : rawPassword !== undefined
+      ? rawPassword
+      : isLocalWindows
+        ? ''
+        : 'dG~iLqh6#H';
 const DB_NAME = process.env.DB_NAME || (isLocalWindows ? 'ragex_db' : 'u972191545_ragex_db');
 const DB_PORT = Number(process.env.DB_PORT) || 3306;
 const DB_SSL = process.env.DB_SSL === 'true' || (DB_HOST !== 'localhost' && DB_HOST !== '127.0.0.1');
