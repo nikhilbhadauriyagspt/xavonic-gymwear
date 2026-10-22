@@ -51,6 +51,7 @@ export default function Header() {
   // Dynamic Announcement Ticker States
   const [announcements, setAnnouncements] = useState(DEFAULT_ANNOUNCEMENTS);
   const [currentAnnouncementIdx, setCurrentAnnouncementIdx] = useState(0);
+  const [isTickerPaused, setIsTickerPaused] = useState(false);
 
   // Announcement & Promo Popup Modal State
   const [isOffersModalOpen, setIsOffersModalOpen] = useState(false);
@@ -138,14 +139,14 @@ export default function Header() {
     setTimeout(() => setCopiedCode(null), 2500);
   };
 
-  // Rotate announcements every 3.8 seconds with smooth fade transition
+  // Rotate announcements every 3.8 seconds with smooth fade transition (pauses on hover)
   useEffect(() => {
-    if (!announcements || announcements.length <= 1) return;
+    if (!announcements || announcements.length <= 1 || isTickerPaused) return;
     const interval = setInterval(() => {
       setCurrentAnnouncementIdx((prev) => (prev + 1) % announcements.length);
     }, 3800);
     return () => clearInterval(interval);
-  }, [announcements]);
+  }, [announcements, isTickerPaused]);
 
   // 1. Fetch live categories from backend / MySQL DB
   useEffect(() => {
@@ -274,44 +275,135 @@ export default function Header() {
 
   return (
     <>
-      {/* 1. TOP ANNOUNCEMENT BAR (Smooth Dynamic Rotation & Clickable Promo Drawer) */}
-      <div 
-        onClick={() => setIsOffersModalOpen(true)}
-        className="w-full bg-white hover:bg-neutral-50 text-zinc-900 border-b border-zinc-200 py-2 px-4 sm:px-8 text-center text-xs font-normal flex items-center justify-center gap-2.5 rounded-none tracking-normal overflow-hidden h-8.5 select-none cursor-pointer transition-colors group"
-        title="Click to view all active deals & promo codes"
-      >
-        <span className="w-1.5 h-1.5 bg-red-600 inline-block animate-pulse shrink-0"></span>
-        <div className="relative overflow-hidden h-5 flex items-center justify-center min-w-0 max-w-2xl">
+      {/* 1. TOP ANNOUNCEMENT BAR (Responsive with Social Icons on Left & Smooth Offer Slider) */}
+      <div className="w-full bg-white text-zinc-800 border-b border-zinc-200/80 px-3 sm:px-6 lg:px-8 h-9 select-none flex items-center justify-between text-xs transition-colors">
+        
+        {/* LEFT: Social Media Icons (Clean, Minimalist, No WhatsApp) */}
+        <div 
+          className="flex items-center gap-1 sm:gap-2 shrink-0 z-10" 
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Instagram */}
+          <a
+            href={brand.instagram_url || 'https://instagram.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-black hover:bg-zinc-100 transition-all duration-150 cursor-pointer"
+            title="Instagram"
+            aria-label="Instagram"
+          >
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+          </a>
+
+          {/* Facebook */}
+          <a
+            href={brand.facebook_url || 'https://facebook.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-black hover:bg-zinc-100 transition-all duration-150 cursor-pointer"
+            title="Facebook"
+            aria-label="Facebook"
+          >
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+          </a>
+
+          {/* YouTube */}
+          <a
+            href={brand.youtube_url || 'https://youtube.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-black hover:bg-zinc-100 transition-all duration-150 cursor-pointer hidden xs:flex"
+            title="YouTube"
+            aria-label="YouTube"
+          >
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </a>
+
+          {/* X (Twitter) */}
+          <a
+            href={brand.twitter_url || 'https://twitter.com'}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-black hover:bg-zinc-100 transition-all duration-150 cursor-pointer hidden sm:flex"
+            title="X (Twitter)"
+            aria-label="X (Twitter)"
+          >
+            <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+
+          <span className="hidden md:inline-block h-3 w-px bg-zinc-200 ml-1"></span>
+        </div>
+
+        {/* CENTER: Dynamic Announcement Ticker (Fluid, Centered, Silky Glide & Fade) */}
+        <div 
+          onClick={() => setIsOffersModalOpen(true)}
+          onMouseEnter={() => setIsTickerPaused(true)}
+          onMouseLeave={() => setIsTickerPaused(false)}
+          className="relative flex-1 max-w-xl mx-2 sm:mx-4 h-7 flex items-center justify-center cursor-pointer overflow-hidden group min-w-0"
+          title="Click to view all active deals & promo codes"
+        >
           {announcements.map((ann, idx) => {
             const isActive = idx === currentAnnouncementIdx;
             return (
               <div
                 key={idx}
-                className={`flex items-center justify-center gap-2 transition-all duration-500 transform ${
+                className={`absolute inset-0 flex items-center justify-center gap-1.5 sm:gap-2 px-1 text-center transition-all duration-600 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   isActive
-                    ? 'opacity-100 translate-y-0 relative'
-                    : 'opacity-0 translate-y-3 absolute pointer-events-none'
+                    ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+                    : 'opacity-0 translate-y-2.5 scale-95 pointer-events-none'
                 }`}
               >
-                <span className="truncate text-xs font-medium text-neutral-800 group-hover:text-black">
+                {/* Live pulsing dot */}
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600"></span>
+                </span>
+
+                {/* Highlight Badge */}
+                {ann.highlight && (
+                  <span className="hidden md:inline-flex items-center text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200 shrink-0">
+                    {ann.highlight}
+                  </span>
+                )}
+
+                {/* Offer Text */}
+                <span className="truncate text-[11.5px] sm:text-xs font-medium text-zinc-800 group-hover:text-black tracking-normal">
                   {ann.text}
                 </span>
+
+                {/* Coupon Code Badge */}
                 {ann.code && (
-                  <span className="inline-flex items-center gap-1 shrink-0">
-                    <span className="hidden sm:inline text-zinc-400 font-light">|</span>
-                    <span className="text-[11px] text-zinc-600 font-normal">Use code</span>
-                    <strong className="text-red-600 font-bold bg-neutral-100 group-hover:bg-white px-1.5 py-0.5 border border-neutral-300 font-mono tracking-wider text-[11px]">
+                  <span className="inline-flex items-center gap-1 shrink-0 ml-0.5">
+                    <span className="hidden sm:inline text-zinc-300 font-light">•</span>
+                    <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200/90 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-wider transition-colors">
+                      <Tag className="w-2.5 h-2.5" />
                       {ann.code}
-                    </strong>
+                    </span>
                   </span>
                 )}
               </div>
             );
           })}
         </div>
-        <span className="hidden lg:inline-block text-[10px] uppercase font-bold text-neutral-400 group-hover:text-red-600 tracking-wider ml-1 transition-colors">
-          View All Offers →
-        </span>
+
+        {/* RIGHT: Offers Drawer Trigger */}
+        <div 
+          onClick={() => setIsOffersModalOpen(true)}
+          className="hidden sm:flex items-center justify-end gap-1 shrink-0 cursor-pointer text-[11px] font-semibold text-zinc-400 hover:text-red-600 tracking-wider uppercase transition-colors z-10 group"
+          title="Click to view all active deals & promo codes"
+        >
+          <span>Offers</span>
+          <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-600 transition-transform group-hover:translate-x-0.5" />
+        </div>
+
       </div>
 
       {/* 2. STICKY MAIN NAVIGATION BAR */}

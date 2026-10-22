@@ -61,9 +61,9 @@ export default function Categories() {
           <Link
             key={cat.id || idx}
             to={`/collections/${cat.slug || 'all'}`}
-            className="group relative block aspect-[4/4.6] w-full overflow-hidden bg-zinc-950 transition-all duration-300 rounded-none cursor-pointer shadow-none"
+            className="group relative block aspect-[1086/1448] w-full overflow-hidden bg-zinc-950 transition-all duration-300 rounded-none cursor-pointer shadow-none"
           >
-            {/* High-Resolution Cloudinary / Photoshoot Image */}
+            {/* High-Resolution Cloudinary / Photoshoot Image (Exact 1086x1448 Ratio) */}
             <img
               src={cat.image_url || cat.image}
               alt={cat.name || cat.title}
@@ -72,7 +72,7 @@ export default function Categories() {
 
             {/* Dark Bottom Gradient for Clean Legibility */}
             {Boolean(cat.show_title_overlay !== 0 && cat.show_title_overlay !== false) && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-transparent opacity-90 group-hover:opacity-85 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent opacity-85 group-hover:opacity-75 transition-opacity" />
             )}
 
             {/* Top Red Hover Accent */}
@@ -80,21 +80,21 @@ export default function Categories() {
 
             {/* Bottom Content with Straight Right Arrow Icon (Rendered only if overlay is enabled) */}
             {Boolean(cat.show_title_overlay !== 0 && cat.show_title_overlay !== false) ? (
-              <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 md:p-6 flex items-end justify-between gap-2 sm:gap-4">
-                <div>
-                  <h3 className="text-xs sm:text-lg md:text-xl font-medium text-white group-hover:text-red-500 transition-colors line-clamp-2">
+              <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 flex items-end justify-between gap-2 sm:gap-4">
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-base lg:text-lg font-medium text-white group-hover:text-red-500 transition-colors line-clamp-2">
                     {cat.name || cat.title}
                   </h3>
                   {cat.subtitle && (
-                    <p className="text-[10px] sm:text-xs text-zinc-400 font-light mt-0.5 line-clamp-1">
+                    <p className="hidden sm:block text-[11px] lg:text-xs text-zinc-400 font-light mt-0.5 line-clamp-1">
                       {cat.subtitle}
                     </p>
                   )}
                 </div>
 
                 {/* Glass Circle with Pure Right Direction Arrow (ArrowRight) */}
-                <div className="w-8 h-8 sm:w-11 sm:h-11 md:w-12 md:h-12 shrink-0 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:bg-red-600 group-hover:border-red-600 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                  <ArrowRight className="w-3.5 h-3.5 sm:w-5 sm:h-5 group-hover:translate-x-0.5 transition-transform duration-300" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 shrink-0 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:bg-red-600 group-hover:border-red-600 group-hover:scale-110 transition-all duration-300 shadow-lg">
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 group-hover:translate-x-0.5 transition-transform duration-300" />
                 </div>
               </div>
             ) : (
