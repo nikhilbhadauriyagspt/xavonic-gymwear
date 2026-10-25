@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBrand } from '../context/BrandContext';
 import authBanner from '../assets/auth_banner.png';
 import logoBlack from '../assets/logo_balck.png';
+import logoWhite from '../assets/logo_white.png';
 
 const WhatsAppIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -41,6 +42,7 @@ export default function AuthDrawer() {
 
   const { brand } = useBrand();
   const activeLogoBlack = (brand?.logo_black && brand.logo_black.trim()) || logoBlack;
+  const activeLogoWhite = (brand?.logo_white && brand.logo_white.trim()) || logoWhite;
   const brandName = brand?.brand_name || 'RageX Activewear';
 
   const [step, setStep] = useState('phone'); // 'phone' | 'otp' | 'name' | 'email' | 'email_otp'
@@ -355,7 +357,7 @@ export default function AuthDrawer() {
   return (
     <AnimatePresence>
       {isAuthOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 font-sans select-none overflow-y-auto">
+        <div className="fixed inset-0 z-[120] flex items-end md:items-center justify-center p-0 md:p-5 font-sans select-none overflow-y-auto">
           
           {/* Subtle Backdrop Layer with Smooth Fade */}
           <motion.div
@@ -364,22 +366,59 @@ export default function AuthDrawer() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={closeAuth}
-            className="fixed inset-0 bg-black/50 cursor-pointer backdrop-blur-xs"
+            className="fixed inset-0 bg-black/60 md:bg-black/50 cursor-pointer backdrop-blur-xs"
           />
 
-          {/* Luxury Glossy Modal Container with Dark Gradient & GPU Acceleration for 60fps Smooth Open */}
+          {/* Mobile: Native App Bottom-Sheet | Desktop: Luxury Glossy 2-Column Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, y: 8 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-4xl transform-gpu will-change-transform bg-black backdrop-blur-xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] rounded-sm overflow-hidden z-10 grid grid-cols-1 md:grid-cols-12 my-auto p-2.5 sm:p-3"
+            initial={{ opacity: 0, y: 48, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.98 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-full max-w-none md:max-w-4xl transform-gpu will-change-transform bg-transparent md:bg-black md:backdrop-blur-xl border-0 md:border md:border-white/10 shadow-[0_-16px_48px_rgba(0,0,0,0.45)] md:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] rounded-t-3xl md:rounded-sm overflow-hidden z-10 grid grid-cols-1 md:grid-cols-12 mt-auto md:my-auto p-0 md:p-3"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Glossy Top Glass Refection Line */}
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
+            {/* Glossy Top Glass Reflection Line (Desktop Only) */}
+            <div className="hidden md:block absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none z-20" />
 
-            {/* ================= LEFT: PURE IMAGE CARD ================= */}
+            {/* ================= MOBILE ONLY: NATIVE APP HERO BANNER ================= */}
+            <div className="md:hidden relative h-48 w-full overflow-hidden bg-zinc-950 rounded-t-3xl">
+              <img
+                src={authBanner}
+                alt={brandName}
+                className="w-full h-full object-cover object-top scale-105 select-none"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/25 pointer-events-none" />
+
+              {/* Mobile Floating Frosted Close Button */}
+              <button
+                onClick={closeAuth}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/45 backdrop-blur-md border border-white/15 flex items-center justify-center text-white active:scale-95 transition-transform cursor-pointer z-30"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Mobile App Brand Overlay */}
+              <div className="absolute bottom-7 left-5 right-5 flex items-end justify-between z-20 pointer-events-none">
+                <div>
+                  <img
+                    src={activeLogoWhite}
+                    alt={brandName}
+                    className="h-7 w-auto object-contain mb-1.5"
+                  />
+                  <p className="text-[11px] font-medium text-zinc-300 tracking-wide">
+                    Engineered for Performance. Built for Athletes.
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 px-2.5 py-1 text-[10px] font-semibold text-white">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Club Access</span>
+                </span>
+              </div>
+            </div>
+
+            {/* ================= DESKTOP LEFT: PURE IMAGE CARD ================= */}
             <div className="hidden md:block md:col-span-5 relative overflow-hidden rounded-sm min-h-[460px] md:min-h-[480px] bg-zinc-950 border border-white/5 shadow-inner">
               <img 
                 src={authBanner} 
@@ -390,17 +429,19 @@ export default function AuthDrawer() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
             </div>
 
-            {/* ================= RIGHT: INSET WHITE CARD ================= */}
+            {/* ================= RIGHT: INSET WHITE CARD (APP SHEET ON MOBILE) ================= */}
             <div className="col-span-12 md:col-span-7 flex flex-col pl-0 md:pl-2.5">
               <div 
-                className="w-full h-full min-h-[460px] md:min-h-[480px] bg-white text-zinc-900 rounded-sm p-6 sm:p-8 flex flex-col justify-between relative shadow-sm border border-zinc-100" 
+                className="w-full h-full min-h-0 md:min-h-[480px] bg-white text-zinc-900 rounded-t-3xl md:rounded-sm -mt-4 md:mt-0 px-5 pt-3.5 pb-7 sm:p-8 flex flex-col justify-between relative shadow-[0_-8px_30px_rgba(0,0,0,0.12)] md:shadow-sm border-t border-zinc-100 md:border z-20" 
                 style={{ fontFamily: "'Poppins', sans-serif" }}
               >
+                {/* Mobile Bottom-Sheet Pull Handle Bar */}
+                <div className="md:hidden w-11 h-1.5 rounded-full bg-zinc-200/90 mx-auto mb-4 shrink-0" />
                 
-                {/* Close Button */}
+                {/* Close Button (Desktop Only - Mobile uses frosted button on hero) */}
                 <button
                   onClick={closeAuth}
-                  className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors cursor-pointer rounded-sm z-20"
+                  className="hidden md:flex absolute top-4 right-4 w-7 h-7 items-center justify-center text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors cursor-pointer rounded-sm z-20"
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
@@ -415,20 +456,22 @@ export default function AuthDrawer() {
                       {/* Header with rounded icon & subtitle (Left Aligned) */}
                       <div className="space-y-1.5 text-left">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-800 shrink-0 border border-zinc-200">
+                          <div className="w-9 h-9 md:w-8 md:h-8 rounded-xl md:rounded-full bg-zinc-100 flex items-center justify-center text-zinc-800 shrink-0 border border-zinc-200">
                             {step === 'otp' && <KeyRound className="w-4 h-4" />}
                             {step === 'phone' && <User className="w-4 h-4" />}
                             {step === 'name' && <User className="w-4 h-4" />}
                             {step === 'email' && <Mail className="w-4 h-4" />}
                             {step === 'email_otp' && <MailCheck className="w-4 h-4" />}
                           </div>
-                          <h2 className="text-xl font-semibold tracking-normal text-zinc-950 text-left">
-                            {step === 'phone' && 'Sign In / Register'}
-                            {step === 'otp' && 'Enter Verification Code'}
-                            {step === 'name' && 'Enter Your Name'}
-                            {step === 'email' && 'Enter Your Email'}
-                            {step === 'email_otp' && 'Verify Email Code'}
-                          </h2>
+                          <div>
+                            <h2 className="text-lg md:text-xl font-semibold tracking-normal text-zinc-950 text-left leading-tight">
+                              {step === 'phone' && 'Sign In / Register'}
+                              {step === 'otp' && 'Enter Verification Code'}
+                              {step === 'name' && 'Enter Your Name'}
+                              {step === 'email' && 'Enter Your Email'}
+                              {step === 'email_otp' && 'Verify Email Code'}
+                            </h2>
+                          </div>
                         </div>
                         <p className="text-xs text-zinc-500 font-normal leading-relaxed text-left">
                           {step === 'phone' && 'Enter your 10-digit mobile number to receive OTP on WhatsApp'}
@@ -441,20 +484,20 @@ export default function AuthDrawer() {
 
                       {/* Error Banner */}
                       {errorMessage && (
-                        <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-sm text-left">
+                        <div className="p-3 md:p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl md:rounded-sm text-left">
                           {errorMessage}
                         </div>
                       )}
 
                       {/* Phone Step: Input + Button + Reassurance */}
                       {step === 'phone' && (
-                        <form onSubmit={handlePhoneSubmit} className="space-y-3.5">
+                        <form onSubmit={handlePhoneSubmit} className="space-y-4 md:space-y-3.5">
                           <div className="space-y-1.5 text-left">
                             <label className="text-[11px] font-medium text-zinc-600 block uppercase tracking-wide text-left">
                               Mobile Number (WhatsApp)
                             </label>
                             
-                            <div className="flex items-center border border-zinc-300 focus-within:border-black rounded-sm px-3.5 py-3 transition-colors bg-zinc-50/50 focus-within:bg-white">
+                            <div className="flex items-center border border-zinc-300 focus-within:border-black rounded-xl md:rounded-sm px-3.5 py-3.5 md:py-3 transition-colors bg-zinc-50/70 focus-within:bg-white">
                               <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-800 pr-3 mr-3 border-r border-zinc-200 shrink-0 select-none">
                                 <svg className="w-4 h-3 rounded-none shrink-0 overflow-hidden" viewBox="0 0 640 480">
                                   <path fill="#f93" d="M0 0h640v160H0z"/>
@@ -468,15 +511,16 @@ export default function AuthDrawer() {
                                     <use href="#d" transform="rotate(120)"/><use href="#d" transform="rotate(240)"/>
                                   </g>
                                 </svg>
-                                <span className=" text-zinc-900">+91</span>
+                                <span className="text-zinc-900 font-semibold md:font-medium">+91</span>
                               </span>
                               <input
                                 type="tel"
+                                inputMode="numeric"
                                 maxLength={10}
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                                placeholder=""
-                                className="w-full bg-transparent text-sm text-zinc-900 focus:outline-none  font-normal tracking-wide"
+                                placeholder="Enter 10-digit number"
+                                className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 md:placeholder:text-transparent focus:outline-none font-medium md:font-normal tracking-wide"
                                 autoFocus
                               />
                               {phoneNumber.length === 10 && (
@@ -491,7 +535,7 @@ export default function AuthDrawer() {
                             disabled={phoneNumber.length < 10 || isSubmitting}
                             whileHover={phoneNumber.length === 10 && !isSubmitting ? { scale: 1.01 } : {}}
                             whileTap={phoneNumber.length === 10 && !isSubmitting ? { scale: 0.985 } : {}}
-                            className={`relative overflow-hidden w-full py-3.5 text-xs font-medium rounded-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-none select-none ${
+                            className={`relative overflow-hidden w-full py-4 md:py-3.5 text-xs font-semibold md:font-medium rounded-xl md:rounded-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-none select-none ${
                               phoneNumber.length === 10 && !isSubmitting
                                 ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-none'
                                 : isSubmitting
@@ -553,7 +597,7 @@ export default function AuthDrawer() {
                       {/* OTP Step Verification */}
                       {step === 'otp' && (
                         <div className="space-y-5 pt-2 animate-in fade-in duration-150">
-                          <div className="flex items-center justify-center gap-2.5 sm:gap-3" onPaste={handleOtpPaste}>
+                          <div className="flex items-center justify-center gap-3" onPaste={handleOtpPaste}>
                             {otp.map((digit, idx) => (
                               <input
                                 key={idx}
@@ -564,7 +608,7 @@ export default function AuthDrawer() {
                                 value={digit}
                                 onChange={(e) => handleOtpChange(idx, e.target.value)}
                                 onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                                className="w-11 h-12 sm:w-12 sm:h-13 text-center text-lg font-medium border border-zinc-300 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 text-zinc-900 rounded-sm bg-zinc-50/50 focus:bg-white transition-all "
+                                className="w-13 h-14 md:w-12 md:h-13 text-center text-lg font-semibold md:font-medium border border-zinc-300 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 text-zinc-900 rounded-xl md:rounded-sm bg-zinc-50/70 focus:bg-white transition-all"
                               />
                             ))}
                           </div>
@@ -613,13 +657,13 @@ export default function AuthDrawer() {
                               Your Full Name
                             </label>
                             
-                            <div className="flex items-center border border-zinc-300 focus-within:border-black rounded-sm px-3.5 py-3 transition-colors bg-zinc-50/50 focus-within:bg-white">
+                            <div className="flex items-center border border-zinc-300 focus-within:border-black rounded-xl md:rounded-sm px-3.5 py-3.5 md:py-3 transition-colors bg-zinc-50/70 focus-within:bg-white">
                               <input
                                 type="text"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
-                                placeholder=""
-                                className="w-full bg-transparent text-sm text-zinc-900 focus:outline-none font-normal tracking-wide"
+                                placeholder="Enter your full name"
+                                className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 md:placeholder:text-transparent focus:outline-none font-normal tracking-wide"
                                 autoFocus
                               />
                               {fullName.trim().length >= 2 && (
@@ -633,7 +677,7 @@ export default function AuthDrawer() {
                             disabled={fullName.trim().length < 2 || isSubmitting}
                             whileHover={fullName.trim().length >= 2 && !isSubmitting ? { scale: 1.01 } : {}}
                             whileTap={fullName.trim().length >= 2 && !isSubmitting ? { scale: 0.985 } : {}}
-                            className={`w-full py-3.5 text-xs font-medium rounded-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-none select-none ${
+                            className={`w-full py-4 md:py-3.5 text-xs font-semibold md:font-medium rounded-xl md:rounded-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-none select-none ${
                               fullName.trim().length >= 2 && !isSubmitting
                                 ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white cursor-pointer'
                                 : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
@@ -653,13 +697,13 @@ export default function AuthDrawer() {
                               Email Address
                             </label>
                             
-                            <div className="flex items-center border border-zinc-300 focus-within:border-black rounded-sm px-3.5 py-3 transition-colors bg-zinc-50/50 focus-within:bg-white">
+                            <div className="flex items-center border border-zinc-300 focus-within:border-black rounded-xl md:rounded-sm px-3.5 py-3.5 md:py-3 transition-colors bg-zinc-50/70 focus-within:bg-white">
                               <input
                                 type="email"
                                 value={emailAddress}
                                 onChange={(e) => setEmailAddress(e.target.value)}
-                                placeholder=""
-                                className="w-full bg-transparent text-sm text-zinc-900 focus:outline-none font-normal tracking-wide lowercase"
+                                placeholder="name@example.com"
+                                className="w-full bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 md:placeholder:text-transparent focus:outline-none font-normal tracking-wide lowercase"
                                 autoFocus
                               />
                               {emailAddress.includes('@') && emailAddress.includes('.') && (
@@ -673,7 +717,7 @@ export default function AuthDrawer() {
                             disabled={!emailAddress.includes('@') || isSubmitting}
                             whileHover={emailAddress.includes('@') && !isSubmitting ? { scale: 1.01 } : {}}
                             whileTap={emailAddress.includes('@') && !isSubmitting ? { scale: 0.985 } : {}}
-                            className={`w-full py-3.5 text-xs font-medium rounded-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-none select-none ${
+                            className={`w-full py-4 md:py-3.5 text-xs font-semibold md:font-medium rounded-xl md:rounded-sm transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-none select-none ${
                               emailAddress.includes('@') && !isSubmitting
                                 ? 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white cursor-pointer'
                                 : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
@@ -708,7 +752,7 @@ export default function AuthDrawer() {
                       {/* 5. EMAIL OTP STEP */}
                       {step === 'email_otp' && (
                         <div className="space-y-5 pt-2 animate-in fade-in duration-150">
-                          <div className="flex items-center justify-center gap-2.5 sm:gap-3" onPaste={handleEmailOtpPaste}>
+                          <div className="flex items-center justify-center gap-3" onPaste={handleEmailOtpPaste}>
                             {emailOtp.map((digit, idx) => (
                               <input
                                 key={idx}
@@ -719,7 +763,7 @@ export default function AuthDrawer() {
                                 value={digit}
                                 onChange={(e) => handleEmailOtpChange(idx, e.target.value)}
                                 onKeyDown={(e) => handleEmailOtpKeyDown(idx, e)}
-                                className="w-11 h-12 sm:w-12 sm:h-13 text-center text-lg font-medium border border-zinc-300 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 text-zinc-900 rounded-sm bg-zinc-50/50 focus:bg-white transition-all "
+                                className="w-13 h-14 md:w-12 md:h-13 text-center text-lg font-semibold md:font-medium border border-zinc-300 focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 text-zinc-900 rounded-xl md:rounded-sm bg-zinc-50/70 focus:bg-white transition-all"
                               />
                             ))}
                           </div>
@@ -774,7 +818,7 @@ export default function AuthDrawer() {
                     </div>
 
                     {/* Centered Legal Footer at the very bottom */}
-                    <div className="pt-6 text-center text-[10px] sm:text-xs text-zinc-400 font-normal">
+                    <div className="pt-5 md:pt-6 text-center text-[10px] sm:text-xs text-zinc-400 font-normal">
                       <span>
                         By continuing, you agree to Rage X’s{' '}
                         <a href="/terms" className="underline text-zinc-500 hover:text-black">Terms</a>
