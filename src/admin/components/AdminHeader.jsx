@@ -292,7 +292,7 @@ export default function AdminHeader({
                             <p className="text-xs font-semibold text-neutral-900 truncate">
                               {item.title}
                             </p>
-                            <span className="text-[10px] text-neutral-400 shrink-0 font-mono">
+                            <span className="text-[10px] text-neutral-400 shrink-0 ">
                               {timeDisplay}
                             </span>
                           </div>

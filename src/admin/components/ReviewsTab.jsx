@@ -228,7 +228,7 @@ export default function ReviewsTab() {
           >
             <span>{tab.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-xs text-[10px] font-mono ${
+              className={`px-1.5 py-0.2 rounded-xs text-[10px]  ${
                 statusFilter === tab.id
                   ? 'bg-neutral-800 text-white'
                   : 'bg-neutral-100 text-neutral-600'
@@ -279,7 +279,7 @@ export default function ReviewsTab() {
                       <div className="font-semibold text-neutral-900 line-clamp-2">
                         {rev.productTitle}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-neutral-400 mt-1 font-mono">
+                      <div className="flex items-center gap-2 text-[10px] text-neutral-400 mt-1 ">
                         <span>Prod ID: #{rev.productId}</span>
                         {rev.productSlug && (
                           <a
@@ -299,13 +299,13 @@ export default function ReviewsTab() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5">
                           <span className="font-semibold text-neutral-900">{rev.authorName}</span>
-                          <span className="text-[9px] font-mono px-1 py-0.2 bg-neutral-100 text-neutral-700 border border-neutral-200 rounded-xs">
+                          <span className="text-[9px]  px-1 py-0.2 bg-neutral-100 text-neutral-700 border border-neutral-200 rounded-xs">
                             {rev.customerId}
                           </span>
                         </div>
 
                         {/* WhatsApp Phone & Email */}
-                        <div className="flex flex-col text-[10px] text-neutral-500 font-mono space-y-0.5">
+                        <div className="flex flex-col text-[10px] text-neutral-500  space-y-0.5">
                           {rev.authorPhone && (
                             <a
                               href={`https://wa.me/${rev.authorPhone.replace(/[^0-9]/g, '')}`}
@@ -325,7 +325,7 @@ export default function ReviewsTab() {
                         {rev.orderNumber && (
                           <div className="pt-1 border-t border-neutral-100 flex items-center gap-1 text-[10px] text-neutral-600">
                             <span className="font-medium text-neutral-800">Order:</span>
-                            <span className="font-mono bg-neutral-100 px-1 rounded-xs">{rev.orderNumber}</span>
+                            <span className=" bg-neutral-100 px-1 rounded-xs">{rev.orderNumber}</span>
                             {rev.orderDate && (
                               <span className="text-neutral-400">
                                 ({new Date(rev.orderDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })})
@@ -348,7 +348,7 @@ export default function ReviewsTab() {
                               }`}
                             />
                           ))}
-                          <span className="ml-1.5 text-[10px] font-semibold text-neutral-800 font-mono">
+                          <span className="ml-1.5 text-[10px] font-semibold text-neutral-800 ">
                             {rev.rating}.0 / 5
                           </span>
                         </div>
@@ -361,7 +361,7 @@ export default function ReviewsTab() {
                         <p className="text-neutral-600 text-[11px] leading-relaxed line-clamp-3">
                           {rev.comment}
                         </p>
-                        <div className="flex items-center gap-2 text-[10px] text-neutral-400 pt-0.5 font-mono">
+                        <div className="flex items-center gap-2 text-[10px] text-neutral-400 pt-0.5 ">
                           {rev.sizePurchased && <span>Size: {rev.sizePurchased}</span>}
                           {rev.fitFeedback && (
                             <>

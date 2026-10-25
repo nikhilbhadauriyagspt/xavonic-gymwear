@@ -195,7 +195,7 @@ export default function CollectionsPage() {
                     Select a category to explore heavyweight pump covers, compression, and shorts.
                   </p>
                 </div>
-                <span className="text-xs text-zinc-500 font-mono">
+                <span className="text-xs text-zinc-500 ">
                   {displayCategories.length} Categories
                 </span>
               </div>
@@ -299,7 +299,7 @@ export default function CollectionsPage() {
                   </p>
                 </div>
 
-                <span className="text-xs text-zinc-500 font-mono">
+                <span className="text-xs text-zinc-500 ">
                   {categoryProducts.length} {categoryProducts.length === 1 ? 'Product' : 'Products'}
                 </span>
               </div>

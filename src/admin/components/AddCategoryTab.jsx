@@ -214,7 +214,7 @@ export default function AddCategoryTab({ onCategoryCreated, onCancel }) {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="e.g. compression-t-shirts"
-                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none font-mono"
+                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none "
                 />
               </div>
             </div>
@@ -367,7 +367,7 @@ export default function AddCategoryTab({ onCategoryCreated, onCancel }) {
                   if (e.target.value) setImagePreview(e.target.value);
                 }}
                 placeholder="https://images.unsplash.com/..."
-                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-1.5 text-xs text-neutral-900 outline-none "
               />
             </div>
 

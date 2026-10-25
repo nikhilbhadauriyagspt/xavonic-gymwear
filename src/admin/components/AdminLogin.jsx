@@ -123,8 +123,8 @@ export default function AdminLogin({ onLoginSuccess }) {
                 <Zap className="h-3 w-3 text-red-600 fill-red-600" /> Demo Credentials:
               </div>
               <div className="flex items-center justify-between text-[11px] text-neutral-500">
-                <span>Email: <strong className="text-neutral-800 font-mono">admin@xavonic.com</strong></span>
-                <span>Pass: <strong className="text-neutral-800 font-mono">admin123</strong></span>
+                <span>Email: <strong className="text-neutral-800 ">admin@xavonic.com</strong></span>
+                <span>Pass: <strong className="text-neutral-800 ">admin123</strong></span>
               </div>
             </div>
 

@@ -74,9 +74,13 @@ export default function AbandonedCheckoutsTab() {
     try {
       const res = await sendAdminAbandonedWhatsApp(item.id, recoveryCoupon);
       if (res && res.success) {
-        toast.success(`WhatsApp recovery message generated! Opening chat...`);
-        if (res.whatsappUrl) {
-          window.open(res.whatsappUrl, '_blank');
+        if (res.apiDelivered) {
+          toast.success(res.message || `WhatsApp recovery message delivered directly via Meta API!`);
+        } else {
+          toast.success(`WhatsApp recovery message generated! Opening chat...`);
+          if (res.whatsappUrl) {
+            window.open(res.whatsappUrl, '_blank');
+          }
         }
         loadAbandonedCheckouts();
       } else {
@@ -275,7 +279,7 @@ export default function AbandonedCheckoutsTab() {
 
                       <div className="flex items-center gap-4 text-xs text-neutral-600 flex-wrap">
                         {item.customer_phone && (
-                          <span className="inline-flex items-center gap-1 font-mono text-neutral-800 font-medium">
+                          <span className="inline-flex items-center gap-1  text-neutral-800 font-medium">
                             <Phone className="h-3.5 w-3.5 text-neutral-400" />
                             {item.customer_phone}
                           </span>

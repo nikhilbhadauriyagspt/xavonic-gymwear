@@ -382,7 +382,7 @@ export default function OrdersTab() {
             <h2 className="text-base sm:text-lg font-semibold text-neutral-900">
               Orders, Returns & Refunds Management
             </h2>
-            <span className="px-2 py-0.5 text-xs font-semibold bg-neutral-100 text-neutral-800 rounded-xs border border-neutral-200 font-mono">
+            <span className="px-2 py-0.5 text-xs font-semibold bg-neutral-100 text-neutral-800 rounded-xs border border-neutral-200 ">
               {summary.totalOrders} Orders
             </span>
           </div>
@@ -503,7 +503,7 @@ export default function OrdersTab() {
           >
             <span>{tab.label}</span>
             <span
-              className={`px-1.5 py-0.2 rounded-xs text-[10px] font-mono ${
+              className={`px-1.5 py-0.2 rounded-xs text-[10px]  ${
                 statusFilter === tab.id
                   ? 'bg-neutral-800 text-white'
                   : 'bg-neutral-100 text-neutral-600'
@@ -559,7 +559,7 @@ export default function OrdersTab() {
                     >
                       {/* Order Number & Date */}
                       <td className="py-3 px-3.5">
-                        <div className="font-mono font-bold text-neutral-900 text-xs">
+                        <div className=" font-bold text-neutral-900 text-xs">
                           {ord.orderNumber}
                         </div>
                         <div className="text-[10px] text-neutral-400 mt-0.5 flex items-center gap-1">
@@ -576,7 +576,7 @@ export default function OrdersTab() {
                           </span>
                         </div>
                         {ord.trackingNumber && (
-                          <div className="text-[9px] font-mono text-neutral-500 mt-1">
+                          <div className="text-[9px]  text-neutral-500 mt-1">
                             Trk: {ord.trackingNumber}
                           </div>
                         )}
@@ -587,12 +587,12 @@ export default function OrdersTab() {
                         <div className="space-y-0.5">
                           <div className="font-semibold text-neutral-900 flex items-center gap-1.5">
                             <span>{ord.customerName}</span>
-                            <span className="text-[9px] font-mono px-1 py-0.2 bg-neutral-100 text-neutral-600 rounded-xs border border-neutral-200">
+                            <span className="text-[9px]  px-1 py-0.2 bg-neutral-100 text-neutral-600 rounded-xs border border-neutral-200">
                               {ord.customerId}
                             </span>
                           </div>
                           {ord.customerPhone && (
-                            <div className="text-[10px] text-neutral-600 font-mono">
+                            <div className="text-[10px] text-neutral-600 ">
                               <a
                                 href={`https://wa.me/${ord.customerPhone.replace(/[^0-9]/g, '')}`}
                                 target="_blank"
@@ -634,7 +634,7 @@ export default function OrdersTab() {
                       {/* Total & Payment Method */}
                       <td className="py-3 px-3.5">
                         <div className="space-y-1">
-                          <div className="font-bold text-neutral-900 text-xs font-mono">
+                          <div className="font-bold text-neutral-900 text-xs ">
                             ₹{ord.totalAmount.toLocaleString('en-IN')}
                           </div>
                           <div className="flex items-center gap-1.5">
@@ -774,7 +774,7 @@ export default function OrdersTab() {
             <div className="flex items-center justify-between border-b border-neutral-200 pb-3.5">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-neutral-900 font-mono">
+                  <h3 className="text-sm font-bold uppercase tracking-wide text-neutral-900 ">
                     Order #{selectedOrder.orderNumber}
                   </h3>
                   <span
@@ -791,7 +791,7 @@ export default function OrdersTab() {
                     {selectedOrder.orderStatus}
                   </span>
                 </div>
-                <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                <p className="text-[11px] text-neutral-400  mt-0.5">
                   Placed on {new Date(selectedOrder.createdAt).toLocaleString('en-IN')}
                 </p>
               </div>
@@ -849,7 +849,7 @@ export default function OrdersTab() {
                   <strong>Reason:</strong> {selectedOrder.cancellationReason || 'Cancelled by user / store policy'}
                 </p>
                 {selectedOrder.cancelledAt && (
-                  <p className="text-[10px] text-red-600 font-mono">
+                  <p className="text-[10px] text-red-600 ">
                     Cancelled on: {new Date(selectedOrder.cancelledAt).toLocaleString('en-IN')}
                   </p>
                 )}
@@ -948,7 +948,7 @@ export default function OrdersTab() {
                       type="number"
                       value={refundForm.refund_amount}
                       onChange={(e) => setRefundForm({ ...refundForm, refund_amount: e.target.value })}
-                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs font-mono outline-none focus:border-neutral-900 font-semibold"
+                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs  outline-none focus:border-neutral-900 font-semibold"
                     />
                   </div>
 
@@ -978,7 +978,7 @@ export default function OrdersTab() {
                       placeholder="e.g. UTR-88492048120"
                       value={refundForm.refund_transaction_id}
                       onChange={(e) => setRefundForm({ ...refundForm, refund_transaction_id: e.target.value })}
-                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs font-mono outline-none focus:border-neutral-900"
+                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs  outline-none focus:border-neutral-900"
                     />
                   </div>
 
@@ -1014,11 +1014,11 @@ export default function OrdersTab() {
               <div className="space-y-1.5">
                 <div className="text-[10px] uppercase font-bold text-neutral-400 tracking-wider">Customer Profile</div>
                 <div className="font-semibold text-neutral-900">{selectedOrder.customerName}</div>
-                <div className="text-neutral-600 font-mono">📱 +{selectedOrder.customerPhone}</div>
+                <div className="text-neutral-600 ">📱 +{selectedOrder.customerPhone}</div>
                 {selectedOrder.customerEmail && (
                   <div className="text-neutral-600 truncate">{selectedOrder.customerEmail}</div>
                 )}
-                <div className="text-[10px] text-neutral-400 font-mono">Customer ID: {selectedOrder.customerId}</div>
+                <div className="text-[10px] text-neutral-400 ">Customer ID: {selectedOrder.customerId}</div>
               </div>
 
               <div className="space-y-1.5">
@@ -1060,7 +1060,7 @@ export default function OrdersTab() {
                   </a>
                 </div>
 
-                <div className="text-[10px] text-neutral-500 font-mono pt-1">
+                <div className="text-[10px] text-neutral-500  pt-1">
                   Tracking: <span className="text-neutral-900 font-semibold">{selectedOrder.trackingNumber}</span> ({selectedOrder.courierPartner})
                 </div>
               </div>
@@ -1082,7 +1082,7 @@ export default function OrdersTab() {
                       />
                       <div>
                         <div className="font-semibold text-neutral-900 text-xs">{item.title}</div>
-                        <div className="text-[10px] text-neutral-500 font-mono flex items-center gap-2 mt-0.5">
+                        <div className="text-[10px] text-neutral-500  flex items-center gap-2 mt-0.5">
                           <span>Size: <strong>{item.size || item.selectedSize}</strong></span>
                           <span>•</span>
                           <span>Color: <strong>{item.color || item.selectedColor}</strong></span>
@@ -1091,7 +1091,7 @@ export default function OrdersTab() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right font-mono font-semibold text-xs text-neutral-900">
+                    <div className="text-right  font-semibold text-xs text-neutral-900">
                       ₹{((Number(item.price || 0)) * (Number(item.quantity || 1))).toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -1100,7 +1100,7 @@ export default function OrdersTab() {
             </div>
 
             {/* Financial Summary */}
-            <div className="bg-neutral-50 p-4 border border-neutral-200 rounded-sm space-y-2 text-xs font-mono">
+            <div className="bg-neutral-50 p-4 border border-neutral-200 rounded-sm space-y-2 text-xs ">
               <div className="flex justify-between text-neutral-600">
                 <span>Subtotal:</span>
                 <span>₹{selectedOrder.subtotal.toLocaleString('en-IN')}</span>
@@ -1249,7 +1249,7 @@ export default function OrdersTab() {
               <div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-5 h-5 text-emerald-600" />
-                  <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wide font-mono">
+                  <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wide ">
                     Dispatch Order #{orderToShip.orderNumber}
                   </h4>
                 </div>
@@ -1271,14 +1271,14 @@ export default function OrdersTab() {
               <div>
                 <span className="text-[10px] uppercase font-bold text-neutral-400 block">Deliver To</span>
                 <div className="font-semibold text-neutral-900">{orderToShip.customerName}</div>
-                <div className="text-neutral-600 font-mono">📱 +{orderToShip.customerPhone}</div>
+                <div className="text-neutral-600 ">📱 +{orderToShip.customerPhone}</div>
                 <div className="text-neutral-600 truncate mt-0.5">
                   {orderToShip.shippingAddress?.city}, {orderToShip.shippingAddress?.state} ({orderToShip.shippingAddress?.pincode})
                 </div>
               </div>
               <div>
                 <span className="text-[10px] uppercase font-bold text-neutral-400 block">Order Value & Items</span>
-                <div className="font-bold text-neutral-900 font-mono text-sm">
+                <div className="font-bold text-neutral-900  text-sm">
                   ₹{orderToShip.totalAmount?.toLocaleString('en-IN')}
                 </div>
                 <div className="text-neutral-600">
@@ -1401,7 +1401,7 @@ export default function OrdersTab() {
                         placeholder="e.g. DEL-884920194 or 140889201"
                         value={shipForm.trackingNumber}
                         onChange={(e) => setShipForm({ ...shipForm, trackingNumber: e.target.value })}
-                        className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs font-mono font-semibold text-neutral-900 outline-none focus:border-neutral-900"
+                        className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs  font-semibold text-neutral-900 outline-none focus:border-neutral-900"
                       />
                     </div>
                   </div>
@@ -1415,7 +1415,7 @@ export default function OrdersTab() {
                       placeholder="https://track.delhivery.com/..."
                       value={shipForm.trackingUrl}
                       onChange={(e) => setShipForm({ ...shipForm, trackingUrl: e.target.value })}
-                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs font-mono text-neutral-800 outline-none focus:border-neutral-900"
+                      className="w-full bg-white border border-neutral-300 rounded-xs px-2.5 py-1.5 text-xs  text-neutral-800 outline-none focus:border-neutral-900"
                     />
                   </div>
                 </div>

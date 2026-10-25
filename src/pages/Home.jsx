@@ -167,7 +167,7 @@ export default function Home() {
           <p className="text-sm text-slate-300">
             Yeh popup <strong>Framer Motion</strong> aur <strong>Tailwind CSS</strong> se bna hai. Isme smooth entry/exit animations, background blur backdrop, aur ESC key support enabled hai!
           </p>
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg text-xs font-mono text-indigo-300">
+          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-lg text-xs  text-indigo-300">
             Popup / Dialog is working seamlessly!
           </div>
           <div className="flex justify-end gap-3 pt-2">

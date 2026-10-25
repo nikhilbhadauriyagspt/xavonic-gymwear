@@ -429,12 +429,12 @@ export function generateInvoiceHTML(order, customBrand = null) {
               <div class="item-name">${it.title}</div>
               <div class="item-variant">Size: ${it.size} | Color: ${it.color}</div>
             </td>
-            <td class="c font-mono">${it.hsn}</td>
-            <td class="r font-mono">₹${it.price.toLocaleString('en-IN')}.00</td>
+            <td class="c ">${it.hsn}</td>
+            <td class="r ">₹${it.price.toLocaleString('en-IN')}.00</td>
             <td class="c font-bold">${it.qty}</td>
-            <td class="r font-mono">₹${it.taxable.toLocaleString('en-IN')}.00</td>
+            <td class="r ">₹${it.taxable.toLocaleString('en-IN')}.00</td>
             <td class="c">5%</td>
-            <td class="r font-mono"><strong>₹${it.lineTotal.toLocaleString('en-IN')}.00</strong></td>
+            <td class="r "><strong>₹${it.lineTotal.toLocaleString('en-IN')}.00</strong></td>
           </tr>
         `).join('')}
       </tbody>

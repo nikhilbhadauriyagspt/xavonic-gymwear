@@ -57,7 +57,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
           <div className="flex items-center gap-2.5">
             <FileText className="h-4 w-4 text-amber-400" />
             <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider font-mono">
+              <h3 className="text-xs font-semibold uppercase tracking-wider ">
                 Tax Invoice • {invoiceNumber}
               </h3>
               <p className="text-[10px] text-neutral-400">
@@ -108,13 +108,13 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
               <p className="text-[10px] text-neutral-500 font-medium uppercase tracking-wider mt-0.5">
                 {brand.brand_tagline || 'Engineered Performance & Aesthetic Apparel'}
               </p>
-              <div className="mt-2 text-[10px] font-mono text-neutral-600 bg-neutral-100 px-2 py-0.5 inline-block border border-neutral-200">
+              <div className="mt-2 text-[10px]  text-neutral-600 bg-neutral-100 px-2 py-0.5 inline-block border border-neutral-200">
                 GSTIN: 06AAECX9821L1Z4 • PAN: AAECX9821L
               </div>
             </div>
 
-            <div className="sm:text-right font-mono text-xs">
-              <div className="font-bold text-sm text-neutral-950 font-mono">{invoiceNumber}</div>
+            <div className="sm:text-right  text-xs">
+              <div className="font-bold text-sm text-neutral-950 ">{invoiceNumber}</div>
               <div className="text-neutral-500 text-[11px] mt-1">Date: {invoiceDate}</div>
               <div className="text-neutral-500 text-[11px]">Order: #{orderNumber}</div>
               <span className="inline-block mt-1 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
@@ -145,7 +145,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
             <div className="border border-neutral-200 bg-neutral-50/70 p-3.5 space-y-1">
               <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 flex items-center justify-between">
                 <span>Billed & Shipped To</span>
-                <span className="font-mono text-neutral-700">{order.customerId || 'CUSTOMER'}</span>
+                <span className=" text-neutral-700">{order.customerId || 'CUSTOMER'}</span>
               </div>
               <div className="font-bold text-neutral-900 text-xs pt-1">
                 {order.customerName || order.customer_name || 'Valued Athlete'}
@@ -184,31 +184,31 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
 
                   return (
                     <tr key={idx} className={idx % 2 === 1 ? 'bg-neutral-50/50' : 'bg-white'}>
-                      <td className="py-2.5 px-3 text-center text-neutral-400 font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-center text-neutral-400  text-[11px]">
                         {idx + 1}
                       </td>
                       <td className="py-2.5 px-3">
                         <div className="font-semibold text-neutral-900 text-xs">{it.title}</div>
-                        <div className="text-[10px] text-neutral-500 font-mono mt-0.5">
+                        <div className="text-[10px] text-neutral-500  mt-0.5">
                           Size: <strong>{it.size || it.selectedSize || 'M'}</strong> • Color: <strong>{it.color || it.selectedColor || 'Standard'}</strong>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-center font-mono text-neutral-600 text-[11px]">
+                      <td className="py-2.5 px-3 text-center  text-neutral-600 text-[11px]">
                         61091000
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-[11px]">
+                      <td className="py-2.5 px-3 text-right  text-[11px]">
                         ₹{price.toLocaleString('en-IN')}.00
                       </td>
                       <td className="py-2.5 px-3 text-center font-semibold text-[11px]">
                         {qty}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-neutral-700 text-[11px]">
+                      <td className="py-2.5 px-3 text-right  text-neutral-700 text-[11px]">
                         ₹{itemTaxable.toLocaleString('en-IN')}.00
                       </td>
                       <td className="py-2.5 px-3 text-center text-neutral-600 text-[11px]">
                         5%
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-semibold text-neutral-950 text-xs">
+                      <td className="py-2.5 px-3 text-right  font-semibold text-neutral-950 text-xs">
                         ₹{lineTotal.toLocaleString('en-IN')}.00
                       </td>
                     </tr>
@@ -227,7 +227,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
               <div className="text-neutral-700">
                 Courier: <strong>{order.courierPartner || order.courier_partner || 'Bluedart Express'}</strong>
               </div>
-              <div className="text-neutral-700 font-mono text-[10px]">
+              <div className="text-neutral-700  text-[10px]">
                 AWB / Tracking: <strong>{order.trackingNumber || order.tracking_number || 'XAV-TRACKING'}</strong>
               </div>
               <div className="text-neutral-700 pt-1">
@@ -238,7 +238,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
               </div>
             </div>
 
-            <div className="border border-neutral-200 bg-neutral-50 p-4 space-y-2 text-xs font-mono">
+            <div className="border border-neutral-200 bg-neutral-50 p-4 space-y-2 text-xs ">
               <div className="flex justify-between text-neutral-600">
                 <span>Items Subtotal:</span>
                 <span>₹{rawSubtotal.toLocaleString('en-IN')}.00</span>
@@ -285,7 +285,7 @@ export default function OrderInvoiceModal({ order, isOpen, onClose }) {
 
         {/* Footer Actions */}
         <div className="bg-neutral-50 px-5 py-3 border-t border-neutral-200 flex justify-between items-center shrink-0">
-          <span className="text-[11px] text-neutral-500 font-mono">
+          <span className="text-[11px] text-neutral-500 ">
             Support: support@ragex.com
           </span>
           <button

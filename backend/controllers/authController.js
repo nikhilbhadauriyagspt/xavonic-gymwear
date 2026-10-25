@@ -137,6 +137,7 @@ exports.verifyOtp = async (req, res) => {
     );
 
     let user;
+    let isNewUser = false;
 
     if (existingUsers && existingUsers.length > 0) {
       user = existingUsers[0];
@@ -150,7 +151,12 @@ exports.verifyOtp = async (req, res) => {
         [user.id]
       );
       user.phone_verified = 1;
+      // If user does not have a real name yet, treat as new user needing onboarding
+      if (!user.name || user.name.trim() === '') {
+        isNewUser = true;
+      }
     } else {
+      isNewUser = true;
       // Create new user with verified phone, unique customer ID, and blank name/email
       const [insertResult] = await db.query(
         'INSERT INTO users (name, phone, phone_verified, email, email_verified, tier, points, gender) VALUES (?, ?, 1, NULL, 0, ?, ?, ?)',
@@ -184,6 +190,7 @@ exports.verifyOtp = async (req, res) => {
       message: 'Mobile verified! Welcome to RageX.',
       token,
       user: formatUserResponse(user),
+      isNewUser,
     });
   } catch (err) {
     console.error('Error in verifyOtp:', err);

@@ -81,7 +81,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
                 <h3 className="text-base font-semibold text-neutral-900">
                   {customerData?.name || 'Registered Customer'}
                 </h3>
-                <span className="font-mono text-[10px] font-semibold bg-neutral-200/80 text-neutral-800 px-1.5 py-0.2 rounded-xs">
+                <span className=" text-[10px] font-semibold bg-neutral-200/80 text-neutral-800 px-1.5 py-0.2 rounded-xs">
                   {customerData?.customer_id || `RGX-${String(customerData?.id || '').padStart(5, '0')}`}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
             <span className="text-[10px] text-neutral-500 uppercase tracking-wider font-medium flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-emerald-600" /> Total Spending
             </span>
-            <div className="text-sm font-bold text-neutral-900 font-mono">
+            <div className="text-sm font-bold text-neutral-900 ">
               ₹{totalSpent.toLocaleString('en-IN')}.00
             </div>
           </div>
@@ -114,7 +114,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
             <span className="text-[10px] text-neutral-500 uppercase tracking-wider font-medium flex items-center gap-1">
               <ShoppingBag className="w-3 h-3 text-neutral-600" /> Total Orders
             </span>
-            <div className="text-sm font-bold text-neutral-900 font-mono">
+            <div className="text-sm font-bold text-neutral-900 ">
               {totalOrders} {totalOrders === 1 ? 'Order' : 'Orders'}
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
             <span className="text-[10px] text-neutral-500 uppercase tracking-wider font-medium flex items-center gap-1">
               <CreditCard className="w-3 h-3 text-neutral-600" /> Avg. Order Value
             </span>
-            <div className="text-sm font-bold text-neutral-900 font-mono">
+            <div className="text-sm font-bold text-neutral-900 ">
               ₹{Math.round(avgOrderValue).toLocaleString('en-IN')}.00
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
             <span className="text-[10px] text-neutral-500 uppercase tracking-wider font-medium flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-red-600" /> Reward Points
             </span>
-            <div className="text-sm font-bold text-red-600 font-mono">
+            <div className="text-sm font-bold text-red-600 ">
               {customerData?.points || 100} Pts
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs font-mono font-semibold text-neutral-900">
+                      <div className="text-xs  font-semibold text-neutral-900">
                         {customerData?.phone ? `+${customerData.phone.replace(/[^0-9]/g, '')}` : 'Not provided'}
                       </div>
                     </div>
@@ -246,12 +246,12 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
 
                       <div className="space-y-0.5">
                         <span className="text-[10px] text-neutral-400 uppercase">Top / Chest Fit</span>
-                        <div className="font-mono font-semibold text-neutral-900">{customerData?.chest_size || 'L (42")'}</div>
+                        <div className=" font-semibold text-neutral-900">{customerData?.chest_size || 'L (42")'}</div>
                       </div>
 
                       <div className="space-y-0.5">
                         <span className="text-[10px] text-neutral-400 uppercase">Lower / Waist Fit</span>
-                        <div className="font-mono font-semibold text-neutral-900">{customerData?.lower_size || 'M (32")'}</div>
+                        <div className=" font-semibold text-neutral-900">{customerData?.lower_size || 'M (32")'}</div>
                       </div>
                     </div>
                   </div>
@@ -294,7 +294,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
                           {/* Order Header */}
                           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-2.5">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-neutral-900">
+                              <span className=" text-xs font-bold text-neutral-900">
                                 {ord.order_number}
                               </span>
                               <span className="text-[11px] text-neutral-400">
@@ -339,14 +339,14 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
                                   )}
                                   <div>
                                     <div className="font-medium text-neutral-900">{item.title}</div>
-                                    <div className="text-[10px] text-neutral-500 font-mono">
+                                    <div className="text-[10px] text-neutral-500 ">
                                       Size: <strong className="text-neutral-800">{item.size || item.selectedSize}</strong>
                                       {item.color && <span> • Color: {item.color}</span>}
                                       <span> • Qty: {item.quantity || 1}</span>
                                     </div>
                                   </div>
                                 </div>
-                                <div className="font-mono font-semibold text-neutral-900">
+                                <div className=" font-semibold text-neutral-900">
                                   ₹{Number(item.price * (item.quantity || 1)).toLocaleString('en-IN')}.00
                                 </div>
                               </div>
@@ -359,7 +359,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
                               <Truck className="w-3.5 h-3.5 text-neutral-500" />
                               <span>{ord.courier_partner || 'Bluedart Express'}</span>
                               {ord.tracking_number && (
-                                <span className="font-mono font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.2 rounded-xs">
+                                <span className=" font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.2 rounded-xs">
                                   {ord.tracking_number}
                                 </span>
                               )}
@@ -367,7 +367,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
 
                             <div className="text-right">
                               <span className="text-neutral-500">Total: </span>
-                              <strong className="text-xs font-bold font-mono text-neutral-900">
+                              <strong className="text-xs font-bold  text-neutral-900">
                                 ₹{Number(ord.total_amount).toLocaleString('en-IN')}.00
                               </strong>
                             </div>
@@ -413,7 +413,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
 
                             <div className="space-y-0.5 text-xs text-neutral-800">
                               <div className="font-semibold text-neutral-900">{name}</div>
-                              {phone && <div className="text-[11px] text-neutral-500 font-mono">Ph: +{phone.replace(/[^0-9]/g, '')}</div>}
+                              {phone && <div className="text-[11px] text-neutral-500 ">Ph: +{phone.replace(/[^0-9]/g, '')}</div>}
                               <div className="text-neutral-600 leading-relaxed pt-1">
                                 {street}
                                 {addr.landmark && <span className="block text-[11px] text-neutral-400">Near: {addr.landmark}</span>}
@@ -436,7 +436,7 @@ export default function CustomerProfileModal({ customerId, isOpen, onClose }) {
 
         {/* Modal Footer */}
         <div className="px-5 py-3 border-t border-neutral-200 bg-neutral-50/70 flex items-center justify-between text-xs">
-          <div className="text-neutral-500 font-mono text-[11px]">
+          <div className="text-neutral-500  text-[11px]">
             Customer ID: {customerData?.customer_id || `RGX-${String(customerData?.id || '').padStart(5, '0')}`}
           </div>
           <button

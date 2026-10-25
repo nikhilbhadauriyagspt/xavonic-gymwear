@@ -275,7 +275,7 @@ export default function AdminSecurityModal({ isOpen, onClose, adminUser, onProfi
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full border border-neutral-300 rounded-xs pl-8 pr-3 py-2 text-xs text-neutral-900 outline-none focus:border-neutral-900 font-mono"
+                    className="w-full border border-neutral-300 rounded-xs pl-8 pr-3 py-2 text-xs text-neutral-900 outline-none focus:border-neutral-900 "
                   />
                 </div>
               </div>

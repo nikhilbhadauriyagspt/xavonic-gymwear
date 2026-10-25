@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Search, 
   User, 
@@ -59,6 +59,7 @@ export default function Header() {
   const [copiedCode, setCopiedCode] = useState(null);
 
   const location = useLocation();
+  const navigate = useNavigate();
   const { openCart, totalItemsCount } = useCart();
   const { handleAccountClick, isLoggedIn, user } = useAuth();
   const { wishlistCount } = useWishlist();
@@ -169,6 +170,11 @@ export default function Header() {
 
   // 2. Scroll listener with hysteresis threshold to prevent jumpy glitch
   useEffect(() => {
+    const isAccount = location.pathname.startsWith('/account') || location.pathname.startsWith('/profile');
+    if (isAccount) {
+      setIsScrolled(true);
+      return;
+    }
     const handleScroll = () => {
       const currentY = window.scrollY;
       if (currentY > 80) {
@@ -177,9 +183,10 @@ export default function Header() {
         setIsScrolled(false);
       }
     };
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   // Close mega menu and mobile drawer on route change
   useEffect(() => {
@@ -383,7 +390,7 @@ export default function Header() {
                 {ann.code && (
                   <span className="inline-flex items-center gap-1 shrink-0 ml-0.5">
                     <span className="hidden sm:inline text-zinc-300 font-light">•</span>
-                    <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200/90 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 px-1.5 py-0.5 rounded text-[11px] font-mono font-semibold tracking-wider transition-colors">
+                    <span className="inline-flex items-center gap-1 bg-red-50 text-red-600 border border-red-200/90 group-hover:bg-red-600 group-hover:text-white group-hover:border-red-600 px-1.5 py-0.5 rounded text-[11px]  font-semibold tracking-wider transition-colors">
                       <Tag className="w-2.5 h-2.5" />
                       {ann.code}
                     </span>
@@ -488,7 +495,7 @@ export default function Header() {
 
             {/* Account / User Avatar Button */}
             <button
-              onClick={handleAccountClick}
+              onClick={() => handleAccountClick(navigate)}
               className={`relative hidden sm:flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 transition-colors cursor-pointer rounded-full ${
                 isScrolled 
                   ? 'text-zinc-700 hover:text-black hover:bg-zinc-100' 
@@ -723,7 +730,7 @@ export default function Header() {
               <button 
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  handleAccountClick();
+                  handleAccountClick(navigate);
                 }}
                 className="flex items-center gap-2 py-2 text-zinc-300 hover:text-white font-normal cursor-pointer"
               >
@@ -789,7 +796,7 @@ export default function Header() {
 
         {/* Account / Avatar Trigger */}
         <button 
-          onClick={handleAccountClick}
+          onClick={() => handleAccountClick(navigate)}
           className="relative flex flex-col items-center gap-0.5 py-1 px-3 text-zinc-500 hover:text-black transition-colors cursor-pointer"
         >
           <div className="relative">
@@ -919,7 +926,7 @@ export default function Header() {
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex items-center gap-2">
                             <Tag className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                            <span className="font-bold text-xs text-neutral-900 font-mono tracking-wider bg-white px-2 py-0.5 border border-neutral-300">
+                            <span className="font-bold text-xs text-neutral-900  tracking-wider bg-white px-2 py-0.5 border border-neutral-300">
                               {ann.code}
                             </span>
                           </div>
@@ -954,7 +961,7 @@ export default function Header() {
                   ) : (
                     <div className="flex items-center justify-between gap-3 p-3.5 bg-neutral-50 border border-neutral-200">
                       <div>
-                        <span className="font-bold text-xs text-neutral-900 font-mono bg-white px-2 py-0.5 border border-neutral-300">
+                        <span className="font-bold text-xs text-neutral-900  bg-white px-2 py-0.5 border border-neutral-300">
                           PUMP10
                         </span>
                         <p className="text-xs text-neutral-600 font-medium mt-1">

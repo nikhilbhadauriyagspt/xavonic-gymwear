@@ -179,7 +179,7 @@ export default function CustomersTab() {
                       onClick={() => handleOpenProfile(c.id)}
                     >
                       {/* ID */}
-                      <td className="py-3 px-3.5 font-mono text-[11px]">
+                      <td className="py-3 px-3.5  text-[11px]">
                         <span className="font-semibold text-neutral-900 bg-neutral-100 px-1.5 py-0.5 rounded-xs border border-neutral-200">
                           {c.customer_id || `RGX-${String(c.id).padStart(5, '0')}`}
                         </span>
@@ -207,7 +207,7 @@ export default function CustomersTab() {
                         <div className="space-y-1">
                           {c.phone ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-neutral-900 font-medium">
+                              <span className=" text-neutral-900 font-medium">
                                 +{c.phone.replace(/[^0-9]/g, '')}
                               </span>
                               {Boolean(c.phone_verified) ? (
@@ -231,7 +231,7 @@ export default function CustomersTab() {
                       {/* Orders & Spending */}
                       <td className="py-3 px-3.5">
                         <div className="space-y-0.5">
-                          <div className="font-bold font-mono text-xs text-neutral-900">
+                          <div className="font-bold  text-xs text-neutral-900">
                             ₹{spent.toLocaleString('en-IN')}.00
                           </div>
                           <div className="text-[10px] text-neutral-500 font-medium flex items-center gap-1">
@@ -248,7 +248,7 @@ export default function CustomersTab() {
                             <Sparkles className="w-2.5 h-2.5" />
                             {c.tier || 'VIP Club'}
                           </span>
-                          <div className="text-[10px] text-neutral-500 font-mono">
+                          <div className="text-[10px] text-neutral-500 ">
                             {c.points || 100} Reward Pts
                           </div>
                         </div>
@@ -256,7 +256,7 @@ export default function CustomersTab() {
 
                       {/* Sizing */}
                       <td className="py-3 px-3.5">
-                        <div className="text-[11px] text-neutral-600 space-y-0.5 font-mono">
+                        <div className="text-[11px] text-neutral-600 space-y-0.5 ">
                           <div>Top: <span className="font-semibold text-neutral-900">{c.chest_size || 'L'}</span></div>
                           <div>Lower: <span className="font-semibold text-neutral-900">{c.lower_size || 'M'}</span></div>
                         </div>

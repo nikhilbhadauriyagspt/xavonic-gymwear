@@ -17,9 +17,15 @@ async function getWhatsAppSettings() {
 
     rows.forEach((r) => {
       if (r.setting_key === 'whatsapp_mode' && r.setting_value) settings.mode = r.setting_value;
-      if (r.setting_key === 'whatsapp_meta_token' && r.setting_value) settings.meta_token = r.setting_value;
-      if (r.setting_key === 'whatsapp_phone_number_id' && r.setting_value) settings.phone_number_id = r.setting_value;
-      if (r.setting_key === 'whatsapp_waba_id' && r.setting_value) settings.waba_id = r.setting_value;
+      if (r.setting_key === 'whatsapp_meta_token' && r.setting_value && r.setting_value.startsWith('EAA')) {
+        settings.meta_token = r.setting_value;
+      }
+      if (r.setting_key === 'whatsapp_phone_number_id' && r.setting_value && /^\d+$/.test(r.setting_value)) {
+        settings.phone_number_id = r.setting_value;
+      }
+      if (r.setting_key === 'whatsapp_waba_id' && r.setting_value && /^\d+$/.test(r.setting_value)) {
+        settings.waba_id = r.setting_value;
+      }
       if (r.setting_key === 'whatsapp_template_name' && r.setting_value) settings.template_name = r.setting_value;
     });
 
@@ -285,10 +291,246 @@ async function sendOrderDispatchNotification(orderData) {
   return { success: true, mode: 'test' };
 }
 
+// 5. Send Abandoned Checkout Recovery via Meta Cloud API (Image Header + Template + 24h Window Fallback)
+async function sendAbandonedCartWhatsApp({ phone, customerName, productName, productPrice, productImage, couponCode, recoveryUrl }) {
+  const settings = await getWhatsAppSettings();
+  const cleanPhone = `91${String(phone || '').replace(/\D/g, '').slice(-10)}`;
+
+  const productWithPrice = productPrice
+    ? `${productName || 'Selected Item'} (₹${productPrice})`
+    : (productName || 'Selected Item');
+
+  const imageUrl =
+    productImage && productImage.startsWith('http')
+      ? productImage
+      : 'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805028/guidelya/products/fytbuv7tb2t6q5lkfukh.jpg';
+
+  const messageText = `Hey ${customerName || 'there'}! 👋\n\nYour *${productWithPrice}* is still waiting in your shopping bag at RAGE X!\n\nUse code *${couponCode || 'EXTRA5'}* at checkout for an exclusive discount:\n👉 ${recoveryUrl}`;
+
+  if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
+    try {
+      const metaUrl = `https://graph.facebook.com/v21.0/${settings.phone_number_id}/messages`;
+
+      // Try 1: Approved Template 'ragex_cart_recovery' with Dynamic Product Image Header
+      const buildTemplatePayload = (langCode, includeHeader = true) => {
+        const components = [];
+        if (includeHeader) {
+          components.push({
+            type: 'header',
+            parameters: [
+              {
+                type: 'image',
+                image: { link: imageUrl },
+              },
+            ],
+          });
+        }
+        components.push({
+          type: 'body',
+          parameters: [
+            { type: 'text', text: String(customerName || 'Shopper') },
+            { type: 'text', text: String(productWithPrice) },
+            { type: 'text', text: String(couponCode || 'EXTRA5') },
+          ],
+        });
+
+        return {
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: cleanPhone,
+          type: 'template',
+          template: {
+            name: 'ragex_cart_recovery',
+            language: { code: langCode },
+            components,
+          },
+        };
+      };
+
+      let response = await fetch(metaUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.meta_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildTemplatePayload('en', true)),
+      });
+
+      let metaData = await response.json();
+
+      if (!response.ok || !metaData.messages) {
+        response = await fetch(metaUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.meta_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(buildTemplatePayload('en_US', true)),
+        });
+        metaData = await response.json();
+      }
+
+      // Try 2: Fallback direct text message (works within 24h session window)
+      if (!response.ok || !metaData.messages) {
+        const textPayload = {
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: cleanPhone,
+          type: 'text',
+          text: {
+            preview_url: true,
+            body: messageText,
+          },
+        };
+
+        response = await fetch(metaUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.meta_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(textPayload),
+        });
+        metaData = await response.json();
+      }
+
+      if (response.ok && metaData.messages) {
+        console.log(`✅ Abandoned Cart WhatsApp sent via Meta API to +${cleanPhone}`);
+        return {
+          success: true,
+          apiDelivered: true,
+          messageId: metaData.messages[0]?.id,
+        };
+      }
+    } catch (err) {
+      console.warn('Meta API Abandoned Cart warning:', err.message);
+    }
+  }
+
+  return {
+    success: true,
+    apiDelivered: false,
+    whatsappUrl: `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(messageText)}`,
+  };
+}
+
+// 6. Send New Product Drop / Size-Targeted Broadcast via Meta Cloud API
+async function sendProductDropWhatsApp({ phone, customerName, productName, productPrice, productImage, productUrl, couponCode = 'NEW10' }) {
+  const settings = await getWhatsAppSettings();
+  const cleanPhone = `91${String(phone || '').replace(/\D/g, '').slice(-10)}`;
+
+  const productWithPrice = productPrice
+    ? `${productName || 'New Drop'} (₹${productPrice})`
+    : (productName || 'New Drop');
+
+  const imageUrl =
+    productImage && productImage.startsWith('http')
+      ? productImage
+      : 'https://res.cloudinary.com/fwlidd7t/image/upload/v1790805028/guidelya/products/fytbuv7tb2t6q5lkfukh.jpg';
+
+  const captionText = `🔥 *NEW DROP ALERT AT RAGE X!* 🔥\n\nHey ${customerName || 'there'},\nWe just dropped *${productWithPrice}* in your size!\n\n🎁 Use code *${couponCode}* for an instant discount.\n👉 Shop Now: ${productUrl || 'https://rage-x.com/collections'}`;
+
+  if (settings.mode === 'live' && settings.meta_token && settings.phone_number_id) {
+    try {
+      const metaUrl = `https://graph.facebook.com/v21.0/${settings.phone_number_id}/messages`;
+
+      const buildPayload = (tplName, langCode) => ({
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'template',
+        template: {
+          name: tplName,
+          language: { code: langCode },
+          components: [
+            {
+              type: 'header',
+              parameters: [
+                {
+                  type: 'image',
+                  image: { link: imageUrl },
+                },
+              ],
+            },
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: String(customerName || 'Shopper') },
+                { type: 'text', text: String(productWithPrice) },
+                { type: 'text', text: String(couponCode || 'NEW10') },
+              ],
+            },
+          ],
+        },
+      });
+
+      // Try 1: 'ragex_new_drop' template
+      let response = await fetch(metaUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${settings.meta_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildPayload('ragex_new_drop', 'en')),
+      });
+      let metaData = await response.json();
+
+      // Try 2: 'ragex_cart_recovery' template (same 3 variables + Image header!)
+      if (!response.ok || !metaData.messages) {
+        response = await fetch(metaUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.meta_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(buildPayload('ragex_cart_recovery', 'en')),
+        });
+        metaData = await response.json();
+      }
+
+      // Try 3: Direct Image + Caption message (within 24h session window)
+      if (!response.ok || !metaData.messages) {
+        response = await fetch(metaUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.meta_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: cleanPhone,
+            type: 'image',
+            image: {
+              link: imageUrl,
+              caption: captionText,
+            },
+          }),
+        });
+        metaData = await response.json();
+      }
+
+      if (response.ok && metaData.messages) {
+        return { success: true, apiDelivered: true, messageId: metaData.messages[0]?.id };
+      }
+    } catch (err) {
+      console.warn('Product broadcast error for +' + cleanPhone + ':', err.message);
+    }
+  }
+
+  return {
+    success: true,
+    apiDelivered: false,
+    whatsappUrl: `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(captionText)}`,
+  };
+}
+
 module.exports = {
   getWhatsAppSettings,
   sendWhatsAppOtp,
   sendOrderWhatsAppNotification,
   sendOrderDispatchNotification,
+  sendAbandonedCartWhatsApp,
+  sendProductDropWhatsApp,
 };
 

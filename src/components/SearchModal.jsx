@@ -197,7 +197,7 @@ export default function SearchModal({ isOpen, onClose }) {
                               <h4 className="text-xs font-semibold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-1">
                                 {item.title}
                               </h4>
-                              <p className="text-[11px] font-bold text-neutral-900 font-mono">₹{price.toLocaleString('en-IN')}</p>
+                              <p className="text-[11px] font-bold text-neutral-900 ">₹{price.toLocaleString('en-IN')}</p>
                             </div>
                             <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-red-600 group-hover:translate-x-1 transition-all mr-1" />
                           </div>
@@ -251,7 +251,7 @@ export default function SearchModal({ isOpen, onClose }) {
                               <h4 className="text-xs sm:text-sm font-semibold text-zinc-900 group-hover:text-red-600 transition-colors line-clamp-1">
                                 {item.title}
                               </h4>
-                              <div className="flex items-center gap-2 pt-0.5 font-mono">
+                              <div className="flex items-center gap-2 pt-0.5 ">
                                 <span className="text-xs font-bold text-zinc-950">₹{price.toLocaleString('en-IN')}</span>
                                 {origPrice > price && (
                                   <span className="text-[11px] text-zinc-400 line-through">₹{origPrice.toLocaleString('en-IN')}</span>
@@ -297,7 +297,7 @@ export default function SearchModal({ isOpen, onClose }) {
 
             {/* Bottom Keyboard Hint Bar */}
             <div className="px-6 py-2.5 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400">
-              <span>Press <kbd className="px-1.5 py-0.5 bg-white border border-zinc-200 text-zinc-600 font-mono text-[10px]">ESC</kbd> to close</span>
+              <span>Press <kbd className="px-1.5 py-0.5 bg-white border border-zinc-200 text-zinc-600  text-[10px]">ESC</kbd> to close</span>
               <span>Click product to instantly view & add to bag</span>
             </div>
 

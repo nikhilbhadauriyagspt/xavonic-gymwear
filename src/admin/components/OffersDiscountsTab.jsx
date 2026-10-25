@@ -218,7 +218,7 @@ export default function OffersDiscountsTab() {
                   <span className="w-2 h-2 rounded-full bg-red-600 shrink-0"></span>
                   <span className="font-medium text-neutral-900 truncate">{ann.text}</span>
                   {ann.code && (
-                    <span className="px-1.5 py-0.5 bg-red-50 text-red-600 font-bold border border-red-200 text-[10px] uppercase font-mono shrink-0">
+                    <span className="px-1.5 py-0.5 bg-red-50 text-red-600 font-bold border border-red-200 text-[10px] uppercase  shrink-0">
                       Code: {ann.code}
                     </span>
                   )}
@@ -253,7 +253,7 @@ export default function OffersDiscountsTab() {
                 placeholder="Coupon Code (Optional, e.g. PUMP10)"
                 value={newAnnouncement.code}
                 onChange={(e) => setNewAnnouncement({ ...newAnnouncement, code: e.target.value })}
-                className="w-full sm:w-48 bg-white border border-neutral-200 px-3 py-1.5 text-xs text-neutral-900 outline-none rounded-xs uppercase font-mono"
+                className="w-full sm:w-48 bg-white border border-neutral-200 px-3 py-1.5 text-xs text-neutral-900 outline-none rounded-xs uppercase "
               />
               <button
                 type="button"
@@ -325,7 +325,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.bundle_buy_2_discount}
                   onChange={(e) => setConfig({ ...config, bundle_buy_2_discount: Number(e.target.value) })}
-                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-neutral-900 outline-none pr-7 font-mono"
+                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-neutral-900 outline-none pr-7 "
                 />
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400">%</span>
               </div>
@@ -338,7 +338,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.bundle_buy_3_discount}
                   onChange={(e) => setConfig({ ...config, bundle_buy_3_discount: Number(e.target.value) })}
-                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-neutral-900 outline-none pr-7 font-mono"
+                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-neutral-900 outline-none pr-7 "
                 />
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400">%</span>
               </div>
@@ -351,7 +351,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.bundle_buy_4_discount}
                   onChange={(e) => setConfig({ ...config, bundle_buy_4_discount: Number(e.target.value) })}
-                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-neutral-900 outline-none pr-7 font-mono"
+                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-neutral-900 outline-none pr-7 "
                 />
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-neutral-400">%</span>
               </div>
@@ -396,7 +396,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.prepaid_discount_percent}
                   onChange={(e) => setConfig({ ...config, prepaid_discount_percent: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 outline-none font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 outline-none "
                 />
               </div>
 
@@ -429,7 +429,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.new_user_discount_amount}
                   onChange={(e) => setConfig({ ...config, new_user_discount_amount: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 outline-none font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 outline-none "
                 />
               </div>
 
@@ -439,7 +439,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.free_shipping_threshold}
                   onChange={(e) => setConfig({ ...config, free_shipping_threshold: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs text-neutral-800 outline-none font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs text-neutral-800 outline-none "
                 />
               </div>
             </div>
@@ -470,7 +470,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.cart_tier_1_min}
                   onChange={(e) => setConfig({ ...config, cart_tier_1_min: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs "
                 />
               </div>
               <div className="space-y-1 flex-1">
@@ -479,7 +479,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.cart_tier_1_discount}
                   onChange={(e) => setConfig({ ...config, cart_tier_1_discount: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 "
                 />
               </div>
             </div>
@@ -491,7 +491,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.cart_tier_2_min}
                   onChange={(e) => setConfig({ ...config, cart_tier_2_min: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs "
                 />
               </div>
               <div className="space-y-1 flex-1">
@@ -500,7 +500,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={config.cart_tier_2_discount}
                   onChange={(e) => setConfig({ ...config, cart_tier_2_discount: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-semibold text-emerald-700 "
                 />
               </div>
             </div>
@@ -534,7 +534,7 @@ export default function OffersDiscountsTab() {
                   placeholder="e.g. VIP20"
                   value={newCoupon.code}
                   onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs uppercase font-mono font-bold"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs uppercase  font-bold"
                 />
               </div>
 
@@ -556,7 +556,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={newCoupon.value}
                   onChange={(e) => setNewCoupon({ ...newCoupon, value: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs font-mono font-semibold"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs  font-semibold"
                 />
               </div>
 
@@ -566,7 +566,7 @@ export default function OffersDiscountsTab() {
                   type="number"
                   value={newCoupon.min_cart}
                   onChange={(e) => setNewCoupon({ ...newCoupon, min_cart: Number(e.target.value) })}
-                  className="w-full bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs font-mono"
+                  className="w-full bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs "
                 />
               </div>
 
@@ -591,7 +591,7 @@ export default function OffersDiscountsTab() {
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-neutral-900 text-white font-mono text-xs font-bold rounded-xs tracking-wider">
+                    <span className="px-2 py-0.5 bg-neutral-900 text-white  text-xs font-bold rounded-xs tracking-wider">
                       {cp.code}
                     </span>
                     <span className="text-xs font-semibold text-emerald-700">

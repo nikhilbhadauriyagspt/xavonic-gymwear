@@ -165,7 +165,7 @@ export default function SmartFitFinderModal({ isOpen, onClose, onSelectSize, cur
                     onChange={(e) => setHeightCm(Number(e.target.value))}
                     className="w-full accent-neutral-900 h-1.5 bg-neutral-200 rounded-lg cursor-pointer"
                   />
-                  <div className="flex justify-between text-[11px] font-mono text-neutral-600 mt-1">
+                  <div className="flex justify-between text-[11px]  text-neutral-600 mt-1">
                     <span>140 cm</span>
                     <span className="font-bold text-neutral-900 text-xs">{heightCm} cm</span>
                     <span>215 cm</span>
@@ -180,7 +180,7 @@ export default function SmartFitFinderModal({ isOpen, onClose, onSelectSize, cur
                 <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-800">
                   Your Body Weight
                 </label>
-                <span className="font-mono font-bold text-neutral-900 text-xs">{weightKg} kg</span>
+                <span className=" font-bold text-neutral-900 text-xs">{weightKg} kg</span>
               </div>
               <input
                 type="range"
@@ -190,7 +190,7 @@ export default function SmartFitFinderModal({ isOpen, onClose, onSelectSize, cur
                 onChange={(e) => setWeightKg(Number(e.target.value))}
                 className="w-full accent-neutral-900 h-1.5 bg-neutral-200 rounded-lg cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+              <div className="flex justify-between text-[10px]  text-neutral-400">
                 <span>45 kg</span>
                 <span>80 kg</span>
                 <span>135 kg</span>

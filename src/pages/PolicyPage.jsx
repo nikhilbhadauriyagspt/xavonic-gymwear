@@ -40,7 +40,7 @@ export default function PolicyPage({ policyType }) {
     <div className="w-full min-h-screen bg-black text-zinc-100 font-sans selection:bg-red-600 selection:text-white py-12 sm:py-16 px-4 sm:px-8 lg:px-14">
       {/* Breadcrumb Header */}
       <div className="max-w-6xl mx-auto space-y-4 mb-10">
-        <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
+        <div className="flex items-center gap-2 text-xs  text-zinc-400">
           <Link to="/" className="hover:text-red-500 transition-colors">HOME</Link>
           <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
           <span className="text-zinc-500 uppercase">LEGAL & POLICIES</span>
@@ -50,14 +50,14 @@ export default function PolicyPage({ policyType }) {
 
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-800/80 pb-6">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-red-500 block mb-1">
+            <span className="text-[10px]  uppercase tracking-[0.25em] text-red-500 block mb-1">
               Official Store Policy
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white uppercase">
               {currentTitle}
             </h1>
           </div>
-          <p className="text-xs font-mono text-zinc-400">
+          <p className="text-xs  text-zinc-400">
             Last Updated: <span className="text-zinc-200">October 2026</span>
           </p>
         </div>
@@ -68,7 +68,7 @@ export default function PolicyPage({ policyType }) {
         {/* Navigation Sidebar */}
         <div className="lg:col-span-3 space-y-4">
           <div className="bg-zinc-950 border border-zinc-900 p-3 space-y-1">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 px-3 py-1.5 block">
+            <span className="text-[10px]  uppercase tracking-wider text-zinc-400 px-3 py-1.5 block">
               Policy Index
             </span>
             {tabs.map((tab) => {

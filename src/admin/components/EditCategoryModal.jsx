@@ -203,7 +203,7 @@ export default function EditCategoryModal({ category, isOpen, onClose, onCategor
                     required
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
-                    className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                    className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-1.5 text-xs text-neutral-900 outline-none "
                   />
                 </div>
               </div>
@@ -346,7 +346,7 @@ export default function EditCategoryModal({ category, isOpen, onClose, onCategor
                     setImagePreview(e.target.value);
                   }}
                   placeholder="https://res.cloudinary.com/..."
-                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs font-mono text-neutral-800 outline-none"
+                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-2.5 py-1.5 text-xs  text-neutral-800 outline-none"
                 />
               </div>
 

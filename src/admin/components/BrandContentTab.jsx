@@ -94,7 +94,7 @@ function RichTextEditor({ value, onChange, placeholder = 'Write rich content her
           <button
             type="button"
             onClick={() => insertTag('<p>', '</p>')}
-            className="p-1.5 hover:bg-neutral-200 rounded-xs text-xs font-mono transition-colors"
+            className="p-1.5 hover:bg-neutral-200 rounded-xs text-xs  transition-colors"
             title="Paragraph"
           >
             &lt;p&gt;
@@ -143,7 +143,7 @@ function RichTextEditor({ value, onChange, placeholder = 'Write rich content her
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={12}
-          className="w-full p-3 text-xs font-mono text-neutral-900 bg-neutral-900 text-neutral-100 outline-none resize-y selection:bg-red-600"
+          className="w-full p-3 text-xs  text-neutral-900 bg-neutral-900 text-neutral-100 outline-none resize-y selection:bg-red-600"
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-neutral-200">
@@ -515,13 +515,13 @@ export default function BrandContentTab() {
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[10px] text-neutral-400 block font-mono">Or paste image URL:</span>
+                      <span className="text-[10px] text-neutral-400 block ">Or paste image URL:</span>
                       <input
                         type="text"
                         placeholder="https://res.cloudinary.com/.../logo_white.png"
                         value={data.logo_white}
                         onChange={(e) => setData({ ...data, logo_white: e.target.value })}
-                        className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-xs px-3 py-1.5 text-xs outline-none font-mono"
+                        className="w-full bg-neutral-900 border border-neutral-700 text-white rounded-xs px-3 py-1.5 text-xs outline-none "
                       />
                     </div>
                   </div>
@@ -578,13 +578,13 @@ export default function BrandContentTab() {
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[10px] text-neutral-500 block font-mono">Or paste image URL:</span>
+                      <span className="text-[10px] text-neutral-500 block ">Or paste image URL:</span>
                       <input
                         type="text"
                         placeholder="https://res.cloudinary.com/.../logo_black.png"
                         value={data.logo_black}
                         onChange={(e) => setData({ ...data, logo_black: e.target.value })}
-                        className="w-full bg-white border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                        className="w-full bg-white border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none "
                       />
                     </div>
                   </div>
@@ -650,13 +650,13 @@ export default function BrandContentTab() {
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[10px] text-neutral-500 block font-mono">Or paste Favicon URL (.png / .svg / .ico):</span>
+                      <span className="text-[10px] text-neutral-500 block ">Or paste Favicon URL (.png / .svg / .ico):</span>
                       <input
                         type="text"
                         placeholder="https://res.cloudinary.com/.../favicon.png"
                         value={data.favicon || ''}
                         onChange={(e) => setData({ ...data, favicon: e.target.value })}
-                        className="w-full bg-neutral-50 border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                        className="w-full bg-neutral-50 border border-neutral-300 rounded-xs px-3 py-1.5 text-xs text-neutral-900 outline-none "
                       />
                     </div>
                   </div>
@@ -758,7 +758,7 @@ export default function BrandContentTab() {
                     value={data.whatsapp_number}
                     onChange={(e) => setData({ ...data, whatsapp_number: e.target.value })}
                     placeholder="919876543210"
-                    className="w-full border border-neutral-300 rounded-xs px-3 py-2 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full border border-neutral-300 rounded-xs px-3 py-2 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -884,7 +884,7 @@ export default function BrandContentTab() {
                     Frequently Asked Questions (Accordion List)
                   </h3>
                 </div>
-                <span className="text-[11px] text-neutral-500 font-mono">
+                <span className="text-[11px] text-neutral-500 ">
                   {(data.about_faqs || []).length} FAQs active
                 </span>
               </div>

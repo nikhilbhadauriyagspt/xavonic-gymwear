@@ -286,7 +286,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                   type="text"
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
-                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs text-neutral-900 outline-none font-mono"
+                  className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 py-1.5 text-xs text-neutral-900 outline-none "
                 />
               </div>
             </div>
@@ -386,7 +386,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                   type="number"
                   value={stock}
                   onChange={(e) => setStock(Number(e.target.value))}
-                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-3 py-1.5 text-xs font-mono font-semibold"
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-sm px-3 py-1.5 text-xs  font-semibold"
                 />
               </div>
             </div>
@@ -445,15 +445,15 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                       <div className="flex items-center justify-between font-semibold">
                         <span className="text-neutral-900">Size {sz}</span>
                         {isOut ? (
-                          <span className="text-[9px] px-1 py-0.2 bg-red-600 text-white rounded-2xs font-mono uppercase">
+                          <span className="text-[9px] px-1 py-0.2 bg-red-600 text-white rounded-2xs  uppercase">
                             Out of Stock
                           </span>
                         ) : isLow ? (
-                          <span className="text-[9px] px-1 py-0.2 bg-amber-500 text-white rounded-2xs font-mono uppercase">
+                          <span className="text-[9px] px-1 py-0.2 bg-amber-500 text-white rounded-2xs  uppercase">
                             Low: {currentSzStock}
                           </span>
                         ) : (
-                          <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-2xs border border-emerald-200 font-mono">
+                          <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-2xs border border-emerald-200 ">
                             In Stock
                           </span>
                         )}
@@ -471,7 +471,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                               [sz]: val,
                             }));
                           }}
-                          className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-2 py-1 text-xs font-mono outline-none"
+                          className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-2 py-1 text-xs  outline-none"
                         />
                       </div>
                     </div>
@@ -498,7 +498,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                             const comboStock = sizeStock[comboKey] !== undefined ? sizeStock[comboKey] : (sizeStock[sz] || 5);
                             return (
                               <div key={comboKey} className="flex items-center gap-1 bg-white border border-neutral-200 px-1.5 py-0.5 rounded-sm text-[11px]">
-                                <span className="text-neutral-500 font-mono">{sz}:</span>
+                                <span className="text-neutral-500 ">{sz}:</span>
                                 <input
                                   type="number"
                                   min="0"
@@ -510,7 +510,7 @@ export default function EditProductModal({ product, isOpen, onClose, onProductUp
                                       [comboKey]: val,
                                     }));
                                   }}
-                                  className="w-10 text-center bg-transparent border-0 font-mono outline-none font-semibold text-neutral-900"
+                                  className="w-10 text-center bg-transparent border-0  outline-none font-semibold text-neutral-900"
                                 />
                               </div>
                             );

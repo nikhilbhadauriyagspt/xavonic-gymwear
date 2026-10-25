@@ -1169,10 +1169,10 @@ export default function ProductDetailPage() {
                               <strong>Pair With:</strong> {bundlePair.title}
                             </span>
                             <div className="flex items-baseline gap-2 mt-1">
-                              <span className="text-xs font-bold text-neutral-950 font-mono">
+                              <span className="text-xs font-bold text-neutral-950 ">
                                 ₹{comboDiscounted.toLocaleString('en-IN')}.00
                               </span>
-                              <span className="text-[10px] text-neutral-400 line-through font-mono">
+                              <span className="text-[10px] text-neutral-400 line-through ">
                                 ₹{comboRawTotal.toLocaleString('en-IN')}
                               </span>
                               <span className="text-[10px] text-emerald-700 font-semibold">
@@ -1343,7 +1343,7 @@ export default function ProductDetailPage() {
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] uppercase font-bold text-neutral-400">Main Product</div>
                     <div className="text-xs font-semibold text-neutral-900 truncate uppercase">{product.title}</div>
-                    <div className="text-xs font-bold text-neutral-950 font-mono mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</div>
+                    <div className="text-xs font-bold text-neutral-950  mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</div>
                     <div className="text-[10px] text-neutral-500 mt-0.5">Size: <strong className="text-neutral-800">{selectedSize}</strong></div>
                   </div>
                 </div>
@@ -1369,7 +1369,7 @@ export default function ProductDetailPage() {
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="text-[10px] uppercase font-bold text-neutral-400">Complementary Fit</div>
                     <div className="text-xs font-semibold text-neutral-900 truncate uppercase">{bundleProduct.title}</div>
-                    <div className="text-xs font-bold text-neutral-950 font-mono">₹{Number(bundleProduct.price || 0).toLocaleString('en-IN')}.00</div>
+                    <div className="text-xs font-bold text-neutral-950 ">₹{Number(bundleProduct.price || 0).toLocaleString('en-IN')}.00</div>
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="text-neutral-500 font-medium">Size:</span>
                       <select
@@ -1406,11 +1406,11 @@ export default function ProductDetailPage() {
                       return (
                         <div className="mt-1">
                           <div className="flex items-baseline gap-2">
-                            <span className="text-base font-bold text-neutral-950 font-mono">
+                            <span className="text-base font-bold text-neutral-950 ">
                               ₹{discounted.toLocaleString('en-IN')}.00
                             </span>
                             {savings > 0 && (
-                              <span className="text-[11px] text-neutral-400 line-through font-mono">
+                              <span className="text-[11px] text-neutral-400 line-through ">
                                 ₹{raw.toLocaleString('en-IN')}.00
                               </span>
                             )}
@@ -2215,7 +2215,7 @@ export default function ProductDetailPage() {
               {product.title}
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-xs font-bold text-neutral-950 font-mono">
+              <span className="text-xs font-bold text-neutral-950 ">
                 ₹{unitPrice.toLocaleString('en-IN')}
               </span>
               <span className="text-[10px] text-neutral-500 font-medium">
@@ -2287,7 +2287,7 @@ export default function ProductDetailPage() {
               <img src={currentImages[0]} alt="" className="h-12 w-9 object-cover bg-neutral-200 shrink-0" />
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-neutral-900 truncate uppercase">{product.title}</div>
-                <div className="text-xs font-bold text-neutral-950 font-mono mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</div>
+                <div className="text-xs font-bold text-neutral-950  mt-0.5">₹{unitPrice.toLocaleString('en-IN')}.00</div>
               </div>
             </div>
 

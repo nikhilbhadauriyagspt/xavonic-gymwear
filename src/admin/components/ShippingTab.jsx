@@ -127,7 +127,7 @@ export default function ShippingTab() {
                 </p>
               </div>
             </div>
-            <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xs border border-emerald-200">
+            <span className="text-[11px]  font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xs border border-emerald-200">
               Threshold: ₹{shippingConfig.free_shipping_threshold}
             </span>
           </div>
@@ -151,7 +151,7 @@ export default function ShippingTab() {
                         free_shipping_threshold: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs font-mono font-semibold outline-none focus:border-neutral-900"
+                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs  font-semibold outline-none focus:border-neutral-900"
                   />
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -176,7 +176,7 @@ export default function ShippingTab() {
                         standard_shipping_charge: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs font-mono font-semibold outline-none focus:border-neutral-900"
+                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs  font-semibold outline-none focus:border-neutral-900"
                   />
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -275,7 +275,7 @@ export default function ShippingTab() {
                         cod_extra_charge: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs font-mono font-semibold outline-none focus:border-neutral-900"
+                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs  font-semibold outline-none focus:border-neutral-900"
                   />
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -299,7 +299,7 @@ export default function ShippingTab() {
                         cod_min_order: Number(e.target.value) || 0,
                       })
                     }
-                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs font-mono font-semibold outline-none focus:border-neutral-900"
+                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs  font-semibold outline-none focus:border-neutral-900"
                   />
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -323,7 +323,7 @@ export default function ShippingTab() {
                         cod_max_order: Number(e.target.value) || 15000,
                       })
                     }
-                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs font-mono font-semibold outline-none focus:border-neutral-900"
+                    className="w-full pl-8 pr-3 py-2 border border-neutral-300 rounded-xs text-xs  font-semibold outline-none focus:border-neutral-900"
                   />
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -409,7 +409,7 @@ export default function ShippingTab() {
                       express_shipping_charge: Number(e.target.value) || 149,
                     })
                   }
-                  className="w-24 px-2.5 py-1.5 border border-neutral-300 rounded-xs text-xs font-mono font-semibold outline-none"
+                  className="w-24 px-2.5 py-1.5 border border-neutral-300 rounded-xs text-xs  font-semibold outline-none"
                 />
                 <button
                   type="button"

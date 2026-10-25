@@ -387,7 +387,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
                 placeholder="e.g. RGX-CMP-001"
-                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none font-mono"
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none "
               />
             </div>
 
@@ -461,7 +461,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none font-mono"
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none "
               />
             </div>
 
@@ -491,7 +491,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                 required
                 value={price}
                 onChange={(e) => handlePriceChange(e.target.value, originalPrice)}
-                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs font-semibold text-neutral-900 outline-none font-mono"
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs font-semibold text-neutral-900 outline-none "
               />
             </div>
 
@@ -504,7 +504,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                 type="number"
                 value={originalPrice}
                 onChange={(e) => handlePriceChange(price, e.target.value)}
-                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-500 outline-none font-mono"
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-500 outline-none "
               />
             </div>
 
@@ -531,7 +531,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                 type="number"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
-                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none font-mono"
+                className="w-full bg-neutral-50 focus:bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-3 py-2 text-xs text-neutral-900 outline-none "
               />
             </div>
 
@@ -598,15 +598,15 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                     <div className="flex items-center justify-between font-semibold">
                       <span className="text-neutral-900">Size {sz}</span>
                       {isOut ? (
-                        <span className="text-[9px] px-1 py-0.2 bg-red-600 text-white rounded-2xs font-mono uppercase font-bold">
+                        <span className="text-[9px] px-1 py-0.2 bg-red-600 text-white rounded-2xs  uppercase font-bold">
                           Out of Stock
                         </span>
                       ) : isLow ? (
-                        <span className="text-[9px] px-1 py-0.2 bg-amber-500 text-white rounded-2xs font-mono uppercase font-bold">
+                        <span className="text-[9px] px-1 py-0.2 bg-amber-500 text-white rounded-2xs  uppercase font-bold">
                           Low: {currentSzStock}
                         </span>
                       ) : (
-                        <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-2xs border border-emerald-200 font-mono font-bold">
+                        <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded-2xs border border-emerald-200  font-bold">
                           In Stock
                         </span>
                       )}
@@ -624,7 +624,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                             [sz]: val,
                           }));
                         }}
-                        className="w-full bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-2 py-1 text-xs font-mono outline-none"
+                        className="w-full bg-white border border-neutral-200 focus:border-neutral-900 rounded-sm px-2 py-1 text-xs  outline-none"
                       />
                     </div>
                   </div>
@@ -651,7 +651,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                           const comboStock = sizeStock[comboKey] !== undefined ? sizeStock[comboKey] : (sizeStock[sz] || 10);
                           return (
                             <div key={comboKey} className="flex items-center gap-1 bg-white border border-neutral-200 px-2 py-1 rounded-sm text-[11px]">
-                              <span className="text-neutral-500 font-mono">{sz}:</span>
+                              <span className="text-neutral-500 ">{sz}:</span>
                               <input
                                 type="number"
                                 min="0"
@@ -663,7 +663,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                                     [comboKey]: val,
                                   }));
                                 }}
-                                className="w-12 bg-transparent text-xs font-mono outline-none text-right font-medium"
+                                className="w-12 bg-transparent text-xs  outline-none text-right font-medium"
                               />
                             </div>
                           );
@@ -740,7 +740,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                             return copy;
                           });
                         }}
-                        className="w-20 bg-white border border-neutral-200 rounded-sm px-2 py-1 text-xs font-mono"
+                        className="w-20 bg-white border border-neutral-200 rounded-sm px-2 py-1 text-xs "
                       />
                     </div>
 
@@ -800,7 +800,7 @@ export default function AddProductTab({ onProductCreated, onCancel }) {
                     {col.galleryPreviews.map((imgSrc, imgIdx) => (
                       <div key={imgIdx} className="relative aspect-3/4 rounded-xs overflow-hidden bg-neutral-900 border border-neutral-200 group">
                         <img src={imgSrc} alt="Preview" className="w-full h-full object-cover" />
-                        <span className="absolute top-1 left-1 px-1.5 py-0.2 bg-black/70 text-white text-[9px] rounded-xs font-mono">
+                        <span className="absolute top-1 left-1 px-1.5 py-0.2 bg-black/70 text-white text-[9px] rounded-xs ">
                           #{imgIdx + 1}
                         </span>
                         <button

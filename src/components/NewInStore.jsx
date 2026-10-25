@@ -533,7 +533,7 @@ export default function NewInStore() {
         >
           {/* Top Bar */}
           <div className="relative flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-white z-30">
-            <div className="text-[12px] font-mono font-medium tracking-wider text-zinc-500">
+            <div className="text-[12px]  font-medium tracking-wider text-zinc-500">
               {String(lightboxIndex + 1).padStart(2, '0')}
               <span className="mx-2 text-zinc-300">/</span>
               {String(galleryImages.length).padStart(2, '0')}

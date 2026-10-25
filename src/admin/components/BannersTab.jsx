@@ -260,7 +260,7 @@ export default function BannersTab() {
           <div className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400">
             Total Banners
           </div>
-          <div className="text-2xl font-bold font-mono text-neutral-900 mt-1">
+          <div className="text-2xl font-bold  text-neutral-900 mt-1">
             {stats.total}
           </div>
         </div>
@@ -270,7 +270,7 @@ export default function BannersTab() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
             Live Storefront
           </div>
-          <div className="text-2xl font-bold font-mono text-emerald-700 mt-1">
+          <div className="text-2xl font-bold  text-emerald-700 mt-1">
             {stats.active}
           </div>
         </div>
@@ -280,7 +280,7 @@ export default function BannersTab() {
             <Clock className="w-3 h-3" />
             Scheduled
           </div>
-          <div className="text-2xl font-bold font-mono text-blue-700 mt-1">
+          <div className="text-2xl font-bold  text-blue-700 mt-1">
             {stats.scheduled}
           </div>
         </div>
@@ -289,7 +289,7 @@ export default function BannersTab() {
           <div className="text-[10px] uppercase tracking-wider font-semibold text-neutral-400">
             Inactive / Expired
           </div>
-          <div className="text-2xl font-bold font-mono text-neutral-500 mt-1">
+          <div className="text-2xl font-bold  text-neutral-500 mt-1">
             {stats.inactive + stats.expired}
           </div>
         </div>
@@ -404,7 +404,7 @@ export default function BannersTab() {
                     </div>
 
                     {/* Order Pill */}
-                    <div className="absolute top-2 right-2 bg-white/90 text-neutral-800 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-xs shadow-xs">
+                    <div className="absolute top-2 right-2 bg-white/90 text-neutral-800 text-[10px]  font-bold px-1.5 py-0.5 rounded-xs shadow-xs">
                       #{b.sort_order}
                     </div>
 
@@ -440,13 +440,13 @@ export default function BannersTab() {
                       )}
                     </div>
 
-                    <div className="text-[11px] text-neutral-600 flex items-center gap-1 font-mono truncate bg-neutral-50 p-1.5 rounded-xs border border-neutral-100">
+                    <div className="text-[11px] text-neutral-600 flex items-center gap-1  truncate bg-neutral-50 p-1.5 rounded-xs border border-neutral-100">
                       <ExternalLink className="w-3 h-3 text-neutral-400 flex-shrink-0" />
                       <span className="truncate">{b.link_url || '/collections'}</span>
                     </div>
 
                     {/* Scheduling Dates Info */}
-                    <div className="space-y-1 text-[10px] text-neutral-500 font-mono pt-1">
+                    <div className="space-y-1 text-[10px] text-neutral-500  pt-1">
                       {b.start_date && (
                         <div className="flex items-center gap-1 text-neutral-700">
                           <Calendar className="w-3 h-3 text-blue-600" />
@@ -567,7 +567,7 @@ export default function BannersTab() {
                     min="0"
                     value={formData.sort_order}
                     onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
-                    className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none font-mono font-semibold"
+                    className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none  font-semibold"
                   />
                 </div>
               </div>
@@ -658,7 +658,7 @@ export default function BannersTab() {
                     placeholder="/collections/men-compression-tees"
                     value={formData.link_url}
                     onChange={(e) => setFormData({ ...formData, link_url: e.target.value })}
-                    className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none font-mono"
+                    className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none "
                   />
                 </div>
 
@@ -738,7 +738,7 @@ export default function BannersTab() {
                       type="datetime-local"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none bg-white font-mono"
+                      className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none bg-white "
                     />
                     <span className="text-[9px] text-neutral-400">Leave blank to make live immediately</span>
                   </div>
@@ -752,7 +752,7 @@ export default function BannersTab() {
                       type="datetime-local"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none bg-white font-mono"
+                      className="w-full border border-neutral-300 rounded-xs p-2 text-xs outline-none bg-white "
                     />
                     <span className="text-[9px] text-neutral-400">Leave blank to run indefinitely</span>
                   </div>

@@ -227,7 +227,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
                     </td>
 
                     {/* Slug */}
-                    <td className="py-2.5 px-3.5 font-mono text-[11px] text-neutral-500">
+                    <td className="py-2.5 px-3.5  text-[11px] text-neutral-500">
                       /{cat.slug}
                     </td>
 
@@ -280,7 +280,7 @@ export default function AllCategoriesTab({ onNavigateToAdd }) {
                         <span>{Boolean(cat.show_in_dual_section) ? 'Featured in Dual' : 'Not in Dual'}</span>
                       </button>
                       {cat.kicker_title && (
-                        <div className="text-[9px] text-zinc-400 mt-0.5 font-mono">[{cat.kicker_title}]</div>
+                        <div className="text-[9px] text-zinc-400 mt-0.5 ">[{cat.kicker_title}]</div>
                       )}
                     </td>
 

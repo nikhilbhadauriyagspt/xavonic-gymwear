@@ -12,7 +12,9 @@ import {
   Eye,
   Layers,
   Palette,
-  ExternalLink
+  ExternalLink,
+  Send,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ADMIN_API_BASE } from '../../config/api';
@@ -28,6 +30,52 @@ export default function AllProductsTab({ onNavigateToAdd }) {
   // Edit Modal State
   const [editingProduct, setEditingProduct] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // WhatsApp Broadcast Modal State
+  const [broadcastProduct, setBroadcastProduct] = useState(null);
+  const [targetSize, setTargetSize] = useState('ALL');
+  const [broadcastCoupon, setBroadcastCoupon] = useState('NEW10');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+
+  const handleBroadcastSubmit = async (e) => {
+    e.preventDefault();
+    if (!broadcastProduct) return;
+    setIsBroadcasting(true);
+    try {
+      const apiBase = ADMIN_API_BASE.replace(/\/admin$/, '');
+      const res = await fetch(`${apiBase}/whatsapp/broadcast-product`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: broadcastProduct.id,
+          productTitle: broadcastProduct.title,
+          productPrice: broadcastProduct.price,
+          productImage: broadcastProduct.image_front || (Array.isArray(broadcastProduct.gallery) && broadcastProduct.gallery[0]) || '',
+          productSlug: broadcastProduct.slug || broadcastProduct.id,
+          targetSize,
+          couponCode: broadcastCoupon,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.sentCount > 0) {
+          toast.success(data.message);
+        } else if (data.fallbackWhatsappUrl) {
+          toast.info(`Opening WhatsApp broadcast preview (${data.totalTargeted} matching customers)...`);
+          window.open(data.fallbackWhatsappUrl, '_blank');
+        } else {
+          toast.info(data.message || 'No matching customers found.');
+        }
+        setBroadcastProduct(null);
+      } else {
+        toast.error(data.message || 'Broadcast failed');
+      }
+    } catch {
+      toast.error('Network error while sending WhatsApp broadcast');
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -208,7 +256,7 @@ export default function AllProductsTab({ onNavigateToAdd }) {
                           <div className="font-semibold text-neutral-900 text-xs line-clamp-1">
                             {prod.title}
                           </div>
-                          <div className="text-[10px] font-mono text-neutral-400">
+                          <div className="text-[10px]  text-neutral-400">
                             SKU: {prod.sku || `RGX-${prod.id}`}
                           </div>
                           <div className="text-[10px] text-neutral-500">
@@ -362,6 +410,17 @@ export default function AllProductsTab({ onNavigateToAdd }) {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => {
+                              setBroadcastProduct(prod);
+                              setTargetSize('ALL');
+                            }}
+                            className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-sm transition-colors cursor-pointer"
+                            title="Broadcast Product on WhatsApp to Customers"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => {
                               setEditingProduct(prod);
                               setIsEditModalOpen(true);
                             }}
@@ -403,6 +462,106 @@ export default function AllProductsTab({ onNavigateToAdd }) {
             fetchProducts();
           }}
         />
+      )}
+
+      {/* WhatsApp Product Broadcast Modal */}
+      {broadcastProduct && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+          onClick={() => setBroadcastProduct(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white border border-neutral-200 rounded-md p-5 shadow-2xl space-y-4 text-xs text-neutral-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+              <div className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-neutral-900">
+                  WhatsApp Customer Broadcast
+                </h3>
+              </div>
+              <button
+                onClick={() => setBroadcastProduct(null)}
+                className="text-neutral-400 hover:text-neutral-900 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Product Preview */}
+            <div className="flex items-center gap-3 p-3 bg-neutral-50 border border-neutral-200 rounded-sm">
+              {broadcastProduct.image_front && (
+                <img
+                  src={broadcastProduct.image_front}
+                  alt={broadcastProduct.title}
+                  className="w-12 h-14 object-cover rounded border border-neutral-200 shrink-0"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-neutral-900 truncate">{broadcastProduct.title}</h4>
+                <p className="text-xs font-bold text-emerald-700  mt-0.5">₹{broadcastProduct.price}</p>
+                <span className="text-[10px] text-neutral-500">Sends with Product Photo + Price + Link</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleBroadcastSubmit} className="space-y-4">
+              {/* Target Customer Size Filter */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold text-neutral-700 uppercase tracking-wide block">
+                  Target Customers by Saved / Bought Size
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {['ALL', 'S', 'M', 'L', 'XL', 'XXL'].map((sz) => (
+                    <button
+                      key={sz}
+                      type="button"
+                      onClick={() => setTargetSize(sz)}
+                      className={`px-3 py-1.5 rounded-sm text-xs font-medium border cursor-pointer transition-colors ${
+                        targetSize === sz
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-neutral-700 border-neutral-300 hover:border-neutral-500'
+                      }`}
+                    >
+                      {sz === 'ALL' ? 'All Customers' : `Size ${sz}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Promo Coupon Code */}
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-neutral-700 uppercase tracking-wide block">
+                  Include Discount Code
+                </label>
+                <input
+                  type="text"
+                  value={broadcastCoupon}
+                  onChange={(e) => setBroadcastCoupon(e.target.value.toUpperCase())}
+                  className="w-full bg-white border border-neutral-300 rounded-sm px-3 py-2 text-neutral-900  text-xs focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setBroadcastProduct(null)}
+                  className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-sm cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isBroadcasting}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isBroadcasting ? 'Sending via WhatsApp API...' : 'Send Broadcast Now'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
     </div>

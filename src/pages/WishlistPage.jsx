@@ -74,7 +74,7 @@ export default function WishlistPage() {
             <span className="text-neutral-300">/</span>
             <span className="font-medium text-neutral-900">Wishlist</span>
           </div>
-          <span className="text-[11px] font-mono text-neutral-500">
+          <span className="text-[11px]  text-neutral-500">
             {wishlistCount} {wishlistCount === 1 ? 'item' : 'items'} saved
           </span>
         </div>
@@ -262,11 +262,11 @@ export default function WishlistPage() {
 
                       {/* Pricing */}
                       <div className="flex items-baseline gap-2 pt-0.5">
-                        <span className="text-xs sm:text-sm font-semibold text-neutral-950 font-mono">
+                        <span className="text-xs sm:text-sm font-semibold text-neutral-950 ">
                           ₹{unitPrice.toLocaleString('en-IN')}.00
                         </span>
                         {originalPrice > unitPrice && (
-                          <span className="text-[11px] text-neutral-400 line-through font-mono">
+                          <span className="text-[11px] text-neutral-400 line-through ">
                             ₹{originalPrice.toLocaleString('en-IN')}.00
                           </span>
                         )}
@@ -345,7 +345,7 @@ export default function WishlistPage() {
               />
               <div className="space-y-1.5 min-w-0">
                 <h3 className="font-semibold text-sm text-neutral-900">{quickViewProduct.title}</h3>
-                <div className="text-xs font-semibold text-neutral-950 font-mono">
+                <div className="text-xs font-semibold text-neutral-950 ">
                   ₹{Number(quickViewProduct.price || 0).toLocaleString('en-IN')}.00
                 </div>
                 <p className="text-[11px] text-neutral-500 line-clamp-2">

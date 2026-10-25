@@ -30,7 +30,7 @@ export default function About() {
     <div className="w-full min-h-screen bg-black text-zinc-100 font-sans selection:bg-red-600 selection:text-white py-12 sm:py-16 px-4 sm:px-8 lg:px-14">
       {/* Breadcrumbs */}
       <div className="max-w-6xl mx-auto space-y-4 mb-10">
-        <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
+        <div className="flex items-center gap-2 text-xs  text-zinc-400">
           <Link to="/" className="hover:text-red-500 transition-colors">HOME</Link>
           <ChevronRight className="w-3.5 h-3.5 text-zinc-600" />
           <span className="text-zinc-500 uppercase">OUR BRAND</span>
@@ -40,14 +40,14 @@ export default function About() {
 
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-zinc-800/80 pb-6">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-red-500 block mb-1">
+            <span className="text-[10px]  uppercase tracking-[0.25em] text-red-500 block mb-1">
               {content?.about_badge || 'Brand Story & Philosophy'}
             </span>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white uppercase">
               {content?.about_heading || 'Gym Wear for Men & Women'}
             </h1>
           </div>
-          <p className="text-xs font-mono text-zinc-400">
+          <p className="text-xs  text-zinc-400">
             {content?.about_tagline || 'Engineered for Performance. Cut for Aesthetics.'}
           </p>
         </div>
@@ -122,7 +122,7 @@ export default function About() {
         {/* FAQs Section */}
         <div className="bg-zinc-950 border border-zinc-900 p-6 sm:p-10 space-y-6">
           <div className="border-b border-zinc-900 pb-4">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-red-500">Got Questions?</span>
+            <span className="text-[10px]  uppercase tracking-wider text-red-500">Got Questions?</span>
             <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-tight text-white mt-1">
               Frequently Asked Questions
             </h2>
@@ -169,7 +169,7 @@ export default function About() {
                 <Link
                   key={idx}
                   to={`/collections?search=${encodeURIComponent(tag)}`}
-                  className="px-3 py-1 bg-zinc-900 hover:bg-red-600 hover:text-white text-zinc-400 text-xs font-mono transition-colors border border-zinc-800"
+                  className="px-3 py-1 bg-zinc-900 hover:bg-red-600 hover:text-white text-zinc-400 text-xs  transition-colors border border-zinc-800"
                 >
                   #{tag}
                 </Link>

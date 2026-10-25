@@ -327,12 +327,12 @@ export default function ProfileDrawer() {
                         {user?.name || user?.displayName || 'User'}
                       </h3>
                       {user?.customerId && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 bg-zinc-200/70 text-zinc-700 font-semibold rounded-xs">
+                        <span className="text-[10px]  px-1.5 py-0.2 bg-zinc-200/70 text-zinc-700 font-semibold rounded-xs">
                           {user.customerId}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-500 font-mono">
+                    <p className="text-xs text-zinc-500 ">
                       {user?.phone ? `+${user.phone.replace(/[^0-9]/g, '')}` : user?.email || 'Complete your profile'}
                     </p>
                   </div>
@@ -422,7 +422,7 @@ export default function ProfileDrawer() {
                 <div className="space-y-3 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between px-1">
                     <h4 className="text-xs font-semibold text-zinc-900">Your Orders</h4>
-                    <span className="text-[11px] text-zinc-400 font-mono">
+                    <span className="text-[11px] text-zinc-400 ">
                       {customerOrders.length} {customerOrders.length === 1 ? 'order' : 'orders'}
                     </span>
                   </div>
@@ -488,7 +488,7 @@ export default function ProfileDrawer() {
                           className="border border-zinc-200 rounded-[10px] p-4 space-y-3 bg-white hover:border-zinc-400 transition-all cursor-pointer shadow-2xs group"
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-zinc-950 group-hover:text-red-600 transition-colors font-mono">
+                            <span className="font-semibold text-zinc-950 group-hover:text-red-600 transition-colors ">
                               #{orderId}
                             </span>
                             <span className={`px-2 py-0.5 text-[10px] font-medium rounded border ${statusColor}`}>
@@ -507,7 +507,7 @@ export default function ProfileDrawer() {
                                 />
                                 <div className="min-w-0 flex-1">
                                   <h5 className="text-xs font-medium text-zinc-800 line-clamp-1">{item.title}</h5>
-                                  <p className="text-[11px] text-zinc-400 font-mono">
+                                  <p className="text-[11px] text-zinc-400 ">
                                     Size: {item.selectedSize || item.size || 'M'} • Qty: {item.quantity}
                                   </p>
                                 </div>
@@ -541,7 +541,7 @@ export default function ProfileDrawer() {
                   <div className="p-4 bg-zinc-950 text-white rounded-[10px] space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-sm">{selectedOrder.id}</span>
-                      <span className="text-[10px] font-mono text-zinc-400">{selectedOrder.date}</span>
+                      <span className="text-[10px]  text-zinc-400">{selectedOrder.date}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-emerald-400 font-medium pt-1">
                       <Truck className="w-4 h-4" />
@@ -555,7 +555,7 @@ export default function ProfileDrawer() {
                       <span className="font-semibold text-zinc-900 block text-[11px] uppercase tracking-wider">
                         Live Tracking Timeline
                       </span>
-                      <span className="text-[11px] font-mono text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">
+                      <span className="text-[11px]  text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">
                         AWB: {selectedOrder.trackingNumber}
                       </span>
                     </div>
@@ -906,7 +906,7 @@ export default function ProfileDrawer() {
                         <p className="text-xs text-zinc-600 leading-relaxed">
                           {addr.addressLine}, {addr.city}, {addr.state} - <strong>{addr.pincode}</strong>
                         </p>
-                        <p className="text-[11px] text-zinc-400 font-mono">📱 +{addr.phone}</p>
+                        <p className="text-[11px] text-zinc-400 ">📱 +{addr.phone}</p>
                       </div>
                     ))
                   )}
@@ -1010,7 +1010,7 @@ export default function ProfileDrawer() {
                         value={addressForm.pincode}
                         onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value.replace(/[^0-9]/g, '') })}
                         placeholder="122002"
-                        className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-[8px] focus:outline-none font-mono"
+                        className="w-full border border-zinc-300 focus:border-zinc-950 px-3 py-2 text-xs rounded-[8px] focus:outline-none "
                         required
                       />
                     </div>
@@ -1093,7 +1093,7 @@ export default function ProfileDrawer() {
                           setIsPhoneOtpSent(false);
                         }}
                         placeholder="Enter 10-digit mobile number"
-                        className={`w-full border px-3 py-1.5 text-xs rounded-sm focus:outline-none font-mono ${
+                        className={`w-full border px-3 py-1.5 text-xs rounded-sm focus:outline-none  ${
                           user.phoneVerified 
                             ? 'bg-zinc-100/80 border-zinc-200 text-zinc-800 cursor-not-allowed' 
                             : 'border-zinc-300 focus:border-zinc-950 bg-white'
@@ -1121,7 +1121,7 @@ export default function ProfileDrawer() {
                       <div className="pt-2 border-t border-zinc-200/80 space-y-2 animate-in fade-in">
                         <div className="flex items-center justify-between text-[11px] text-zinc-600">
                           <span>Enter WhatsApp OTP sent to +91 {profileForm.phone}:</span>
-                          <span className="font-mono text-zinc-900 font-semibold">(Code: 1234)</span>
+                          <span className=" text-zinc-900 font-semibold">(Code: 1234)</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1130,7 +1130,7 @@ export default function ProfileDrawer() {
                             value={phoneOtpInput}
                             onChange={(e) => setPhoneOtpInput(e.target.value)}
                             placeholder="1234"
-                            className="w-24 border border-zinc-300 px-2 py-1.5 text-xs text-center font-mono rounded-sm bg-white"
+                            className="w-24 border border-zinc-300 px-2 py-1.5 text-xs text-center  rounded-sm bg-white"
                           />
                           <button
                             type="button"
@@ -1207,7 +1207,7 @@ export default function ProfileDrawer() {
                       <div className="pt-2 border-t border-zinc-200/80 space-y-2 animate-in fade-in">
                         <div className="flex items-center justify-between text-[11px] text-zinc-600">
                           <span>Enter Email OTP sent to {profileForm.email}:</span>
-                          <span className="font-mono text-zinc-900 font-semibold">(Code: 1234)</span>
+                          <span className=" text-zinc-900 font-semibold">(Code: 1234)</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1216,7 +1216,7 @@ export default function ProfileDrawer() {
                             value={emailOtpInput}
                             onChange={(e) => setEmailOtpInput(e.target.value)}
                             placeholder="1234"
-                            className="w-24 border border-zinc-300 px-2 py-1.5 text-xs text-center font-mono rounded-sm bg-white"
+                            className="w-24 border border-zinc-300 px-2 py-1.5 text-xs text-center  rounded-sm bg-white"
                           />
                           <button
                             type="button"

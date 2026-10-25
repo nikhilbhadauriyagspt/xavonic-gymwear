@@ -331,7 +331,7 @@ export default function DashboardOverview({ onNavigateTab }) {
               <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-neutral-900 text-white rounded-sm text-xs font-medium animate-in fade-in duration-100">
                 <span className="text-neutral-300">{points[hoveredPointIndex].label}:</span>
                 <span className="text-white font-semibold">{points[hoveredPointIndex].formattedRev}</span>
-                <span className="text-red-400 font-mono text-[10px]">({points[hoveredPointIndex].orders} orders)</span>
+                <span className="text-red-400  text-[10px]">({points[hoveredPointIndex].orders} orders)</span>
               </div>
             ) : (
               <div className="text-[11px] text-neutral-500 font-medium flex items-center gap-1.5">
@@ -526,7 +526,7 @@ export default function DashboardOverview({ onNavigateTab }) {
                       </div>
                       <div className="text-right">
                         <span className="font-semibold text-neutral-900 text-xs">{cat.revenue}</span>
-                        <span className="text-neutral-400 text-[10px] ml-1.5 font-mono">({cat.percentage}%)</span>
+                        <span className="text-neutral-400 text-[10px] ml-1.5 ">({cat.percentage}%)</span>
                       </div>
                     </div>
                     <div className="w-full bg-neutral-100 h-1 rounded-xs overflow-hidden">
@@ -595,7 +595,7 @@ export default function DashboardOverview({ onNavigateTab }) {
               ) : (
                 recentOrders.map((ord) => (
                   <tr key={ord.id} className="hover:bg-neutral-50/70 transition-colors">
-                    <td className="p-3 font-mono font-semibold text-neutral-900">
+                    <td className="p-3  font-semibold text-neutral-900">
                       {ord.id}
                     </td>
                     <td className="p-3">

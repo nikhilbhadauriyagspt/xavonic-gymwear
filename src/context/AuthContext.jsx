@@ -43,6 +43,12 @@ export function createFullUserPayload(apiUser = {}) {
       parsedAddresses = [];
     }
   }
+  parsedAddresses = parsedAddresses.filter(
+    (a) =>
+      a &&
+      a.id !== 'addr-default-1' &&
+      !String(a.addressLine || '').includes('Plot 42, Sector 18, Cyber City')
+  );
 
   let parsedOrders = [];
   if (Array.isArray(apiUser.orders)) {
@@ -69,8 +75,8 @@ export function createFullUserPayload(apiUser = {}) {
         : apiUser.emailVerified
     ),
     gender: apiUser.gender || 'Male',
-    tier: apiUser.tier || 'VIP Athlete Club',
-    points: apiUser.points || 100,
+    tier: apiUser.tier && !apiUser.tier.toLowerCase().includes('athlete') ? apiUser.tier : 'Member',
+    points: apiUser.points || 0,
     joinedDate: 'October 2026',
     chestSize: apiUser.chestSize || apiUser.chest_size || 'L (42")',
     lowerSize: apiUser.lowerSize || apiUser.lower_size || 'M (32")',
@@ -133,9 +139,13 @@ export function AuthProvider({ children }) {
   const openProfile = () => setIsProfileOpen(true);
   const closeProfile = () => setIsProfileOpen(false);
 
-  const handleAccountClick = () => {
+  const handleAccountClick = (navigate) => {
     if (user) {
-      setIsProfileOpen(true);
+      if (typeof navigate === 'function') {
+        navigate('/account');
+      } else {
+        window.location.href = '/account';
+      }
     } else {
       setIsAuthOpen(true);
     }
@@ -177,7 +187,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem('xavonic_user_token', data.token);
         const fullUser = createFullUserPayload(data.user);
         setUser(fullUser);
-        return { success: true, user: fullUser };
+        return { success: true, user: fullUser, isNewUser: Boolean(data.isNewUser) };
       } else {
         toast.error(data.message || 'Invalid or expired OTP code.');
         return { success: false, message: data.message || 'Invalid code' };
@@ -198,10 +208,10 @@ export function AuthProvider({ children }) {
       });
       const data = await res.json();
       if (data.success) {
-        if (data.mode === 'test' || data.mode === 'test_fallback') {
-          toast.success(`Email OTP: ${data.testOtp} (Testing Code: 1234)`, { duration: 6000 });
+        if ((data.mode === 'test' || data.mode === 'test_fallback') && data.testOtp) {
+          toast.success(`OTP sent to ${email} (Test OTP: ${data.testOtp})`, { duration: 6000 });
         } else {
-          toast.success(`OTP sent to your email (${email})`);
+          toast.success(`Verification OTP sent to ${email}`);
         }
         return { success: true, testOtp: data.testOtp, mode: data.mode };
       } else {
@@ -209,8 +219,8 @@ export function AuthProvider({ children }) {
         return { success: false, message: data.message };
       }
     } catch (err) {
-      toast.info('Test Mode Active. Use OTP: 1234');
-      return { success: true, testOtp: '1234', mode: 'test' };
+      toast.error('Network error sending Email OTP. Please try again.');
+      return { success: false };
     }
   };
 
@@ -312,15 +322,15 @@ export function AuthProvider({ children }) {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Verification OTP sent to ${emailToLink} (Testing Code: 1234)`);
+        toast.success(`Verification OTP sent to ${emailToLink}`);
         return { success: true };
       } else {
         toast.error(data.message || 'Failed to send email OTP.');
         return { success: false };
       }
     } catch (err) {
-      toast.info('Test Mode: Use OTP 1234');
-      return { success: true };
+      toast.error('Network error sending email OTP.');
+      return { success: false };
     }
   };
 
@@ -350,16 +360,7 @@ export function AuthProvider({ children }) {
         return { success: false };
       }
     } catch (err) {
-      if (otp === '1234') {
-        setUser((prev) => ({
-          ...prev,
-          email: emailToLink,
-          emailVerified: true,
-        }));
-        toast.success('Email linked successfully!');
-        return { success: true };
-      }
-      toast.error('Verification failed.');
+      toast.error('Verification failed. Please try again.');
       return { success: false };
     }
   };
@@ -374,15 +375,15 @@ export function AuthProvider({ children }) {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`WhatsApp OTP sent to ${phoneToLink} (Testing Code: 1234)`);
+        toast.success(`WhatsApp OTP sent to ${phoneToLink}`);
         return { success: true };
       } else {
         toast.error(data.message || 'Failed to send WhatsApp OTP.');
         return { success: false };
       }
     } catch (err) {
-      toast.info('Test Mode: Use OTP 1234');
-      return { success: true };
+      toast.error('Network error sending WhatsApp OTP.');
+      return { success: false };
     }
   };
 

@@ -612,7 +612,7 @@ export default function GatewaySettingsTab() {
               )}
               <span className="text-neutral-400">•</span>
               <span className="text-neutral-600">Mode:</span>
-              <span className={`font-mono uppercase font-bold text-[10px] px-1.5 py-0.5 rounded-xs border ${
+              <span className={` uppercase font-bold text-[10px] px-1.5 py-0.5 rounded-xs border ${
                 razorpayConfig.mode === 'live'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
                   : 'bg-amber-50 text-amber-700 border-amber-300'
@@ -701,7 +701,7 @@ export default function GatewaySettingsTab() {
                     value={razorpayConfig.key_id}
                     onChange={(e) => setRazorpayConfig({ ...razorpayConfig, key_id: e.target.value })}
                     placeholder="e.g. rzp_test_88f9xY1z or rzp_live_..."
-                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm pl-8 pr-3 text-xs text-neutral-900 font-mono outline-none focus:bg-white focus:border-neutral-900"
+                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm pl-8 pr-3 text-xs text-neutral-900  outline-none focus:bg-white focus:border-neutral-900"
                   />
                 </div>
                 <span className="text-[10px] text-neutral-400 mt-1 block">
@@ -721,7 +721,7 @@ export default function GatewaySettingsTab() {
                     value={razorpayConfig.key_secret}
                     onChange={(e) => setRazorpayConfig({ ...razorpayConfig, key_secret: e.target.value })}
                     placeholder="e.g. kLx9aB02pZx..."
-                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm pl-8 pr-8 text-xs text-neutral-900 font-mono outline-none focus:bg-white focus:border-neutral-900"
+                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm pl-8 pr-8 text-xs text-neutral-900  outline-none focus:bg-white focus:border-neutral-900"
                   />
                   <button
                     type="button"
@@ -768,7 +768,7 @@ export default function GatewaySettingsTab() {
                     value={razorpayConfig.theme_color}
                     onChange={(e) => setRazorpayConfig({ ...razorpayConfig, theme_color: e.target.value })}
                     placeholder="#09090b"
-                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none focus:bg-white focus:border-neutral-900"
+                    className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none focus:bg-white focus:border-neutral-900"
                   />
                 </div>
               </div>
@@ -783,7 +783,7 @@ export default function GatewaySettingsTab() {
               <p className="text-blue-800 text-[11px] leading-relaxed">
                 Add this Webhook URL in your Razorpay Dashboard (Settings &gt; Webhooks) for <code>payment.captured</code> and <code>order.paid</code>:
               </p>
-              <div className="p-2 bg-white border border-blue-200 rounded-xs font-mono text-[11px] text-neutral-800 select-all">
+              <div className="p-2 bg-white border border-blue-200 rounded-xs  text-[11px] text-neutral-800 select-all">
                 https://xavonic-gymwear.onrender.com/api/payment/webhook
               </div>
             </div>
@@ -920,7 +920,7 @@ export default function GatewaySettingsTab() {
                     value={waConfig.meta_token}
                     onChange={(e) => setWaConfig({ ...waConfig, meta_token: e.target.value })}
                     placeholder="EAAOx..."
-                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -931,7 +931,7 @@ export default function GatewaySettingsTab() {
                     value={waConfig.phone_number_id}
                     onChange={(e) => setWaConfig({ ...waConfig, phone_number_id: e.target.value })}
                     placeholder="e.g. 105928374829104"
-                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -942,7 +942,7 @@ export default function GatewaySettingsTab() {
                     value={waConfig.waba_id}
                     onChange={(e) => setWaConfig({ ...waConfig, waba_id: e.target.value })}
                     placeholder="e.g. 108492019481023"
-                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                   />
                 </div>
               </div>
@@ -973,7 +973,7 @@ export default function GatewaySettingsTab() {
                 value={testPhone}
                 onChange={(e) => setTestPhone(e.target.value)}
                 placeholder="Enter 10-digit mobile number"
-                className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 outline-none font-mono"
+                className="w-full h-8.5 bg-neutral-50 border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 outline-none "
               />
               <button
                 type="button"
@@ -1082,7 +1082,7 @@ export default function GatewaySettingsTab() {
                     value={smtpConfig.host}
                     onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })}
                     placeholder="smtp.gmail.com"
-                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -1130,7 +1130,7 @@ export default function GatewaySettingsTab() {
                     value={smtpConfig.pass}
                     onChange={(e) => setSmtpConfig({ ...smtpConfig, pass: e.target.value })}
                     placeholder="Enter 16-character App Password"
-                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -1231,7 +1231,7 @@ export default function GatewaySettingsTab() {
                   value={cloudinaryConfig.cloud_name}
                   onChange={(e) => setCloudinaryConfig({ ...cloudinaryConfig, cloud_name: e.target.value })}
                   placeholder="e.g. fwlidd7t"
-                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                 />
               </div>
 
@@ -1246,7 +1246,7 @@ export default function GatewaySettingsTab() {
                   value={cloudinaryConfig.api_key}
                   onChange={(e) => setCloudinaryConfig({ ...cloudinaryConfig, api_key: e.target.value })}
                   placeholder="e.g. 887531852538712"
-                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                 />
               </div>
 
@@ -1271,7 +1271,7 @@ export default function GatewaySettingsTab() {
                   value={cloudinaryConfig.api_secret}
                   onChange={(e) => setCloudinaryConfig({ ...cloudinaryConfig, api_secret: e.target.value })}
                   placeholder="Enter API Secret"
-                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                 />
               </div>
 
@@ -1343,7 +1343,7 @@ export default function GatewaySettingsTab() {
                   value={mapsConfig.api_key}
                   onChange={(e) => setMapsConfig({ ...mapsConfig, api_key: e.target.value })}
                   placeholder="AIzaSyAWnFjD1hsIsyYB7nQs_fAUd2BVuziu0xE"
-                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900 font-mono outline-none"
+                  className="w-full h-8.5 bg-neutral-50 focus:bg-white border border-neutral-200 rounded-sm px-3 text-xs text-neutral-900  outline-none"
                 />
                 <p className="text-[10px] text-neutral-400">
                   You can change this API key anytime in the future. It will instantly update across checkout.
@@ -1581,7 +1581,7 @@ export default function GatewaySettingsTab() {
                     value={logisticsConfig.shiprocket_email}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_email: e.target.value })}
                     placeholder="logistics@ragex.com"
-                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -1604,7 +1604,7 @@ export default function GatewaySettingsTab() {
                     value={logisticsConfig.shiprocket_password}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_password: e.target.value })}
                     placeholder="••••••••••••"
-                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -1618,7 +1618,7 @@ export default function GatewaySettingsTab() {
                     value={logisticsConfig.shiprocket_pickup_location}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, shiprocket_pickup_location: e.target.value })}
                     placeholder="Primary"
-                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900  outline-none"
                   />
                   <p className="text-[10px] text-neutral-400 mt-1">
                     Matches your default dispatch warehouse address configured on Shiprocket.
@@ -1684,7 +1684,7 @@ export default function GatewaySettingsTab() {
                     value={logisticsConfig.nimbuspost_email}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, nimbuspost_email: e.target.value })}
                     placeholder="shipping@ragex.com"
-                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900  outline-none"
                   />
                 </div>
 
@@ -1707,7 +1707,7 @@ export default function GatewaySettingsTab() {
                     value={logisticsConfig.nimbuspost_token}
                     onChange={(e) => setLogisticsConfig({ ...logisticsConfig, nimbuspost_token: e.target.value })}
                     placeholder="np_live_token_••••••••"
-                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900 font-mono outline-none"
+                    className="w-full h-8.5 bg-white border border-neutral-200 rounded-sm px-2.5 text-xs text-neutral-900  outline-none"
                   />
                 </div>
               </div>

@@ -235,7 +235,7 @@ export default function AdminSidebar({
                 <Users className={`h-3.5 w-3.5 ${activeTab === 'customers' ? 'text-white' : 'text-neutral-500'}`} />
                 <span>Customers</span>
               </div>
-              <span className={`text-[11px] font-mono ${activeTab === 'customers' ? 'text-neutral-300' : 'text-neutral-400'}`}>
+              <span className={`text-[11px]  ${activeTab === 'customers' ? 'text-neutral-300' : 'text-neutral-400'}`}>
                 {customersCount}
               </span>
             </button>

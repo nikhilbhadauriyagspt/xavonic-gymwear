@@ -28,6 +28,7 @@ import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
 import About from './pages/About';
 import PolicyPage from './pages/PolicyPage';
+import AccountPage from './pages/AccountPage';
 import AdminPage from './admin/AdminPage';
 
 function ScrollToTop() {
@@ -79,6 +80,7 @@ function HomePage() {
 function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAccountRoute = location.pathname.startsWith('/account') || location.pathname.startsWith('/profile');
 
   if (isAdminRoute) {
     return (
@@ -90,7 +92,7 @@ function MainLayout() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-black text-zinc-100 antialiased selection:bg-red-600 selection:text-white font-sans flex flex-col">
+    <div className={`min-h-screen w-full ${isAccountRoute ? 'bg-white text-zinc-900' : 'bg-black text-zinc-100'} antialiased selection:bg-red-600 selection:text-white font-sans flex flex-col`}>
       {/* Auto Scroll To Top on Page Switch */}
       <ScrollToTop />
 
@@ -100,9 +102,6 @@ function MainLayout() {
       {/* Center Modern Login Modal */}
       <AuthDrawer />
 
-      {/* Slide-Over Right Profile & Orders Drawer */}
-      <ProfileDrawer />
-
       {/* 1. Header Navigation */}
       <Header />
 
@@ -110,6 +109,8 @@ function MainLayout() {
       <div className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route path="/profile" element={<AccountPage />} />
           <Route path="/collections" element={<CollectionsPage />} />
           <Route path="/collections/:categorySlug" element={<CollectionsPage />} />
           <Route path="/shop" element={<CollectionsPage />} />
@@ -138,8 +139,8 @@ function MainLayout() {
         </Routes>
       </div>
 
-      {/* Clean Decent Footer */}
-      <Footer />
+      {/* Clean Decent Footer (Hidden on Account Dashboard) */}
+      {!isAccountRoute && <Footer />}
 
       {/* Live Sales Activity FOMO Toast */}
       <LiveSalesPopup />

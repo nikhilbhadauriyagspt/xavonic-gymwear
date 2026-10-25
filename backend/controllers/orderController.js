@@ -1136,10 +1136,26 @@ exports.sendAbandonedCartWhatsAppRecovery = async (req, res) => {
       items = typeof checkout.items_json === 'string' ? JSON.parse(checkout.items_json) : checkout.items_json || [];
     } catch (_) {}
 
-    const firstProduct = items[0]?.title || 'Athlete Gear';
-    const cleanPhone = `91${checkout.customer_phone.replace(/\D/g, '').slice(-10)}`;
+    const firstItem = items[0] || {};
+    const rawTitle = firstItem.title || firstItem.name || 'Selected Item';
+    const itemSize = firstItem.size ? ` - Size ${firstItem.size}` : '';
+    const firstProduct = `${rawTitle}${itemSize}`;
+    const firstPrice = firstItem.price || checkout.cart_total || '';
+    const firstImage = firstItem.image || firstItem.imageFront || '';
 
-    const messageText = `Hey ${checkout.customer_name || 'Athlete'}! 💪\n\nYour *${firstProduct}* is still reserved in your bag at RageX.\n\nUse VIP code *${customCoupon}* for an extra 5% OFF on checkout today!\n\n👉 Complete Order: https://ragex.com/checkout?recover=${checkout.recovery_token}&coupon=${customCoupon}`;
+    const cleanPhone = `91${checkout.customer_phone.replace(/\D/g, '').slice(-10)}`;
+    const recoveryUrl = `https://rage-x.com/checkout?recover=${checkout.recovery_token}&coupon=${customCoupon}`;
+
+    const { sendAbandonedCartWhatsApp } = require('../services/whatsappService');
+    const waRes = await sendAbandonedCartWhatsApp({
+      phone: cleanPhone,
+      customerName: checkout.customer_name || 'Shopper',
+      productName: firstProduct,
+      productPrice: firstPrice,
+      productImage: firstImage,
+      couponCode: customCoupon,
+      recoveryUrl,
+    });
 
     // Update status in DB
     await db.query(
@@ -1149,8 +1165,11 @@ exports.sendAbandonedCartWhatsAppRecovery = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Recovery message queued for ${checkout.customer_name} (+${cleanPhone})!`,
-      whatsappUrl: `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(messageText)}`,
+      apiDelivered: Boolean(waRes.apiDelivered),
+      message: waRes.apiDelivered
+        ? `WhatsApp message sent directly via Meta Cloud API to +${cleanPhone}!`
+        : `Recovery message ready for ${checkout.customer_name} (+${cleanPhone})!`,
+      whatsappUrl: waRes.whatsappUrl || null,
     });
   } catch (err) {
     console.error('Error sending recovery WhatsApp:', err);
