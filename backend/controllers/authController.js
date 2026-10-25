@@ -7,6 +7,13 @@ const { createNotification } = require('./adminNotificationController');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'xavonic_athletics_admin_super_secret_key_2026';
 
+// In-memory OTP cache for instant fallback / fast lookup
+const localOtpCache = new Map();
+
+const generateRandomOtp = () => {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
 // Helper to format user object returned to client
 const formatUserResponse = (user) => {
   let addresses = [];
@@ -51,20 +58,25 @@ exports.sendOtp = async (req, res) => {
     }
 
     const formattedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
-    const otp = '1234';
+    const otp = generateRandomOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await db.query(
-      'INSERT INTO otp_verifications (identifier, phone, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
-      [formattedPhone, formattedPhone, otp, expiresAt]
-    );
+    localOtpCache.set(formattedPhone, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+    try {
+      await db.query(
+        'INSERT INTO otp_verifications (identifier, phone, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
+        [formattedPhone, formattedPhone, otp, expiresAt]
+      );
+    } catch (dbErr) {
+      console.warn('DB OTP insert note:', dbErr.message);
+    }
 
     const waResult = await sendWhatsAppOtp(formattedPhone, otp);
 
     return res.status(200).json({
       success: true,
-      message: waResult.message || `OTP sent to +${formattedPhone}`,
-      testOtp: otp,
+      message: waResult.message || `OTP sent to WhatsApp +${formattedPhone}`,
       mode: waResult.mode,
       phone: formattedPhone,
     });
@@ -89,9 +101,8 @@ exports.verifyOtp = async (req, res) => {
 
     let isValid = false;
 
-    if (cleanOtp === '1234') {
-      isValid = true;
-    } else {
+    // 1. Check in database
+    try {
       const [rows] = await db.query(
         'SELECT * FROM otp_verifications WHERE (phone = ? OR identifier = ?) AND otp = ? AND is_used = 0 AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
         [formattedPhone, formattedPhone, cleanOtp]
@@ -100,10 +111,21 @@ exports.verifyOtp = async (req, res) => {
         isValid = true;
         await db.query('UPDATE otp_verifications SET is_used = 1 WHERE id = ?', [rows[0].id]);
       }
+    } catch (dbErr) {
+      console.warn('DB verifyOtp note:', dbErr.message);
+    }
+
+    // 2. Fallback to memory cache
+    if (!isValid && localOtpCache.has(formattedPhone)) {
+      const cached = localOtpCache.get(formattedPhone);
+      if (cached.otp === cleanOtp && Date.now() < cached.expiresAt) {
+        isValid = true;
+        localOtpCache.delete(formattedPhone);
+      }
     }
 
     if (!isValid) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Use code: 1234' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
     }
 
     const raw10 = digitsOnly.length > 10 ? digitsOnly.slice(-10) : digitsOnly;
@@ -179,20 +201,25 @@ exports.sendEmailOtpHandler = async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const otp = '1234';
+    const otp = generateRandomOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await db.query(
-      'INSERT INTO otp_verifications (identifier, email, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
-      [cleanEmail, cleanEmail, otp, expiresAt]
-    );
+    localOtpCache.set(cleanEmail, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+    try {
+      await db.query(
+        'INSERT INTO otp_verifications (identifier, email, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
+        [cleanEmail, cleanEmail, otp, expiresAt]
+      );
+    } catch (dbErr) {
+      console.warn('DB email OTP note:', dbErr.message);
+    }
 
     const emailResult = await sendEmailOtp(cleanEmail, otp);
 
     return res.status(200).json({
       success: true,
       message: emailResult.message || `OTP sent to ${cleanEmail}`,
-      testOtp: otp,
       mode: emailResult.mode,
       email: cleanEmail,
     });
@@ -216,9 +243,7 @@ exports.verifyEmailOtpHandler = async (req, res) => {
 
     let isValid = false;
 
-    if (cleanOtp === '1234') {
-      isValid = true;
-    } else {
+    try {
       const [rows] = await db.query(
         'SELECT * FROM otp_verifications WHERE (email = ? OR identifier = ?) AND otp = ? AND is_used = 0 AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
         [cleanEmail, cleanEmail, cleanOtp]
@@ -227,10 +252,20 @@ exports.verifyEmailOtpHandler = async (req, res) => {
         isValid = true;
         await db.query('UPDATE otp_verifications SET is_used = 1 WHERE id = ?', [rows[0].id]);
       }
+    } catch (dbErr) {
+      console.warn('DB verify email note:', dbErr.message);
+    }
+
+    if (!isValid && localOtpCache.has(cleanEmail)) {
+      const cached = localOtpCache.get(cleanEmail);
+      if (cached.otp === cleanOtp && Date.now() < cached.expiresAt) {
+        isValid = true;
+        localOtpCache.delete(cleanEmail);
+      }
     }
 
     if (!isValid) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Use code: 1234' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
     }
 
     const [existingUsers] = await db.query('SELECT * FROM users WHERE email = ?', [cleanEmail]);
@@ -374,20 +409,25 @@ exports.linkEmailSendOtp = async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const otp = '1234';
+    const otp = generateRandomOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await db.query(
-      'INSERT INTO otp_verifications (identifier, email, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
-      [`link_${cleanEmail}`, cleanEmail, otp, expiresAt]
-    );
+    localOtpCache.set(`link_${cleanEmail}`, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+    try {
+      await db.query(
+        'INSERT INTO otp_verifications (identifier, email, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
+        [`link_${cleanEmail}`, cleanEmail, otp, expiresAt]
+      );
+    } catch (dbErr) {
+      console.warn('DB link email note:', dbErr.message);
+    }
 
     const emailResult = await sendEmailOtp(cleanEmail, otp);
 
     return res.status(200).json({
       success: true,
       message: `OTP sent to ${cleanEmail}`,
-      testOtp: otp,
       mode: emailResult.mode,
     });
   } catch (err) {
@@ -409,15 +449,31 @@ exports.verifyLinkEmail = async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanOtp = String(otp).trim();
 
-    if (cleanOtp !== '1234') {
+    let isValid = false;
+
+    try {
       const [rows] = await db.query(
         'SELECT * FROM otp_verifications WHERE (email = ? OR identifier = ?) AND otp = ? AND is_used = 0 AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
         [cleanEmail, `link_${cleanEmail}`, cleanOtp]
       );
-      if (!rows || rows.length === 0) {
-        return res.status(400).json({ success: false, message: 'Invalid OTP. Use code: 1234' });
+      if (rows && rows.length > 0) {
+        isValid = true;
+        await db.query('UPDATE otp_verifications SET is_used = 1 WHERE id = ?', [rows[0].id]);
       }
-      await db.query('UPDATE otp_verifications SET is_used = 1 WHERE id = ?', [rows[0].id]);
+    } catch (dbErr) {
+      console.warn('DB verifyLinkEmail note:', dbErr.message);
+    }
+
+    if (!isValid && localOtpCache.has(`link_${cleanEmail}`)) {
+      const cached = localOtpCache.get(`link_${cleanEmail}`);
+      if (cached.otp === cleanOtp && Date.now() < cached.expiresAt) {
+        isValid = true;
+        localOtpCache.delete(`link_${cleanEmail}`);
+      }
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
     }
 
     // Update authenticated user's email and set email_verified = 1
@@ -446,20 +502,25 @@ exports.linkPhoneSendOtp = async (req, res) => {
     }
 
     const formattedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
-    const otp = '1234';
+    const otp = generateRandomOtp();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    await db.query(
-      'INSERT INTO otp_verifications (identifier, phone, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
-      [`link_${formattedPhone}`, formattedPhone, otp, expiresAt]
-    );
+    localOtpCache.set(`link_${formattedPhone}`, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+    try {
+      await db.query(
+        'INSERT INTO otp_verifications (identifier, phone, otp, expires_at, is_used) VALUES (?, ?, ?, ?, 0)',
+        [`link_${formattedPhone}`, formattedPhone, otp, expiresAt]
+      );
+    } catch (dbErr) {
+      console.warn('DB link phone note:', dbErr.message);
+    }
 
     const waResult = await sendWhatsAppOtp(formattedPhone, otp);
 
     return res.status(200).json({
       success: true,
       message: `WhatsApp OTP sent to +${formattedPhone}`,
-      testOtp: otp,
       mode: waResult.mode,
     });
   } catch (err) {
@@ -482,15 +543,31 @@ exports.verifyLinkPhone = async (req, res) => {
     const formattedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
     const cleanOtp = String(otp).trim();
 
-    if (cleanOtp !== '1234') {
+    let isValid = false;
+
+    try {
       const [rows] = await db.query(
         'SELECT * FROM otp_verifications WHERE (phone = ? OR identifier = ?) AND otp = ? AND is_used = 0 AND expires_at > NOW() ORDER BY id DESC LIMIT 1',
         [formattedPhone, `link_${formattedPhone}`, cleanOtp]
       );
-      if (!rows || rows.length === 0) {
-        return res.status(400).json({ success: false, message: 'Invalid OTP. Use code: 1234' });
+      if (rows && rows.length > 0) {
+        isValid = true;
+        await db.query('UPDATE otp_verifications SET is_used = 1 WHERE id = ?', [rows[0].id]);
       }
-      await db.query('UPDATE otp_verifications SET is_used = 1 WHERE id = ?', [rows[0].id]);
+    } catch (dbErr) {
+      console.warn('DB verifyLinkPhone note:', dbErr.message);
+    }
+
+    if (!isValid && localOtpCache.has(`link_${formattedPhone}`)) {
+      const cached = localOtpCache.get(`link_${formattedPhone}`);
+      if (cached.otp === cleanOtp && Date.now() < cached.expiresAt) {
+        isValid = true;
+        localOtpCache.delete(`link_${formattedPhone}`);
+      }
+    }
+
+    if (!isValid) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP. Please try again.' });
     }
 
     // Update authenticated user's phone and set phone_verified = 1

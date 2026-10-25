@@ -12,7 +12,7 @@ async function getWhatsAppSettings() {
       meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSyT7Yo55SC6VsewcCZAuVKf0fteToWRUBofz8xT4ZCqjjAepu0tKk8947ahePWFl8fEfex4A7e7VOMls1otDqPS3o77unh6TdiRlYc2xsx36uri3uEwb6yuAkBnv7AsjvUUEOmJyb3z8X9HdlCuh0lYZBD9qg22BdbLPsBZAEO5TJYTIAgZDZD',
       phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '1390115774180863',
       waba_id: process.env.WHATSAPP_WABA_ID || '959954196738025',
-      template_name: 'ragex_otp_auth',
+      template_name: 'ragex_auth_v2',
     };
 
     rows.forEach((r) => {
@@ -31,7 +31,7 @@ async function getWhatsAppSettings() {
       meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSyT7Yo55SC6VsewcCZAuVKf0fteToWRUBofz8xT4ZCqjjAepu0tKk8947ahePWFl8fEfex4A7e7VOMls1otDqPS3o77unh6TdiRlYc2xsx36uri3uEwb6yuAkBnv7AsjvUUEOmJyb3z8X9HdlCuh0lYZBD9qg22BdbLPsBZAEO5TJYTIAgZDZD',
       phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '1390115774180863',
       waba_id: process.env.WHATSAPP_WABA_ID || '959954196738025',
-      template_name: 'ragex_otp_auth',
+      template_name: 'ragex_auth_v2',
     };
   }
 }
@@ -113,9 +113,23 @@ async function sendWhatsAppOtp(phone, otp) {
 
       let metaData = await response.json();
 
-      // If template call fails, fallback to raw text message
+      // If primary template call fails, try backup template ragex_otp_auth, then fallback text
       if (!response.ok || !metaData.messages) {
-        console.warn(`⚠️ Template dispatch warning, trying text payload...`, metaData);
+        console.warn(`⚠️ Template dispatch warning (${templateName}), trying ragex_otp_auth...`, metaData);
+        templatePayload.template.name = 'ragex_otp_auth';
+        response = await fetch(metaUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.meta_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(templatePayload),
+        });
+        metaData = await response.json();
+      }
+
+      if (!response.ok || !metaData.messages) {
+        console.warn(`⚠️ Backup template warning, trying text payload...`, metaData);
         response = await fetch(metaUrl, {
           method: 'POST',
           headers: {
