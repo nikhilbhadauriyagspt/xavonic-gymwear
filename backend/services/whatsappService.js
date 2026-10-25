@@ -8,19 +8,19 @@ async function getWhatsAppSettings() {
     );
 
     const settings = {
-      mode: 'test', // 'test' | 'live'
-      meta_token: '',
-      phone_number_id: '',
-      waba_id: '',
+      mode: process.env.WHATSAPP_MODE || 'live', // 'test' | 'live'
+      meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSxwenML9suGSz3B0WmVDx3ZBlQUAGlUG2OcZCpHdNRnlPaa1djVyzOPbIf6aB7CsH9ZBC3TOW3W8YGupjFKVE3FkcIZAXXZA7UZCslhGHswOWPJJpUodGYhybMoIITVrLzA46MeJfwtj1cefy25vhp9lQssqg3Pbryts3NZBMYnWtpiNNFCIyrhGE18geRfoKoPSUJm0YblhgoZCHIZCeL1UMQ3UmKbv6G0pXJHvMxL7NoZCZCehWURkBAZBOHjgr6ZAKGU7I2D4nPGW3',
+      phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '1390115774180863',
+      waba_id: process.env.WHATSAPP_WABA_ID || '959954196738025',
       template_name: 'ragex_otp_auth',
     };
 
     rows.forEach((r) => {
-      if (r.setting_key === 'whatsapp_mode') settings.mode = r.setting_value;
-      if (r.setting_key === 'whatsapp_meta_token') settings.meta_token = r.setting_value;
-      if (r.setting_key === 'whatsapp_phone_number_id') settings.phone_number_id = r.setting_value;
-      if (r.setting_key === 'whatsapp_waba_id') settings.waba_id = r.setting_value;
-      if (r.setting_key === 'whatsapp_template_name') settings.template_name = r.setting_value;
+      if (r.setting_key === 'whatsapp_mode' && r.setting_value) settings.mode = r.setting_value;
+      if (r.setting_key === 'whatsapp_meta_token' && r.setting_value) settings.meta_token = r.setting_value;
+      if (r.setting_key === 'whatsapp_phone_number_id' && r.setting_value) settings.phone_number_id = r.setting_value;
+      if (r.setting_key === 'whatsapp_waba_id' && r.setting_value) settings.waba_id = r.setting_value;
+      if (r.setting_key === 'whatsapp_template_name' && r.setting_value) settings.template_name = r.setting_value;
     });
 
     return settings;
