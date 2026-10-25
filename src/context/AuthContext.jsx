@@ -151,19 +151,15 @@ export function AuthProvider({ children }) {
       });
       const data = await res.json();
       if (data.success) {
-        if (data.mode === 'test' || data.mode === 'test_fallback') {
-          toast.success(`WhatsApp OTP: ${data.testOtp} (Testing Code: 1234)`, { duration: 6000 });
-        } else {
-          toast.success('OTP sent directly to your WhatsApp!');
-        }
-        return { success: true, testOtp: data.testOtp, mode: data.mode };
+        toast.success(data.message || 'OTP sent directly to your WhatsApp!');
+        return { success: true, mode: data.mode };
       } else {
         toast.error(data.message || 'Failed to send OTP.');
         return { success: false, message: data.message };
       }
     } catch (err) {
-      toast.info('Test Mode Active. Use OTP: 1234');
-      return { success: true, testOtp: '1234', mode: 'test' };
+      toast.error('Network error sending WhatsApp OTP. Please try again.');
+      return { success: false, message: err.message };
     }
   };
 
@@ -181,23 +177,14 @@ export function AuthProvider({ children }) {
         localStorage.setItem('xavonic_user_token', data.token);
         const fullUser = createFullUserPayload(data.user);
         setUser(fullUser);
-        toast.success(`Mobile verified! Welcome to RageX.`);
-        closeAuth();
-        return { success: true };
+        return { success: true, user: fullUser };
       } else {
-        toast.error(data.message || 'Invalid OTP code.');
-        return { success: false, message: data.message };
+        toast.error(data.message || 'Invalid or expired OTP code.');
+        return { success: false, message: data.message || 'Invalid code' };
       }
     } catch (err) {
-      if (otp === '1234') {
-        const fullUser = createFullUserPayload({ phone, phoneVerified: true, email: '', emailVerified: false, name: '' });
-        setUser(fullUser);
-        toast.success('Logged in successfully!');
-        closeAuth();
-        return { success: true };
-      }
-      toast.error('Could not verify OTP.');
-      return { success: false };
+      toast.error('Could not verify OTP. Please try again.');
+      return { success: false, message: err.message };
     }
   };
 
