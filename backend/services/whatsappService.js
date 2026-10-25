@@ -25,8 +25,14 @@ async function getWhatsAppSettings() {
 
     return settings;
   } catch (err) {
-    console.error('Error loading WhatsApp settings:', err.message);
-    return { mode: 'test' };
+    console.error('Error loading WhatsApp settings from DB, using live defaults:', err.message);
+    return {
+      mode: process.env.WHATSAPP_MODE || 'live',
+      meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSxwenML9suGSz3B0WmVDx3ZBlQUAGlUG2OcZCpHdNRnlPaa1djVyzOPbIf6aB7CsH9ZBC3TOW3W8YGupjFKVE3FkcIZAXXZA7UZCslhGHswOWPJJpUodGYhybMoIITVrLzA46MeJfwtj1cefy25vhp9lQssqg3Pbryts3NZBMYnWtpiNNFCIyrhGE18geRfoKoPSUJm0YblhgoZCHIZCeL1UMQ3UmKbv6G0pXJHvMxL7NoZCZCehWURkBAZBOHjgr6ZAKGU7I2D4nPGW3',
+      phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '1390115774180863',
+      waba_id: process.env.WHATSAPP_WABA_ID || '959954196738025',
+      template_name: 'ragex_otp_auth',
+    };
   }
 }
 
@@ -48,9 +54,44 @@ async function sendWhatsAppOtp(phone, otp) {
       const brandName = brand.brand_name || 'RageX Activewear';
 
       console.log(`🚀 Dispatching real WhatsApp message via Meta Cloud API...`);
-      const metaUrl = `https://graph.facebook.com/v19.0/${settings.phone_number_id}/messages`;
+      const metaUrl = `https://graph.facebook.com/v21.0/${settings.phone_number_id}/messages`;
       
-      const payload = {
+      const templateName = settings.template_name || 'ragex_otp_auth';
+
+      const templatePayload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanPhone,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: 'en_US' },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                {
+                  type: 'text',
+                  text: String(otp),
+                },
+              ],
+            },
+            {
+              type: 'button',
+              sub_type: 'url',
+              index: '0',
+              parameters: [
+                {
+                  type: 'text',
+                  text: String(otp),
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const fallbackTextPayload = {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
         to: cleanPhone,
@@ -61,16 +102,30 @@ async function sendWhatsAppOtp(phone, otp) {
         },
       };
 
-      const response = await fetch(metaUrl, {
+      let response = await fetch(metaUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${settings.meta_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(templatePayload),
       });
 
-      const metaData = await response.json();
+      let metaData = await response.json();
+
+      // If template call fails, fallback to raw text message
+      if (!response.ok || !metaData.messages) {
+        console.warn(`⚠️ Template dispatch warning, trying text payload...`, metaData);
+        response = await fetch(metaUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${settings.meta_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(fallbackTextPayload),
+        });
+        metaData = await response.json();
+      }
 
       if (response.ok && metaData.messages) {
         console.log(`✅ Live WhatsApp OTP sent successfully! Message ID:`, metaData.messages[0]?.id);
