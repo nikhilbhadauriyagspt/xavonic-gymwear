@@ -9,7 +9,7 @@ async function getWhatsAppSettings() {
 
     const settings = {
       mode: process.env.WHATSAPP_MODE || 'live', // 'test' | 'live'
-      meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSxwenML9suGSz3B0WmVDx3ZBlQUAGlUG2OcZCpHdNRnlPaa1djVyzOPbIf6aB7CsH9ZBC3TOW3W8YGupjFKVE3FkcIZAXXZA7UZCslhGHswOWPJJpUodGYhybMoIITVrLzA46MeJfwtj1cefy25vhp9lQssqg3Pbryts3NZBMYnWtpiNNFCIyrhGE18geRfoKoPSUJm0YblhgoZCHIZCeL1UMQ3UmKbv6G0pXJHvMxL7NoZCZCehWURkBAZBOHjgr6ZAKGU7I2D4nPGW3',
+      meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSyT7Yo55SC6VsewcCZAuVKf0fteToWRUBofz8xT4ZCqjjAepu0tKk8947ahePWFl8fEfex4A7e7VOMls1otDqPS3o77unh6TdiRlYc2xsx36uri3uEwb6yuAkBnv7AsjvUUEOmJyb3z8X9HdlCuh0lYZBD9qg22BdbLPsBZAEO5TJYTIAgZDZD',
       phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '1390115774180863',
       waba_id: process.env.WHATSAPP_WABA_ID || '959954196738025',
       template_name: 'ragex_otp_auth',
@@ -28,7 +28,7 @@ async function getWhatsAppSettings() {
     console.error('Error loading WhatsApp settings from DB, using live defaults:', err.message);
     return {
       mode: process.env.WHATSAPP_MODE || 'live',
-      meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSxwenML9suGSz3B0WmVDx3ZBlQUAGlUG2OcZCpHdNRnlPaa1djVyzOPbIf6aB7CsH9ZBC3TOW3W8YGupjFKVE3FkcIZAXXZA7UZCslhGHswOWPJJpUodGYhybMoIITVrLzA46MeJfwtj1cefy25vhp9lQssqg3Pbryts3NZBMYnWtpiNNFCIyrhGE18geRfoKoPSUJm0YblhgoZCHIZCeL1UMQ3UmKbv6G0pXJHvMxL7NoZCZCehWURkBAZBOHjgr6ZAKGU7I2D4nPGW3',
+      meta_token: process.env.WHATSAPP_META_TOKEN || 'EAAz17rrKDQwBSyT7Yo55SC6VsewcCZAuVKf0fteToWRUBofz8xT4ZCqjjAepu0tKk8947ahePWFl8fEfex4A7e7VOMls1otDqPS3o77unh6TdiRlYc2xsx36uri3uEwb6yuAkBnv7AsjvUUEOmJyb3z8X9HdlCuh0lYZBD9qg22BdbLPsBZAEO5TJYTIAgZDZD',
       phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '1390115774180863',
       waba_id: process.env.WHATSAPP_WABA_ID || '959954196738025',
       template_name: 'ragex_otp_auth',
