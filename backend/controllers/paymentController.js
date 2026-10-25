@@ -3,6 +3,7 @@ const {
   getRazorpayConfig,
   createRazorpayOrder,
   verifyPaymentSignature,
+  fetchRazorpayPayment,
 } = require('../services/razorpayService');
 const { sendOrderWhatsAppNotification } = require('../services/whatsappService');
 const { sendOrderInvoiceEmail } = require('../services/emailService');
@@ -67,36 +68,55 @@ exports.createPaymentOrder = async (req, res) => {
  */
 exports.verifyPaymentAndPlaceOrder = async (req, res) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      orderDetails,
-    } = req.body;
+    const razorpay_order_id = req.body.razorpay_order_id || req.body.order_id || req.body.orderId || req.body.orderPayload?.razorpay_order_id || '';
+    const razorpay_payment_id = req.body.razorpay_payment_id || req.body.payment_id || req.body.paymentId || req.body.orderPayload?.razorpay_payment_id || '';
+    const razorpay_signature = req.body.razorpay_signature || req.body.signature || '';
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!razorpay_payment_id) {
       return res.status(400).json({
         success: false,
-        message: 'Payment verification parameters missing (order_id, payment_id, signature).',
+        message: 'Payment verification failed: Razorpay payment_id is missing.',
       });
     }
 
-    // Verify cryptographic HMAC-SHA256 signature
-    const isValid = await verifyPaymentSignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    );
+    let isValid = false;
+
+    // 1. Try cryptographic HMAC-SHA256 signature verification if signature & order_id present
+    if (razorpay_order_id && razorpay_signature) {
+      try {
+        isValid = await verifyPaymentSignature(
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature
+        );
+      } catch (sigErr) {
+        console.warn('⚠️ Signature check error:', sigErr.message);
+      }
+    }
+
+    // 2. Direct server-to-server verification via Razorpay API fallback
+    if (!isValid && typeof fetchRazorpayPayment === 'function') {
+      try {
+        console.log(`🔍 Verifying payment ${razorpay_payment_id} directly with Razorpay API...`);
+        const paymentRecord = await fetchRazorpayPayment(razorpay_payment_id);
+        if (paymentRecord && (paymentRecord.status === 'captured' || paymentRecord.status === 'authorized')) {
+          console.log(`✅ Direct Razorpay API verification succeeded! Status: ${paymentRecord.status}`);
+          isValid = true;
+        }
+      } catch (fetchErr) {
+        console.warn('⚠️ Direct Razorpay fetch error:', fetchErr.message);
+      }
+    }
 
     if (!isValid) {
-      console.warn('❌ Invalid Razorpay Signature detected for Order ID:', razorpay_order_id);
+      console.warn('❌ Payment verification failed for ID:', razorpay_payment_id);
       return res.status(400).json({
         success: false,
-        message: 'Cryptographic signature verification failed. Payment cannot be verified.',
+        message: 'Payment verification failed. Could not verify payment with Razorpay.',
       });
     }
 
-    console.log(`✅ Razorpay Payment Verified: Payment ID: ${razorpay_payment_id} | Order ID: ${razorpay_order_id}`);
+    console.log(`✅ Razorpay Payment Verified: Payment ID: ${razorpay_payment_id} | Order ID: ${razorpay_order_id || 'direct'}`);
 
     // If orderDetails / orderPayload are passed, create the order in DB immediately
     const orderInfo = req.body.orderDetails || req.body.orderPayload || req.body.order || null;

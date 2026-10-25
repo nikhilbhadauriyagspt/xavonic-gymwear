@@ -98,6 +98,7 @@ async function createRazorpayOrder(amountInRupees, receiptId, notes = {}) {
   console.log(`💳 Razorpay Order Created: ${razorpayOrder.id} for ₹${amountInRupees} (${amountInPaise} paise)`);
 
   return {
+    id: razorpayOrder.id,
     orderId: razorpayOrder.id,
     amount: razorpayOrder.amount,
     currency: razorpayOrder.currency,
@@ -149,7 +150,18 @@ async function testRazorpayAuth(key_id, key_secret) {
   }
 }
 
+async function fetchRazorpayPayment(paymentId) {
+  try {
+    const instance = await getRazorpayInstance();
+    const payment = await instance.payments.fetch(paymentId);
+    return payment;
+  } catch (err) {
+    console.error('Error fetching payment ' + paymentId + ' from Razorpay:', err.message);
+    return null;
+  }
+}
 module.exports = {
+  fetchRazorpayPayment,
   getRazorpayConfig,
   clearRazorpayCache,
   getRazorpayInstance,
@@ -157,3 +169,4 @@ module.exports = {
   verifyPaymentSignature,
   testRazorpayAuth,
 };
+

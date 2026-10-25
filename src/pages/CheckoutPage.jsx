@@ -674,6 +674,7 @@ export default function CheckoutPage() {
         }
 
         const razorpayOrder = rzpOrderRes.order;
+        const rzpOrderId = razorpayOrder.orderId || razorpayOrder.id;
 
         const options = {
           key: razorpayConfig.key_id,
@@ -682,7 +683,7 @@ export default function CheckoutPage() {
           name: razorpayConfig.brand_name || brand?.brand_name || 'RageX Activewear',
           description: `Checkout Order (${cartItems.length} items)`,
           image: brand?.logo_black || '/logo.png',
-          order_id: razorpayOrder.id,
+          order_id: rzpOrderId,
           prefill: {
             name: payload.customer_name,
             email: payload.customer_email,
@@ -706,7 +707,7 @@ export default function CheckoutPage() {
             try {
               setIsProcessing(true);
               const verifyRes = await verifyClientPaymentAndPlaceOrder({
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_order_id: response.razorpay_order_id || rzpOrderId,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 orderPayload: {
@@ -714,7 +715,7 @@ export default function CheckoutPage() {
                   payment_status: 'Paid',
                   transaction_id: response.razorpay_payment_id,
                   razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_order_id: response.razorpay_order_id || rzpOrderId,
                 },
               });
 
