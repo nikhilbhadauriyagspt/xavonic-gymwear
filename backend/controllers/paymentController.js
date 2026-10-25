@@ -142,70 +142,91 @@ exports.verifyPaymentAndPlaceOrder = async (req, res) => {
       const itemsJson = typeof items === 'string' ? items : JSON.stringify(items || []);
       const addressJson = typeof shippingAddress === 'string' ? shippingAddress : JSON.stringify(shippingAddress || {});
 
-      // Deduct inventory stock
+      // Deduct inventory stock safely
       if (Array.isArray(items)) {
         for (const it of items) {
-          const prodId = it.productId || it.id;
-          const selectedSize = (it.selectedSize || it.size || '').trim();
-          const qty = Number(it.quantity || 1);
+          try {
+            const prodId = it.productId || it.id;
+            const selectedSize = (it.selectedSize || it.size || '').trim();
+            const qty = Number(it.quantity || 1);
 
-          if (prodId) {
-            const [prodRows] = await db.query('SELECT sizes_json, stock_count FROM products WHERE id = ?', [prodId]);
-            if (prodRows && prodRows.length > 0) {
-              let sizes = [];
-              try {
-                sizes = JSON.parse(prodRows[0].sizes_json || '[]');
-              } catch (_) {}
+            if (prodId) {
+              const [prodRows] = await db.query('SELECT stock, size_stock_json, sizes_json FROM products WHERE id = ?', [prodId]);
+              if (prodRows && prodRows.length > 0) {
+                const currentStock = Number(prodRows[0].stock || 0);
+                const newStockTotal = Math.max(0, currentStock - qty);
+                const inStockStatus = newStockTotal > 0 ? 1 : 0;
 
-              let updated = false;
-              if (Array.isArray(sizes) && sizes.length > 0) {
-                sizes = sizes.map((s) => {
-                  if (typeof s === 'object' && s.size === selectedSize) {
-                    const newStock = Math.max(0, (Number(s.stock) || 0) - qty);
-                    updated = true;
-                    return { ...s, stock: newStock };
-                  }
-                  return s;
-                });
+                let sizeStock = {};
+                try {
+                  sizeStock = typeof prodRows[0].size_stock_json === 'string'
+                    ? JSON.parse(prodRows[0].size_stock_json)
+                    : (prodRows[0].size_stock_json || {});
+                } catch (_) { sizeStock = {}; }
+
+                if (selectedSize && sizeStock[selectedSize] !== undefined) {
+                  sizeStock[selectedSize] = Math.max(0, (Number(sizeStock[selectedSize]) || 0) - qty);
+                }
+
+                let sizes = [];
+                try {
+                  sizes = typeof prodRows[0].sizes_json === 'string'
+                    ? JSON.parse(prodRows[0].sizes_json)
+                    : (prodRows[0].sizes_json || []);
+                } catch (_) {}
+
+                if (Array.isArray(sizes) && sizes.length > 0) {
+                  sizes = sizes.map((s) => {
+                    if (typeof s === 'object' && s.size === selectedSize) {
+                      return { ...s, stock: Math.max(0, (Number(s.stock) || 0) - qty) };
+                    }
+                    return s;
+                  });
+                }
+
+                await db.query(
+                  'UPDATE products SET stock = ?, in_stock = ?, size_stock_json = ?, sizes_json = ? WHERE id = ?',
+                  [newStockTotal, inStockStatus, JSON.stringify(sizeStock), JSON.stringify(sizes), prodId]
+                );
               }
-
-              const newStockTotal = Math.max(0, (Number(prodRows[0].stock_count) || 0) - qty);
-
-              await db.query(
-                'UPDATE products SET stock_count = ?, sizes_json = ? WHERE id = ?',
-                [newStockTotal, JSON.stringify(sizes), prodId]
-              );
             }
+          } catch (stockErr) {
+            console.warn('⚠️ Non-fatal inventory stock deduction note:', stockErr.message);
           }
         }
       }
 
+      const itemsCount = Array.isArray(items) ? items.reduce((acc, it) => acc + (Number(it.quantity) || 1), 0) : 1;
+      const deliveryNotesCombined = [notes, `Razorpay Payment ID: ${razorpay_payment_id}`].filter(Boolean).join(' | ');
+      const userId = req.user?.id || orderInfo.user_id || null;
+      const customerId = orderInfo.customer_id || (userId ? `RGX-${String(userId).padStart(5, '0')}` : null);
+
       // Insert Order into DB
       const [result] = await db.query(
         `INSERT INTO orders (
-          order_number, user_id, customer_name, customer_phone, customer_email,
-          items_json, subtotal, discount_amount, coupon_code, shipping_fee, total_amount,
-          payment_method, payment_status, order_status, shipping_address_json,
-          tracking_number, courier_partner, notes, payment_transaction_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Paid', 'Processing', ?, ?, ?, ?, ?)`,
+          order_number, user_id, customer_id, customer_name, customer_email, customer_phone,
+          items_json, items_count, subtotal, discount_amount, coupon_code, shipping_fee, total_amount,
+          payment_method, payment_status, order_status, shipping_address, tracking_number, courier_partner, delivery_notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Paid', 'Processing', ?, ?, ?, ?)`,
         [
           orderNumber,
-          req.user?.id || null,
+          userId,
+          customerId,
           customerName || 'Valued Athlete',
-          customerPhone || '',
           customerEmail || '',
+          customerPhone || '',
           itemsJson,
+          itemsCount,
           Number(subtotal || 0),
           Number(discountAmount || 0),
-          couponCode || '',
+          couponCode || null,
           Number(shippingFee || 0),
           Number(totalAmount || 0),
           paymentMethod,
           addressJson,
           trackingNumber,
           courierPartner,
-          notes || '',
-          razorpay_payment_id,
+          deliveryNotesCombined,
         ]
       );
 
