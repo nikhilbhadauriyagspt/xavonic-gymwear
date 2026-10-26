@@ -103,7 +103,7 @@ export default function CheckoutPage() {
       if (data && data.success && data.config) {
         setRazorpayConfig(data.config);
       }
-    }).catch(() => {});
+    }).catch(() => { });
     loadRazorpayScript();
   }, []);
 
@@ -193,7 +193,7 @@ export default function CheckoutPage() {
           setMapsApiKey(data.config.api_key);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Dynamically load Google Places Script
@@ -581,7 +581,7 @@ export default function CheckoutPage() {
           image: item.image || item.images?.[0],
         })),
         addressSummary: `${activeAddress?.city || ''}, ${activeAddress?.state || ''} ${activeAddress?.pincode || ''}`.trim(),
-      }).catch(() => {});
+      }).catch(() => { });
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -899,449 +899,112 @@ export default function CheckoutPage() {
     }
   };
 
-  // If order is confirmed, render the brand-level Order Confirmation screen
+  // RAGE-X: order success (checkout and payment logic remain unchanged)
   if (step === 'confirmed' && confirmedOrder) {
-    const addr = confirmedOrder.addressDetails || null;
-    const isPaidOnline =
-      String(confirmedOrder.paymentStatus || '').toLowerCase() === 'paid' ||
-      !String(confirmedOrder.paymentMethod || '').toLowerCase().includes('cod');
+    const addr = confirmedOrder.addressDetails;
+    const isCod = /cash on delivery|\bcod\b|pay on delivery/i.test(confirmedOrder.paymentMethod || '');
+    const isPaidOnline = !isCod && String(confirmedOrder.paymentStatus || '').toLowerCase() === 'paid';
+    const stages = [
+      { name: 'Placed', note: 'Order received', Icon: CheckCircle2 },
+      { name: 'Processing', note: 'Preparing your order', Icon: Package },
+      { name: 'Shipped', note: 'On the way', Icon: Truck },
+      { name: 'Delivered', note: 'At your doorstep', Icon: Home },
+    ];
+    const stageNumber = Math.min(3, Math.max(0,
+      /deliver/i.test(confirmedOrder.status || '') ? 3 :
+        /ship|dispatch|transit/i.test(confirmedOrder.status || '') ? 2 :
+          /process|pack/i.test(confirmedOrder.status || '') ? 1 : 0
+    ));
 
     return (
-      <div className="min-h-screen bg-[#fafaf9] text-zinc-900 font-sans pb-16">
-        {/* Top Minimal Brand Header */}
-        <header className="border-b border-zinc-200 bg-white">
-          <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3.5 sm:px-6">
-            <Link to="/" className="text-sm font-bold tracking-tight uppercase text-zinc-950">
-              {brand?.brand_name || 'RAGEX'}
+      <div className="relative min-h-screen overflow-hidden bg-[#fafbf8] text-[#18251e] pb-16" style={{ fontFamily: 'inherit' }}>
+        {/* Put the generated 1920x900 image at: public/images/ragex-order-success-bg.png */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-[69px] h-[740px] sm:h-[820px] overflow-hidden">
+          <div className="absolute inset-0 bg-cover bg-[position:65%_top] sm:bg-center" style={{ backgroundImage: "url('/images/ragex-order-success-bg.png')" }} />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#fafbf8]/10 via-[#fafbf8]/20 to-[#fafbf8]" />
+        </div>
+
+        <header className="relative z-10 border-b border-[#e7ece5] bg-white/90">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+            <Link to="/" className="text-xl font-black italic tracking-[-.07em] text-[#151b16]">
+              RAGE<span className="text-[#d81f2b]">-X</span>
             </Link>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-[11px] font-semibold text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Order Confirmed</span>
-            </span>
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-[#35734a]"><ShieldCheck className="h-4 w-4" /> Secure checkout</span>
           </div>
         </header>
 
-        <main className="mx-auto max-w-4xl px-4 pt-8 sm:px-6 sm:pt-10 space-y-6">
-          {/* 1. Hero Confirmation Card & Live Order Timeline */}
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-2xs"
-          >
-            {/* Top Greeting & Order ID Header */}
-            <div className="p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 border-b border-zinc-100">
-              <div className="flex items-start gap-4">
-                <motion.div
-                  initial={{ scale: 0.85, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.08, type: 'spring', stiffness: 240 }}
-                  className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white shadow-xs"
-                >
-                  <Check className="h-6 w-6 stroke-[2.5]" />
-                </motion.div>
+        <main className="relative z-10 mx-auto max-w-5xl px-4 pt-7 sm:px-8 sm:pt-9">
+          <div className="relative grid min-h-[295px] items-center gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] lg:gap-14">
+            <motion.div initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: .7, delay: .15 }} className="order-2 text-center md:order-1 md:text-left">
+              <p className="text-[37px] leading-none italic tracking-tight text-[#185b37] sm:text-[49px]" style={{ fontFamily: 'cursive' }}>Thank You ♡</p>
+              <p className="mt-4 text-[10px] font-semibold uppercase tracking-[.25em] text-[#24352a]">For shopping with <span className="font-black italic tracking-normal text-[#bb1722]">RAGE-X</span></p>
+            </motion.div>
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65 }} className="order-1 text-center md:order-2">
+              <motion.div initial={{ scale: .65, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 180, damping: 16, delay: .15 }} className="relative mx-auto mb-4 grid h-[88px] w-[88px] place-items-center rounded-full border-[7px] border-[#e5f1e7] bg-[#185d38]">
+                <svg viewBox="0 0 56 56" className="h-12 w-12" fill="none" aria-label="Order confirmed" role="img">
+                  <motion.path d="M12 29L23 40L45 16" stroke="white" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: .5, duration: .75, ease: 'easeOut' }} />
+                </svg>
+                {[0, 60, 120, 180, 240, 300].map((angle) => <motion.span key={angle} initial={{ opacity: 0, scale: .3 }} animate={{ opacity: [0, 1, 0], scale: [0.3, 1, 1.2] }} transition={{ duration: .8, delay: .65, ease: 'easeOut' }} className="absolute h-1.5 w-1.5 rounded-full bg-[#367d50]" style={{ left: `calc(50% + ${Math.cos(angle * Math.PI / 180) * 61}px)`, top: `calc(50% + ${Math.sin(angle * Math.PI / 180) * 61}px)` }} />)}
+              </motion.div>
+              <p className="text-[10px] font-semibold uppercase tracking-[.28em] text-[#37704c]">Order placed successfully</p>
+              <h1 className="mt-2 text-[28px] font-bold leading-tight tracking-tight text-[#18251e] sm:text-[40px]">Your order is <span className="text-[#1c623b]">confirmed!</span></h1>
+              <p className="mx-auto mt-3 max-w-md text-[13px] leading-6 text-[#58665b] sm:text-sm">We have received your order. We'll send updates to your registered email as it moves toward delivery.</p>
+            </motion.section>
+          </div>
 
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                      <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                      {isPaidOnline ? 'Payment Verified' : 'Order Confirmed'}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500">
-                      <Calendar className="h-3 w-3 text-zinc-400" />
-                      {confirmedOrder.date}
-                    </span>
-                  </div>
-
-                  <h1 className="mt-1.5 text-xl sm:text-2xl font-bold tracking-tight text-zinc-900">
-                    Thank you for your order{addr?.name ? `, ${addr.name.split(' ')[0]}` : ''}!
-                  </h1>
-
-                  <p className="mt-1 text-xs text-zinc-500 leading-relaxed">
-                    Order confirmation and live tracking updates have been sent to{' '}
-                    <span className="font-semibold text-zinc-800">
-                      {addr?.email || contactEmail || user?.email || 'your registered email'}
-                    </span>
-                    .
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex sm:flex-col items-center sm:items-end justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 shrink-0">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-                  Order Number
-                </span>
-                <span className="text-sm sm:text-base font-bold tracking-tight text-zinc-900 mt-0.5">
-                  #{String(confirmedOrder.id || '').replace(/^#/, '')}
-                </span>
-              </div>
+          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .15, duration: .45 }} className="mt-9 overflow-hidden rounded-2xl border border-[#e1e9df] bg-white/95">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#edf0ea] px-5 py-5 sm:px-8">
+              <div><p className="text-[11px] uppercase tracking-[.14em] text-[#849084]">Order number</p><p className="mt-1 text-xl font-bold">#{String(confirmedOrder.id || '').replace(/^#/, '')}</p><p className="mt-1 text-xs text-[#7d887d]">Placed on {confirmedOrder.date}</p></div>
+              <div className="flex flex-col items-start gap-2 sm:items-end"><span className="inline-flex items-center gap-1.5 rounded-full bg-[#eaf5ec] px-3 py-1.5 text-xs font-semibold text-[#267044]"><CheckCircle2 className="h-3.5 w-3.5" /> Order confirmed</span><p className="text-xs text-[#6a796b]">Expected: {confirmedOrder.estimatedDelivery}</p></div>
             </div>
-
-            {/* Live Delivery Process Stepper with Icons */}
-            <div className="bg-zinc-50/50 px-6 py-6 sm:px-8">
-              {/* Estimated Delivery Sub-Header */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-6">
-                <div className="flex items-center gap-2.5">
-                  <div className="grid h-8 w-8 place-items-center rounded-lg bg-white border border-zinc-200 text-zinc-800 shadow-2xs">
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
-                      Estimated Delivery
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-zinc-900">
-                      {confirmedOrder.estimatedDelivery}
-                    </span>
-                  </div>
-                </div>
-
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-zinc-200 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 shadow-2xs">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Express Fulfilment Active</span>
-                </span>
-              </div>
-
-              {/* 4-Step Connected Icon Timeline */}
-              <div className="relative pt-2">
-                {/* Horizontal Background Connector Track (Desktop & Tablet) */}
-                <div className="hidden sm:block absolute top-7 left-[12.5%] right-[12.5%] h-0.5 bg-zinc-200" />
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: '25%' }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  className="hidden sm:block absolute top-7 left-[12.5%] h-0.5 bg-emerald-600"
-                />
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 relative z-10">
-                  {[
-                    {
-                      label: 'Confirmed',
-                      sub: 'Order received',
-                      Icon: CheckCircle2,
-                      state: 'done',
-                    },
-                    {
-                      label: 'Processing',
-                      sub: 'Quality & packing',
-                      Icon: Package,
-                      state: 'active',
-                    },
-                    {
-                      label: 'Shipped',
-                      sub: 'In transit',
-                      Icon: Truck,
-                      state: 'upcoming',
-                    },
-                    {
-                      label: 'Delivered',
-                      sub: confirmedOrder.estimatedDelivery,
-                      Icon: Home,
-                      state: 'upcoming',
-                    },
-                  ].map(({ label, sub, Icon, state }) => {
-                    const isDone = state === 'done';
-                    const isActive = state === 'active';
-
-                    return (
-                      <div
-                        key={label}
-                        className={`flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2.5 rounded-xl sm:rounded-none border sm:border-0 p-3 sm:p-0 ${
-                          isDone
-                            ? 'border-emerald-200 bg-emerald-50/40 sm:bg-transparent'
-                            : isActive
-                            ? 'border-zinc-900 bg-white sm:bg-transparent'
-                            : 'border-zinc-200 bg-white/60 sm:bg-transparent'
-                        }`}
-                      >
-                        <div
-                          className={`relative grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 transition-all ${
-                            isDone
-                              ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
-                              : isActive
-                              ? 'border-zinc-900 bg-white text-zinc-900 ring-4 ring-zinc-900/10'
-                              : 'border-zinc-200 bg-white text-zinc-400'
-                          }`}
-                        >
-                          <Icon className="h-4 w-4 stroke-[2.2]" />
-                        </div>
-
-                        <div className="min-w-0">
-                          <p
-                            className={`text-xs font-bold ${
-                              isDone
-                                ? 'text-emerald-700'
-                                : isActive
-                                ? 'text-zinc-900'
-                                : 'text-zinc-400'
-                            }`}
-                          >
-                            {label}
-                          </p>
-                          <p className="text-[11px] text-zinc-500 mt-0.5 truncate">
-                            {sub}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="px-5 py-6 sm:px-8">
+              <h2 className="mb-6 text-sm font-bold">Your order journey</h2>
+              <div className="relative grid grid-cols-4 gap-1 sm:gap-4">
+                <div className="absolute left-[12%] right-[12%] top-[19px] h-[2px] bg-[#e2e8e0]" />
+                <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: .45, duration: .7 }} style={{ transformOrigin: 'left', width: `${stageNumber * 33.333}%` }} className="absolute left-[12%] top-[19px] h-[2px] bg-[#267044]" />
+                {stages.map(({ name, note, Icon }, index) => {
+                  const completed = index <= stageNumber;
+                  return <div key={name} className="relative flex flex-col items-center text-center"><div className={`z-10 grid h-10 w-10 place-items-center rounded-full border-2 ${completed ? 'border-[#267044] bg-[#267044] text-white' : 'border-[#e2e8e0] bg-white text-[#9da89f]'}`}><Icon className="h-4 w-4" /></div><p className={`mt-3 text-[11px] font-semibold sm:text-xs ${completed ? 'text-[#245d39]' : 'text-[#829084]'}`}>{name}</p><p className="mt-1 hidden text-[11px] text-[#899489] sm:block">{note}</p></div>;
+                })}
               </div>
             </div>
           </motion.section>
 
-          {/* 2. Two-Column Details: Delivery Address + Payment & Shipping Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Delivery Address Card */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-zinc-100">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-zinc-700" />
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
-                      Delivery Address
-                    </h2>
-                  </div>
-                  {addr?.type && (
-                    <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-                      {addr.type}
-                    </span>
-                  )}
-                </div>
-
-                {addr ? (
-                  <div className="space-y-1 text-xs">
-                    <p className="font-semibold text-zinc-900 text-sm">{addr.name}</p>
-                    <p className="text-zinc-600 leading-relaxed">{addr.addressLine}</p>
-                    <p className="text-zinc-600">
-                      {addr.city}, {addr.state} — <span className="font-semibold text-zinc-800">{addr.pincode}</span>
-                    </p>
-                    <div className="pt-2.5 mt-2.5 border-t border-zinc-100 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-zinc-500">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Phone className="h-3 w-3 text-zinc-400" />
-                        <strong className="font-medium text-zinc-700">{addr.phone}</strong>
-                      </span>
-                      {addr.email && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Mail className="h-3 w-3 text-zinc-400" />
-                          <span className="truncate">{addr.email}</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-xs text-zinc-600 leading-relaxed">
-                    {confirmedOrder.shippingAddress}
-                  </p>
-                )}
+          <section className="mt-5 grid gap-5 md:grid-cols-2">
+            <div className="rounded-2xl border border-[#e1e9df] bg-white p-6 sm:p-7">
+              <h2 className="flex items-center gap-2 text-sm font-bold"><MapPin className="h-[18px] w-[18px] text-[#347a4f]" /> Shipping details</h2>
+              <div className="mt-5 border-t border-[#edf0ea] pt-4 text-sm leading-7 text-[#59695e]">
+                <p className="font-semibold text-[#202c22]">{addr?.name || 'Customer'}</p>
+                <p>{addr ? <>{addr.addressLine}<br />{addr.city}, {addr.state} - {addr.pincode}</> : confirmedOrder.shippingAddress}</p>
+                {addr?.phone && <p className="mt-2 text-xs">Phone: {addr.phone}</p>}
+                {addr?.email && <p className="break-all text-xs">Email: {addr.email}</p>}
               </div>
             </div>
-
-            {/* Payment & Fulfilment Card */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-zinc-100">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-zinc-700" />
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
-                      Payment & Dispatch
-                    </h2>
-                  </div>
-                  <span
-                    className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                      isPaidOnline
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border border-amber-200'
-                    }`}
-                  >
-                    {isPaidOnline ? 'Paid Online' : 'Pay on Delivery'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
-                      Payment Mode
-                    </span>
-                    <span className="font-semibold text-zinc-900 mt-0.5 block">
-                      {confirmedOrder.paymentMethod}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
-                      Total Amount
-                    </span>
-                    <span className="font-bold text-zinc-900 mt-0.5 block">
-                      {confirmedOrder.total}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
-                      Fulfilment Partner
-                    </span>
-                    <span className="font-medium text-zinc-800 mt-0.5 block">
-                      {confirmedOrder.courierPartner}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block">
-                      Tracking / AWB
-                    </span>
-                    <span className="font-medium text-zinc-600 mt-0.5 block">
-                      {confirmedOrder.trackingNumber}
-                    </span>
-                  </div>
-                </div>
+            <div className="rounded-2xl border border-[#e1e9df] bg-white p-6 sm:p-7">
+              <h2 className="flex items-center gap-2 text-sm font-bold"><CreditCard className="h-[18px] w-[18px] text-[#347a4f]" /> Payment details</h2>
+              <div className="mt-5 space-y-4 border-t border-[#edf0ea] pt-4 text-sm">
+                <div className="flex justify-between gap-4"><span className="text-[#798779]">Payment method</span><span className="text-right font-semibold">{confirmedOrder.paymentMethod}</span></div>
+                <div className="flex justify-between gap-4"><span className="text-[#798779]">Status</span><span className="font-semibold text-[#22643e]">{isCod ? 'Pay on delivery' : confirmedOrder.paymentStatus}</span></div>
+                <div className="flex justify-between gap-4 border-t border-[#edf0ea] pt-4"><span className="font-semibold">{isPaidOnline ? 'Amount paid' : 'Order total'}</span><span className="text-lg font-bold text-[#22643e]">{confirmedOrder.total}</span></div>
               </div>
             </div>
+          </section>
+
+          <section className="mt-5 rounded-2xl border border-[#e1e9df] bg-white p-6 sm:p-7">
+            <div className="flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-bold"><ShoppingBag className="h-[18px] w-[18px] text-[#347a4f]" /> Order summary</h2><span className="text-xs text-[#7b897b]">{confirmedOrder.items.length} item(s)</span></div>
+            <div className="mt-4 divide-y divide-[#eef1eb] border-y border-[#eef1eb]">
+              {confirmedOrder.items.map((item, index) => <div key={`${item.id || item.title || 'item'}-${index}`} className="flex items-start justify-between gap-4 py-3.5 text-sm"><div><p className="font-medium">{item.title || item.name || 'Order item'}</p><p className="mt-1 text-xs text-[#819082]">Size: {item.selectedSize || item.size || 'Standard'} · Qty: {item.quantity || 1}</p></div><span className="shrink-0 font-semibold">₹{(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString('en-IN')}</span></div>)}
+            </div>
+            <div className="ml-auto mt-4 max-w-sm space-y-2.5 text-sm"><div className="flex justify-between"><span className="text-[#798779]">Subtotal</span><span>{confirmedOrder.subtotal}</span></div>{confirmedOrder.discount !== '₹0' && <div className="flex justify-between"><span className="text-[#798779]">Discount</span><span className="text-[#22643e]">-{confirmedOrder.discount}</span></div>}<div className="flex justify-between"><span className="text-[#798779]">Shipping</span><span>{confirmedOrder.shipping}</span></div><div className="flex justify-between border-t border-[#e4ebe3] pt-3 text-base font-bold"><span>Total</span><span>{confirmedOrder.total}</span></div></div>
+          </section>
+
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link to="/collections" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#22643e] px-7 text-sm font-semibold text-white transition-colors hover:bg-[#174c2e]">Continue shopping <ArrowRight className="h-4 w-4" /></Link>
+            <button type="button" onClick={() => setIsInvoiceModalOpen(true)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#bfd0c0] bg-white px-6 text-sm font-semibold text-[#245b37] transition-colors hover:bg-[#f1f7f0]"><FileText className="h-4 w-4" /> View invoice</button>
+            <button type="button" onClick={() => printOrderInvoice(confirmedOrder)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[#e1e9df] bg-white px-5 text-sm font-semibold text-[#4c6151] transition-colors hover:bg-[#f6f9f5]"><Printer className="h-4 w-4" /> Print</button>
           </div>
-
-          {/* 3. Order Items & Receipt Breakdown Card */}
-          <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-2xs">
-            <div className="flex items-center justify-between px-5 py-4 sm:px-6 border-b border-zinc-100">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-zinc-700" />
-                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-900">
-                  Order Summary ({confirmedOrder.items.length}{' '}
-                  {confirmedOrder.items.length === 1 ? 'Item' : 'Items'})
-                </h2>
-              </div>
-              <span className="text-[11px] font-medium text-zinc-400">
-                Invoice #{confirmedOrder.id}
-              </span>
-            </div>
-
-            {/* Item Rows */}
-            <div className="divide-y divide-zinc-100 px-5 sm:px-6">
-              {confirmedOrder.items.map((it, idx) => (
-                <div key={idx} className="py-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <img
-                      src={
-                        it.image ||
-                        it.imageFront ||
-                        'https://images.unsplash.com/photo-1581655353564-df123a1eb820?w=120'
-                      }
-                      alt={it.title}
-                      className="h-16 w-13 object-cover bg-zinc-100 rounded-lg border border-zinc-200 shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <h4 className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
-                        {it.title}
-                      </h4>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
-                        <span className="rounded-md bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700">
-                          Size: {it.selectedSize || it.size || 'M'}
-                        </span>
-                        <span className="rounded-md bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700">
-                          Qty: {it.quantity}
-                        </span>
-                        <span className="text-zinc-400">
-                          ₹{Number(it.price).toLocaleString('en-IN')} / unit
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold text-zinc-900 shrink-0">
-                    ₹{(it.price * it.quantity).toLocaleString('en-IN')}.00
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Receipt Totals */}
-            <div className="bg-zinc-50/70 border-t border-zinc-200 px-5 py-4 sm:px-6 space-y-2 text-xs">
-              <div className="flex justify-between text-zinc-600">
-                <span>Bag Subtotal</span>
-                <span className="font-medium text-zinc-900">{confirmedOrder.subtotal}</span>
-              </div>
-
-              {confirmedOrder.discount && confirmedOrder.discount !== '₹0' && (
-                <div className="flex justify-between text-emerald-700">
-                  <span>Total Savings & Discounts</span>
-                  <span className="font-semibold">- {confirmedOrder.discount}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between text-zinc-600">
-                <span>Shipping & Handling</span>
-                <span className="font-semibold text-emerald-700">{confirmedOrder.shipping}</span>
-              </div>
-
-              <div className="pt-3 mt-2 border-t border-zinc-200 flex justify-between items-baseline">
-                <div>
-                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-900">
-                    Total {isPaidOnline ? 'Paid' : 'Payable'}
-                  </span>
-                  <span className="ml-2 text-[11px] text-zinc-400">
-                    ({confirmedOrder.paymentMethod})
-                  </span>
-                </div>
-                <span className="text-base sm:text-lg font-bold text-zinc-900">
-                  {confirmedOrder.total}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Bottom Action Bar */}
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-zinc-100 text-zinc-700 shrink-0">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <div className="text-xs">
-                <p className="font-semibold text-zinc-900">Need assistance with your order?</p>
-                <p className="text-[11px] text-zinc-500">
-                  Reach our support team at{' '}
-                  <a
-                    href={`mailto:${brand?.support_email || 'support@ragex.com'}`}
-                    className="font-medium text-zinc-900 underline underline-offset-2"
-                  >
-                    {brand?.support_email || 'support@ragex.com'}
-                  </a>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsInvoiceModalOpen(true)}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 text-xs font-semibold text-zinc-800 hover:bg-zinc-50 transition-colors cursor-pointer"
-              >
-                <FileText className="h-3.5 w-3.5 text-zinc-700" />
-                <span>Tax Invoice</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => printOrderInvoice(confirmedOrder)}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
-                title="Print Invoice / Save PDF"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>Print</span>
-              </button>
-
-              <Link
-                to="/collections"
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-5 text-xs font-semibold uppercase tracking-wider text-white hover:bg-black transition-colors cursor-pointer shadow-xs"
-              >
-                <span>Continue Shopping</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Tax Invoice Modal */}
-          <OrderInvoiceModal
-            order={confirmedOrder}
-            isOpen={isInvoiceModalOpen}
-            onClose={() => setIsInvoiceModalOpen(false)}
-          />
+          <p className="mt-8 text-center text-xs text-[#829083]">Questions about your order? <a className="font-semibold text-[#22643e] underline underline-offset-4" href={`mailto:${brand?.support_email || 'support@rage-x.com'}`}>Contact us</a></p>
+          <OrderInvoiceModal order={confirmedOrder} isOpen={isInvoiceModalOpen} onClose={() => setIsInvoiceModalOpen(false)} />
         </main>
       </div>
     );
@@ -1349,7 +1012,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#fafaf9] text-neutral-900 font-sans selection:bg-neutral-900 selection:text-white">
-      
+
       {/* 1. Header Bar */}
       <header className="border-b border-neutral-200 bg-white sticky top-0 z-30">
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -1419,10 +1082,10 @@ export default function CheckoutPage() {
       {/* Main Checkout Container */}
       <main className="mx-auto max-w-[1240px] px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.2fr)_440px] xl:grid-cols-[minmax(0,1.25fr)_460px] lg:gap-12">
-          
+
           {/* LEFT COLUMN: SHIPPING & SAVED ADDRESSES & PAYMENT */}
           <div className="space-y-8">
-            
+
             {/* Step 1: Customer Account / Contact Info & Email Verification */}
             <section className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-2xs transition-all">
               <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-5">
@@ -1503,11 +1166,10 @@ export default function CheckoutPage() {
                           if (isEmailOtpOpen) setIsEmailOtpOpen(false);
                         }}
                         placeholder="name@example.com"
-                        className={`h-11 w-full rounded-lg border pl-9 pr-3 text-xs text-zinc-900 outline-none transition-all ${
-                          isEmailCurrentlyVerified
-                            ? 'border-emerald-200 bg-emerald-50/20 focus:border-emerald-600'
-                            : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/5'
-                        }`}
+                        className={`h-11 w-full rounded-lg border pl-9 pr-3 text-xs text-zinc-900 outline-none transition-all ${isEmailCurrentlyVerified
+                          ? 'border-emerald-200 bg-emerald-50/20 focus:border-emerald-600'
+                          : 'border-zinc-200 bg-zinc-50/50 focus:bg-white focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/5'
+                          }`}
                       />
                     </div>
                     {!isEmailCurrentlyVerified && !isEmailOtpOpen && (
@@ -1613,11 +1275,10 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={handleDetectLiveLocation}
                     disabled={isDetectingLocation}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer disabled:opacity-60 ${
-                      newAddressForm.latitude
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-900'
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer disabled:opacity-60 ${newAddressForm.latitude
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-900'
+                      }`}
                   >
                     {isDetectingLocation ? (
                       <>
@@ -1652,16 +1313,14 @@ export default function CheckoutPage() {
                         layout
                         key={addr.id}
                         onClick={() => setSelectedAddressId(addr.id)}
-                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
-                          isSelected
-                            ? 'border-zinc-900 bg-zinc-50/80 ring-1 ring-zinc-900 shadow-2xs'
-                            : 'border-zinc-200 hover:border-zinc-400 bg-white'
-                        }`}
+                        className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${isSelected
+                          ? 'border-zinc-900 bg-zinc-50/80 ring-1 ring-zinc-900 shadow-2xs'
+                          : 'border-zinc-200 hover:border-zinc-400 bg-white'
+                          }`}
                       >
                         <div className="flex items-start gap-3.5">
-                          <div className={`mt-0.5 grid h-4 w-4 place-items-center rounded-full border shrink-0 transition-colors ${
-                            isSelected ? 'border-zinc-900 bg-zinc-900' : 'border-zinc-300 bg-white'
-                          }`}>
+                          <div className={`mt-0.5 grid h-4 w-4 place-items-center rounded-full border shrink-0 transition-colors ${isSelected ? 'border-zinc-900 bg-zinc-900' : 'border-zinc-300 bg-white'
+                            }`}>
                             {isSelected && <Check className="h-2.5 w-2.5 text-white stroke-[3]" />}
                           </div>
                           <div className="space-y-1">
@@ -1864,11 +1523,10 @@ export default function CheckoutPage() {
                             key={label}
                             type="button"
                             onClick={() => setNewAddressForm((prev) => ({ ...prev, type: label }))}
-                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-                              active
-                                ? 'border-zinc-900 bg-zinc-900 text-white shadow-2xs'
-                                : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400'
-                            }`}
+                            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-xs font-medium transition-all cursor-pointer ${active
+                              ? 'border-zinc-900 bg-zinc-900 text-white shadow-2xs'
+                              : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400'
+                              }`}
                           >
                             <Icon className="h-3.5 w-3.5" />
                             <span>{label}</span>
@@ -1928,18 +1586,16 @@ export default function CheckoutPage() {
                 {/* 1. Pay Online via Official Razorpay Popup Window */}
                 <div
                   onClick={() => setPaymentMethod('upi')}
-                  className={`rounded-xl border p-4 transition-all cursor-pointer ${
-                    paymentMethod !== 'cod'
-                      ? 'border-zinc-900 bg-zinc-50/60 ring-1 ring-zinc-900'
-                      : 'border-zinc-200 bg-white hover:border-zinc-300'
-                  }`}
+                  className={`rounded-xl border p-4 transition-all cursor-pointer ${paymentMethod !== 'cod'
+                    ? 'border-zinc-900 bg-zinc-50/60 ring-1 ring-zinc-900'
+                    : 'border-zinc-200 bg-white hover:border-zinc-300'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3.5">
                       <div
-                        className={`mt-0.5 grid h-4 w-4 place-items-center rounded-full border shrink-0 transition-colors ${
-                          paymentMethod !== 'cod' ? 'border-zinc-900 bg-zinc-900' : 'border-zinc-300 bg-white'
-                        }`}
+                        className={`mt-0.5 grid h-4 w-4 place-items-center rounded-full border shrink-0 transition-colors ${paymentMethod !== 'cod' ? 'border-zinc-900 bg-zinc-900' : 'border-zinc-300 bg-white'
+                          }`}
                       >
                         {paymentMethod !== 'cod' && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                       </div>
@@ -1978,22 +1634,20 @@ export default function CheckoutPage() {
                       toast.error(`COD is not available for orders above ₹${codMaxLimit}. Please pay online.`);
                     }
                   }}
-                  className={`rounded-xl border p-4 transition-all ${
-                    !isCodAllowedForCart
-                      ? 'opacity-60 border-zinc-200 bg-zinc-50 cursor-not-allowed'
-                      : paymentMethod === 'cod'
+                  className={`rounded-xl border p-4 transition-all ${!isCodAllowedForCart
+                    ? 'opacity-60 border-zinc-200 bg-zinc-50 cursor-not-allowed'
+                    : paymentMethod === 'cod'
                       ? 'border-zinc-900 bg-zinc-50/60 ring-1 ring-zinc-900 cursor-pointer'
                       : 'border-zinc-200 bg-white hover:border-zinc-300 cursor-pointer'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3.5">
                       <div
-                        className={`mt-0.5 grid h-4 w-4 place-items-center rounded-full border shrink-0 transition-colors ${
-                          paymentMethod === 'cod' && isCodAllowedForCart
-                            ? 'border-zinc-900 bg-zinc-900'
-                            : 'border-zinc-300 bg-white'
-                        }`}
+                        className={`mt-0.5 grid h-4 w-4 place-items-center rounded-full border shrink-0 transition-colors ${paymentMethod === 'cod' && isCodAllowedForCart
+                          ? 'border-zinc-900 bg-zinc-900'
+                          : 'border-zinc-300 bg-white'
+                          }`}
                       >
                         {paymentMethod === 'cod' && isCodAllowedForCart && (
                           <div className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -2010,8 +1664,8 @@ export default function CheckoutPage() {
                               ? 'Currently unavailable on this store'
                               : `Available for orders between ₹${codMinLimit} and ₹${codMaxLimit}`
                             : Number(shippingConfig?.cod_extra_charge) > 0
-                            ? `Pay by Cash or UPI at the time of delivery (+₹${shippingConfig.cod_extra_charge} convenience fee)`
-                            : 'Pay by Cash or UPI at the time of delivery'}
+                              ? `Pay by Cash or UPI at the time of delivery (+₹${shippingConfig.cod_extra_charge} convenience fee)`
+                              : 'Pay by Cash or UPI at the time of delivery'}
                         </p>
                       </div>
                     </div>
@@ -2027,7 +1681,7 @@ export default function CheckoutPage() {
 
           {/* RIGHT COLUMN: STICKY ORDER SUMMARY & COUPONS */}
           <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start space-y-4">
-            
+
             {/* Summary Box */}
             <div className="border border-neutral-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
               <h3 className="text-sm font-medium uppercase tracking-wider text-neutral-900 pb-3 border-b border-neutral-200">
