@@ -81,9 +81,9 @@ export default function GatewaySettingsTab() {
   const [logisticsConfig, setLogisticsConfig] = useState({
     default_gateway: 'shiprocket', // 'shiprocket' | 'nimbuspost' | 'manual'
     shiprocket_mode: 'test',
-    shiprocket_email: '',
-    shiprocket_password: '',
-    shiprocket_pickup_location: 'Primary',
+    shiprocket_email: 'support@rage-x.com',
+    shiprocket_password: 'cB6p1i!T&&ygUWsi8*4Lt28WG2f79Nuz',
+    shiprocket_pickup_location: 'work',
     nimbuspost_mode: 'test',
     nimbuspost_email: '',
     nimbuspost_token: '',

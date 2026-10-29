@@ -102,14 +102,13 @@ export default function OrdersTab() {
       .then((res) => {
         if (res.success && res.config) {
           setLogisticsConfig(res.config);
-          if (res.config.courier_active_gateway) {
-            setShipForm((prev) => ({
-              ...prev,
-              gateway: res.config.courier_active_gateway,
-              sendWhatsApp: res.config.courier_auto_notify_whatsapp !== false,
-              sendEmail: res.config.courier_auto_notify_email !== false,
-            }));
-          }
+          const defaultGw = res.config.default_gateway || res.config.courier_active_gateway || 'shiprocket';
+          setShipForm((prev) => ({
+            ...prev,
+            gateway: defaultGw,
+            sendWhatsApp: res.config.auto_send_whatsapp !== 'false',
+            sendEmail: res.config.auto_send_email !== 'false',
+          }));
         }
       })
       .catch(() => {});
@@ -117,16 +116,22 @@ export default function OrdersTab() {
 
   const openShipModal = (order) => {
     setOrderToShip(order);
-    const activeGateway = logisticsConfig?.courier_active_gateway || 'manual';
+    const activeGateway = logisticsConfig?.default_gateway || logisticsConfig?.courier_active_gateway || 'shiprocket';
+    const existingTracking =
+      order.trackingNumber &&
+      !String(order.trackingNumber).startsWith('XAV-') &&
+      !String(order.trackingNumber).startsWith('DEL-')
+        ? order.trackingNumber
+        : '';
     setShipForm({
       gateway: activeGateway,
       courierPartner: order.courierPartner && order.courierPartner !== 'Standard Delivery' ? order.courierPartner : 'Delhivery',
-      trackingNumber: order.trackingNumber || '',
+      trackingNumber: existingTracking,
       trackingUrl: order.trackingUrl || '',
-      estimatedDelivery: order.estimatedDelivery || '3-5 Business Days',
+      estimatedDelivery: order.estimatedDelivery || logisticsConfig?.default_estimated_days || '2-4 Business Days',
       deliveryNotes: '',
-      sendWhatsApp: logisticsConfig?.courier_auto_notify_whatsapp !== false,
-      sendEmail: logisticsConfig?.courier_auto_notify_email !== false,
+      sendWhatsApp: logisticsConfig?.auto_send_whatsapp !== 'false',
+      sendEmail: logisticsConfig?.auto_send_email !== 'false',
     });
     setIsShipModalOpen(true);
   };
